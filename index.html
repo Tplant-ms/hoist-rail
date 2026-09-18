@@ -7,194 +7,169 @@
 <style>
   :root {
     --primary: #1565c0;
-    --ok: #2e7d32;
-    --ng: #c62828;
-    --warn: #e65100;
-    --bg: #f5f5f5;
-    --card: #ffffff;
-    --border: #ddd;
-    --text: #212121;
-    --sub: #555;
+    --ok:      #2e7d32;
+    --ng:      #c62828;
+    --govern:  #e65100;
+    --bg:      #f5f5f5;
+    --card:    #ffffff;
+    --border:  #ddd;
+    --text:    #212121;
+    --sub:     #555;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Helvetica Neue', Arial, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    font-size: 14px;
-    line-height: 1.5;
-  }
-  .page-wrap {
-    max-width: 720px;
-    margin: 0 auto;
+    background: var(--bg); color: var(--text);
+    font-size: 14px; line-height: 1.5;
   }
   header {
-    background: var(--primary);
-    color: #fff;
-    padding: 14px 20px;
-    font-size: 17px;
-    font-weight: bold;
-    letter-spacing: 0.05em;
-    border-radius: 0 0 8px 8px;
-    text-align: center;
+    background: #1565c0; color: #fff;
+    padding: 14px 20px; font-size: 17px; font-weight: bold;
+    letter-spacing: 0.05em; border-radius: 0 0 8px 8px; text-align: center;
   }
   header small {
-    display: block;
-    font-size: 11px;
-    font-weight: normal;
-    opacity: 0.85;
-    margin-top: 3px;
+    display: block; font-size: 11px; font-weight: normal;
+    opacity: 0.85; margin-top: 3px;
   }
-  .container { padding: 12px 12px 40px; }
+  .page-wrap { max-width: 720px; margin: 0 auto; }
+  .container  { padding: 12px 12px 40px; }
+
+  /* CARD */
   .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 14px 16px;
-    margin-bottom: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px; margin-bottom: 10px;
   }
   .card h2 {
-    font-size: 13px;
-    font-weight: bold;
-    color: var(--primary);
-    border-bottom: 1px solid #e0e0e0;
-    padding-bottom: 6px;
-    margin-bottom: 10px;
-    letter-spacing: 0.04em;
+    font-size: 13px; font-weight: bold; color: var(--primary);
+    border-bottom: 1px solid #e0e0e0; padding-bottom: 6px;
+    margin-bottom: 10px; letter-spacing: 0.04em;
   }
-  .form-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 420px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-group label { display: block; font-size: 12px; color: var(--sub); margin-bottom: 3px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 8px 10px; border: 1px solid #bbb;
+    border-radius: 5px; font-size: 14px; background: #fffde7;
+    transition: border-color .2s, background .2s;
   }
-  @media (max-width: 420px) {
-    .form-grid { grid-template-columns: 1fr; }
+  .form-group input:focus, .form-group select:focus {
+    outline: none; border-color: var(--primary);
+    background: #fff9c4; box-shadow: 0 0 0 2px rgba(21,101,192,.15);
   }
-  .form-group label {
-    display: block;
-    font-size: 12px;
-    color: var(--sub);
-    margin-bottom: 3px;
-  }
-  .form-group input,
-  .form-group select {
-    width: 100%;
-    padding: 8px 10px;
-    border: 1px solid #bbb;
-    border-radius: 5px;
-    font-size: 14px;
-    background: #fffde7;
-    transition: border-color 0.2s, background 0.2s;
-  }
-  .form-group input:focus,
-  .form-group select:focus {
-    outline: none;
-    border-color: var(--primary);
-    background: #fff9c4;
-    box-shadow: 0 0 0 2px rgba(21,101,192,0.15);
-  }
+  .form-group.full { grid-column: 1 / -1; }
   .clear-btn {
-    display: block;
-    width: 100%;
-    margin-top: 10px;
-    padding: 9px;
-    background: #fff;
-    border: 1px solid #bbb;
-    border-radius: 5px;
-    font-size: 13px;
-    color: #555;
-    cursor: pointer;
-    transition: background 0.15s, border-color 0.15s;
-    letter-spacing: 0.03em;
+    display: block; width: 100%; margin-top: 10px; padding: 9px;
+    background: #fff; border: 1px solid #bbb; border-radius: 5px;
+    font-size: 13px; color: #555; cursor: pointer;
+    transition: background .15s, border-color .15s;
   }
   .clear-btn:hover { background: #fce4ec; border-color: #e57373; color: #c62828; }
-  .form-group.full { grid-column: 1 / -1; }
+
+  /* MEMBER PROPS */
   .member-props {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    margin-top: 8px;
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-top: 8px;
   }
-  @media (max-width: 420px) {
-    .member-props { grid-template-columns: repeat(2, 1fr); }
-  }
-  .prop-box {
-    background: #f0f4ff;
-    border-radius: 5px;
-    padding: 5px 7px;
-    text-align: center;
-  }
+  @media (max-width: 420px) { .member-props { grid-template-columns: repeat(2,1fr); } }
+  .prop-box { background: #f0f4ff; border-radius: 5px; padding: 5px 7px; text-align: center; }
   .prop-box .val { font-size: 13px; font-weight: bold; color: var(--primary); }
   .prop-box .lbl { font-size: 10px; color: var(--sub); }
+
+  /* TABS */
+  .tab-bar {
+    display: flex; gap: 6px; margin-bottom: 10px;
+  }
+  .tab-btn {
+    flex: 1; padding: 10px 6px; border: 2px solid var(--border);
+    border-radius: 7px; background: #fff; font-size: 14px; font-weight: bold;
+    color: var(--sub); cursor: pointer; transition: all .18s; letter-spacing: 0.02em;
+  }
+  .tab-btn.active {
+    border-color: var(--primary); background: var(--primary); color: #fff;
+  }
+  .tab-btn:not(.active):hover { border-color: #90b0e0; color: var(--primary); background: #f0f4ff; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* RESULT TABLE (2点支持) */
   .result-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
   .result-table th, .result-table td {
-    padding: 7px 8px;
-    text-align: left;
-    border-bottom: 1px solid #eee;
-    font-size: 13px;
+    padding: 7px 8px; text-align: left;
+    border-bottom: 1px solid #eee; font-size: 13px;
   }
-  .result-table th {
-    background: #f0f4ff;
-    font-weight: bold;
-    color: var(--primary);
-    font-size: 12px;
-  }
+  .result-table th { background: #f0f4ff; font-weight: bold; color: var(--primary); font-size: 12px; }
   .result-table tr:last-child td { border-bottom: none; }
   .badge {
-    display: inline-block;
-    padding: 2px 10px;
-    border-radius: 12px;
-    font-weight: bold;
-    font-size: 12px;
-    min-width: 40px;
-    text-align: center;
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-weight: bold; font-size: 12px; min-width: 40px; text-align: center;
   }
   .badge.ok { background: #e8f5e9; color: var(--ok); }
   .badge.ng { background: #ffebee; color: var(--ng); }
   .badge.na { background: #f5f5f5; color: #999; }
-  .ratio-bar-wrap {
-    display: flex; align-items: center; gap: 6px;
-  }
+  .ratio-bar-wrap { display: flex; align-items: center; gap: 6px; }
   .ratio-val { min-width: 44px; text-align: right; font-weight: bold; font-size: 13px; }
-  .ratio-bar {
-    flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden;
-  }
-  .ratio-fill {
-    height: 100%; border-radius: 4px; transition: width 0.3s, background 0.3s;
-  }
+  .ratio-bar  { flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+  .ratio-fill { height: 100%; border-radius: 4px; transition: width .3s, background .3s; }
   .summary-box {
-    text-align: center;
-    padding: 10px;
-    border-radius: 8px;
-    font-size: 16px;
-    font-weight: bold;
-    margin-top: 6px;
+    text-align: center; padding: 10px; border-radius: 8px;
+    font-size: 15px; font-weight: bold; margin-top: 6px;
   }
   .summary-box.ok { background: #e8f5e9; color: var(--ok); }
   .summary-box.ng { background: #ffebee; color: var(--ng); }
   .summary-box.na { background: #f5f5f5; color: #999; }
-  .inter-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    margin-top: 8px;
+
+  /* MAX SPAN (片持ち) */
+  .max-span-box {
+    text-align: center; padding: 14px 12px 10px;
+    border-radius: 8px; margin-bottom: 10px;
+    border: 2px solid var(--govern); background: #fff8f0;
   }
+  .max-span-box .ms-label { font-size: 11px; color: var(--govern); font-weight: bold; letter-spacing: .05em; }
+  .max-span-box .ms-value { font-size: 50px; font-weight: bold; color: var(--govern); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .max-span-box .ms-unit  { font-size: 18px; font-weight: normal; color: var(--govern); }
+  .max-span-box .ms-gov   { font-size: 12px; color: var(--sub); margin-top: 2px; }
+
+  .limit-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .limit-table th, .limit-table td {
+    padding: 7px 8px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px;
+  }
+  .limit-table th { background: #f0f4ff; font-weight: bold; color: var(--primary); font-size: 12px; }
+  .limit-table tr:last-child td { border-bottom: none; }
+  .limit-table td.L-val { font-weight: bold; font-variant-numeric: tabular-nums; }
+  .tag-gov {
+    display: inline-block; padding: 1px 7px; border-radius: 10px;
+    background: var(--govern); color: #fff; font-size: 10px; font-weight: bold;
+  }
+
+  /* SLIDER */
+  .slider-section { margin-top: 10px; }
+  .slider-section h3 { font-size: 12px; font-weight: bold; color: var(--sub); margin-bottom: 6px; }
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-val { min-width: 64px; text-align: right; font-size: 16px; font-weight: bold; color: var(--primary); font-variant-numeric: tabular-nums; }
+  .sratios { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .sratio-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+  .sratio-name { width: 80px; flex-shrink: 0; color: var(--sub); }
+  .sratio-bar-wrap { flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+  .sratio-fill { height: 100%; border-radius: 4px; transition: width .2s, background .2s; }
+  .sratio-num  { min-width: 48px; text-align: right; font-weight: bold; font-variant-numeric: tabular-nums; }
+  .sratio-badge {
+    min-width: 32px; text-align: center; font-size: 11px; font-weight: bold;
+    padding: 1px 6px; border-radius: 10px;
+  }
+  .sratio-badge.ok { background: #e8f5e9; color: var(--ok); }
+  .sratio-badge.ng { background: #ffebee; color: var(--ng); }
+
+  /* COMMON */
+  .inter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
   @media (max-width: 380px) { .inter-grid { grid-template-columns: 1fr; } }
-  .inter-item {
-    background: #fafafa;
-    border: 1px solid #e8e8e8;
-    border-radius: 5px;
-    padding: 5px 8px;
-  }
+  .inter-item { background: #fafafa; border: 1px solid #e8e8e8; border-radius: 5px; padding: 5px 8px; }
   .inter-item .k { font-size: 11px; color: var(--sub); }
   .inter-item .v { font-size: 13px; font-weight: bold; }
-  .note {
-    font-size: 11px;
-    color: var(--sub);
-    margin-top: 8px;
-    line-height: 1.6;
-  }
+  .note { font-size: 11px; color: var(--sub); margin-top: 8px; line-height: 1.6; }
   .divider { border: none; border-top: 1px solid #e0e0e0; margin: 10px 0; }
+  .form-sub { font-size: 11px; color: var(--sub); margin-top: 2px; }
 </style>
 </head>
 <body>
@@ -206,133 +181,191 @@
 
 <div class="container">
 
-<!-- 入力 -->
+<!-- ===== 共通入力 ===== -->
 <div class="card">
-  <h2>📥 入力条件</h2>
+  <h2>📥 荷重条件・部材（共通）</h2>
   <div class="form-grid">
     <div class="form-group">
       <label>吊り荷重 W (kg)</label>
-      <input type="number" id="W" value="1000" min="0" step="50">
+      <input type="number" id="W" placeholder="例: 1000" min="0" step="50">
     </div>
     <div class="form-group">
       <label>ホイスト自重 Hw (kg)</label>
-      <input type="number" id="Hw" value="200" min="0" step="10">
+      <input type="number" id="Hw" placeholder="例: 200" min="0" step="10">
     </div>
     <div class="form-group">
       <label>衝撃係数 φ</label>
       <input type="number" id="phi" value="1.2" min="1" max="2" step="0.05">
     </div>
     <div class="form-group">
-      <label>スパン L (m)</label>
-      <input type="number" id="L" value="5.0" min="0.5" max="30" step="0.1">
-    </div>
-    <div class="form-group">
       <label>許容曲げ応力度 fb₀ (kN/cm²)</label>
       <input type="number" id="fb0" value="15.6" min="1" step="0.1">
-    </div>
-    <div class="form-group">
-      <label>座屈支点間距離 Lb (m)</label>
-      <input type="number" id="Lb" value="5.0" min="0" step="0.1">
     </div>
     <div class="form-group full">
       <label>部材選択</label>
       <select id="member"></select>
     </div>
   </div>
-  <button class="clear-btn" id="clear-btn">🗑 クリア（吊り荷重・ホイスト自重・スパンを消去）</button>
   <div class="member-props" id="member-props" style="display:none">
     <div class="prop-box"><div class="val" id="p-H">—</div><div class="lbl">H (mm)</div></div>
     <div class="prop-box"><div class="val" id="p-B">—</div><div class="lbl">B (mm)</div></div>
     <div class="prop-box"><div class="val" id="p-Ix">—</div><div class="lbl">Ix (cm⁴)</div></div>
     <div class="prop-box"><div class="val" id="p-Zx">—</div><div class="lbl">Zx (cm³)</div></div>
     <div class="prop-box"><div class="val" id="p-ib">—</div><div class="lbl">ib (cm)</div></div>
-    <div class="prop-box"><div class="val" id="p-eta">—</div><div class="lbl">η</div></div>
     <div class="prop-box"><div class="val" id="p-tw">—</div><div class="lbl">tw (mm)</div></div>
     <div class="prop-box"><div class="val" id="p-tf">—</div><div class="lbl">tf (mm)</div></div>
+    <div class="prop-box"><div class="val" id="p-W">—</div><div class="lbl">自重(kg/m)</div></div>
+  </div>
+  <button class="clear-btn" id="clear-btn">🗑 クリア（吊り荷重・ホイスト自重を消去）</button>
+</div>
+
+<!-- ===== タブ ===== -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="simple">⚖ 2点支持（単純梁）</button>
+  <button class="tab-btn"        data-tab="cant">↗ 片持ち梁（最大スパン）</button>
+</div>
+
+<!-- ===== TAB: 2点支持 ===== -->
+<div id="tab-simple" class="tab-content active">
+  <div class="card">
+    <h2>📐 2点支持 — スパン・座屈長</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>スパン L (m)</label>
+        <input type="number" id="L" value="5.0" min="0.5" max="30" step="0.1">
+      </div>
+      <div class="form-group">
+        <label>座屈支点間距離 Lb (m)</label>
+        <input type="number" id="Lb" value="5.0" min="0" step="0.1">
+        <div class="form-sub">※ 上フランジ拘束点間距離</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" id="simple-result" style="display:none">
+    <h2>📊 2点支持 — 検討結果</h2>
+    <div class="summary-box na" id="simple-summary">— 計算中 —</div>
+    <hr class="divider">
+    <table class="result-table">
+      <thead><tr><th>検討項目</th><th>計算値</th><th>許容値</th><th>比率</th><th>判定</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>① 曲げ応力</td>
+          <td id="s-sb">—</td><td id="s-fb">—</td>
+          <td><div class="ratio-bar-wrap"><span class="ratio-val" id="s-rv-b">—</span><div class="ratio-bar"><div class="ratio-fill" id="s-rf-b" style="width:0%"></div></div></div></td>
+          <td><span class="badge na" id="s-badge-b">—</span></td>
+        </tr>
+        <tr>
+          <td>② 横座屈</td>
+          <td id="s-sb2">—</td><td id="s-fb2">—</td>
+          <td><div class="ratio-bar-wrap"><span class="ratio-val" id="s-rv-ltb">—</span><div class="ratio-bar"><div class="ratio-fill" id="s-rf-ltb" style="width:0%"></div></div></div></td>
+          <td><span class="badge na" id="s-badge-ltb">—</span></td>
+        </tr>
+        <tr>
+          <td>③ せん断</td>
+          <td id="s-tau">—</td><td id="s-fs">—</td>
+          <td><div class="ratio-bar-wrap"><span class="ratio-val" id="s-rv-s">—</span><div class="ratio-bar"><div class="ratio-fill" id="s-rf-s" style="width:0%"></div></div></div></td>
+          <td><span class="badge na" id="s-badge-s">—</span></td>
+        </tr>
+        <tr>
+          <td>④ たわみ</td>
+          <td id="s-delta">—</td><td id="s-deltaa">—</td>
+          <td><div class="ratio-bar-wrap"><span class="ratio-val" id="s-rv-d">—</span><div class="ratio-bar"><div class="ratio-fill" id="s-rf-d" style="width:0%"></div></div></div></td>
+          <td><span class="badge na" id="s-badge-d">—</span></td>
+        </tr>
+      </tbody>
+    </table>
+    <hr class="divider">
+    <div style="font-size:12px;font-weight:bold;color:var(--sub);margin-bottom:6px;">中間計算値</div>
+    <div class="inter-grid" id="s-inter"></div>
+    <p class="note" id="s-note"></p>
   </div>
 </div>
 
-<!-- 結果 -->
-<div class="card" id="result-card" style="display:none">
-  <h2>📊 検討結果</h2>
+<!-- ===== TAB: 片持ち梁 ===== -->
+<div id="tab-cant" class="tab-content">
+  <div class="card">
+    <h2>📐 片持ち梁 — たわみ制限</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>たわみ制限 1/n（nを入力）</label>
+        <input type="number" id="deflN" value="300" min="100" step="50">
+        <div class="form-sub">片持ち梁は L/300 程度が一般的</div>
+      </div>
+    </div>
+  </div>
 
-  <div class="summary-box na" id="summary-box">— 計算中 —</div>
-  <hr class="divider">
+  <div class="card" id="cant-result" style="display:none">
+    <h2>📊 片持ち梁 — 最大スパン算定</h2>
+    <div class="max-span-box">
+      <div class="ms-label">▼ 最大スパン（支配検討）</div>
+      <div class="ms-value" id="c-maxspan">—<span class="ms-unit"> m</span></div>
+      <div class="ms-gov" id="c-gov">—</div>
+    </div>
 
-  <table class="result-table">
-    <thead>
-      <tr>
-        <th>検討項目</th>
-        <th>計算値</th>
-        <th>許容値</th>
-        <th>比率</th>
-        <th>判定</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td>① 曲げ応力</td>
-        <td id="r-sb">—</td>
-        <td id="r-fb">—</td>
-        <td><div class="ratio-bar-wrap"><span class="ratio-val" id="rv-b">—</span><div class="ratio-bar"><div class="ratio-fill" id="rf-b" style="width:0%"></div></div></div></td>
-        <td><span class="badge na" id="badge-b">—</span></td>
-      </tr>
-      <tr>
-        <td>② 横座屈</td>
-        <td id="r-sb2">—</td>
-        <td id="r-fb2">—</td>
-        <td><div class="ratio-bar-wrap"><span class="ratio-val" id="rv-ltb">—</span><div class="ratio-bar"><div class="ratio-fill" id="rf-ltb" style="width:0%"></div></div></div></td>
-        <td><span class="badge na" id="badge-ltb">—</span></td>
-      </tr>
-      <tr>
-        <td>③ せん断</td>
-        <td id="r-tau">—</td>
-        <td id="r-fs">—</td>
-        <td><div class="ratio-bar-wrap"><span class="ratio-val" id="rv-s">—</span><div class="ratio-bar"><div class="ratio-fill" id="rf-s" style="width:0%"></div></div></div></td>
-        <td><span class="badge na" id="badge-s">—</span></td>
-      </tr>
-      <tr>
-        <td>④ たわみ</td>
-        <td id="r-delta">—</td>
-        <td id="r-deltaa">—</td>
-        <td><div class="ratio-bar-wrap"><span class="ratio-val" id="rv-d">—</span><div class="ratio-bar"><div class="ratio-fill" id="rf-d" style="width:0%"></div></div></div></td>
-        <td><span class="badge na" id="badge-d">—</span></td>
-      </tr>
-    </tbody>
-  </table>
+    <table class="limit-table">
+      <thead><tr><th>検討項目</th><th>上限スパン</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>① 曲げ応力</td><td class="L-val" id="c-lim-b">—</td><td id="c-tag-b"></td></tr>
+        <tr><td>② 横座屈（Lb=2L）</td><td class="L-val" id="c-lim-ltb">—</td><td id="c-tag-ltb"></td></tr>
+        <tr><td>③ せん断</td><td class="L-val" id="c-lim-s">—</td><td id="c-tag-s"></td></tr>
+        <tr><td>④ たわみ（L/n）</td><td class="L-val" id="c-lim-d">—</td><td id="c-tag-d"></td></tr>
+      </tbody>
+    </table>
 
-  <hr class="divider">
-  <div style="font-size:12px; font-weight:bold; color:var(--sub); margin-bottom:6px;">中間計算値</div>
-  <div class="inter-grid" id="inter-grid"></div>
-  <p class="note" id="calc-note"></p>
+    <hr class="divider">
+    <div class="slider-section">
+      <h3>🔍 任意スパンで比率確認</h3>
+      <div class="slider-row">
+        <span style="font-size:12px;color:var(--sub)">0.5m</span>
+        <input type="range" id="c-slider" min="0.5" max="20" step="0.1" value="2">
+        <span style="font-size:12px;color:var(--sub)" id="c-slider-max">20m</span>
+        <div class="slider-val"><span id="c-slider-L">2.0</span> m</div>
+      </div>
+      <div class="sratios" id="c-ratios"></div>
+    </div>
+
+    <hr class="divider">
+    <div style="font-size:12px;font-weight:bold;color:var(--sub);margin-bottom:6px;">中間計算値</div>
+    <div class="inter-grid" id="c-inter"></div>
+    <p class="note" id="c-note"></p>
+  </div>
 </div>
 
-<!-- 計算式 -->
+<!-- ===== 計算式 ===== -->
 <div class="card">
   <h2>📐 計算式概要</h2>
-  <p style="font-size:12px; line-height:1.8; color:var(--sub)">
-    <b>設計荷重：</b> P₁ = (W + Hw)×φ×9.81/1000 [kN]<br>
-    <b>曲げモーメント：</b> M = P₁×L/4 [kN·m]（集中荷重・単純梁）<br>
-    <b>せん断力：</b> Q = P₁/2 [kN]<br>
-    <b>曲げ応力度：</b> σb = M×100/Zx [kN/cm²]<br>
-    <b>横座屈スレンダー比：</b> λb = Lb×100/ib<br>
-    <b>低減係数ν（AIJ）：</b> λb≤60→1.0 / ≤130→線形低減 / &gt;130→放物線<br>
-    <b>横座屈許容曲げ：</b> fb′ = ν×fb₀<br>
-    <b>せん断応力度：</b> Aw=(H−2tf)×tw/100 [cm²]、τ=Q/Aw<br>
-    <b>許容せん断：</b> fs = fb₀/√3<br>
-    <b>たわみ：</b> δ = P₁×(L×100)³/(48×E×Ix) [cm]、δa = L×100/800<br>
-    <b>E = 21,000 kN/cm²（鋼材ヤング係数）</b>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+    <div>
+      <div style="font-size:11px;font-weight:bold;color:var(--primary);margin-bottom:4px">⚖ 2点支持（単純梁）</div>
+      <p style="font-size:11px;line-height:1.8;color:var(--sub)">
+        M = P₁×L/4 [kN·m]<br>
+        Q = P₁/2 [kN]<br>
+        σb = M×100/Zx<br>
+        δ = P₁L³/(48EI) ≤ L/800
+      </p>
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:bold;color:var(--govern);margin-bottom:4px">↗ 片持ち梁</div>
+      <p style="font-size:11px;line-height:1.8;color:var(--sub)">
+        M = P₁×L [kN·m]（固定端）<br>
+        Q = P₁ [kN]<br>
+        σb = M×100/Zx<br>
+        δ = P₁L³/(3EI) ≤ L/n<br>
+        Lb_eff = 2L（上フランジ自由）
+      </p>
+    </div>
+  </div>
+  <p style="font-size:11px;color:var(--sub);margin-top:8px">
+    共通：P₁=(W+Hw)×φ×9.81/1000 [kN]、fb′=ν×fb₀（AIJ横座屈低減）、fs=fb₀/√3、E=21,000 kN/cm²
   </p>
 </div>
 
-</div><!-- /container -->
-</div><!-- /page-wrap -->
+</div></div>
 
 <script>
 // ===== 部材データ =====
-// [名称, H, B, tw, tf, A, Ix, Zx, ib, eta, Iy, Zy, W, 種別]
 const MEMBERS = [
-  // H形鋼 細幅
   ['H-150×75×5×7',150,75,5,7,17.85,666,88.8,1.96,5.6,49.5,13.2,14,'細幅'],
   ['H-175×90×5×8',175,90,5,8,22.9,1210,138,2.39,5.81,97.5,21.7,18,'細幅'],
   ['H-200×100×5.5×8',200,100,5.5,8,26.67,1810,181,2.63,6.57,134,26.7,20.9,'細幅'],
@@ -343,7 +376,6 @@ const MEMBERS = [
   ['H-450×200×9×14',450,200,9,14,95.43,32900,1460,5.23,8.4,1870,187,74.9,'細幅'],
   ['H-500×200×10×16',500,200,10,16,112.3,46800,1870,5.2,8.13,2140,214,88.2,'細幅'],
   ['H-600×200×11×17',600,200,11,17,131.7,75600,2520,5.09,8.98,2270,227,103,'細幅'],
-  // H形鋼 中幅
   ['H-148×100×6×9',148,100,6,9,26.35,1000,135,2.71,4.46,150,30.1,20.7,'中幅'],
   ['H-194×150×6×9',194,150,6,9,38.11,2630,271,4.09,5.87,507,67.6,29.9,'中幅'],
   ['H-244×175×7×11',244,175,7,11,55.49,6040,495,4.72,5.99,984,112,43.6,'中幅'],
@@ -356,7 +388,6 @@ const MEMBERS = [
   ['H-700×300×13×24',700,300,13,24,231.5,197000,5640,7.95,7.73,10800,721,182,'中幅'],
   ['H-800×300×14×26',800,300,14,26,263.5,286000,7160,7.87,8.08,11700,781,207,'中幅'],
   ['H-900×300×16×28',900,300,16,28,305.8,404000,8990,7.75,8.31,12600,842,240,'中幅'],
-  // H形鋼 広幅
   ['H-100×100×6×8',100,100,6,8,21.59,378,75.6,2.75,3.44,134,26.7,16.9,'広幅'],
   ['H-125×125×6.5×9',125,125,6.5,9,30,839,134,3.45,3.84,293,46.9,23.6,'広幅'],
   ['H-150×150×7×10',150,150,7,10,39.65,1620,216,4.15,4.15,563,75.1,31.1,'広幅'],
@@ -366,7 +397,6 @@ const MEMBERS = [
   ['H-300×300×10×15',300,300,10,15,118.5,20200,1350,8.28,5.52,6750,450,93,'広幅'],
   ['H-350×350×12×19',350,350,12,19,171.9,39800,2280,10.8,5.11,13600,776,135,'広幅'],
   ['H-400×400×13×21',400,400,13,21,218.7,66600,3330,11,5.25,22400,1120,172,'広幅'],
-  // I形鋼 (JIS G 3192)
   ['I-100×75×5×7',100,75,5,7,16.43,281,56.2,1.7,3.24,47.3,12.6,12.9,'I形鋼'],
   ['I-125×75×5.5×8',125,75,5.5,8,20.45,538,86,1.68,3.5,57.5,15.3,16.1,'I形鋼'],
   ['I-150×75×5.5×9',150,75,5.5,9,21.83,819,109,1.62,3.6,57.5,15.3,17.1,'I形鋼'],
@@ -388,223 +418,331 @@ const MEMBERS = [
   ['I-600×190×13×25',600,190,13,25,169.4,98400,3280,3.81,4.81,2460,259,133,'I形鋼'],
   ['I-600×190×16×38',600,190,16,38,224.5,130000,4330,3.97,3.3,3540,373,176,'I形鋼'],
 ];
+const MEMBER_MAP = {};
+MEMBERS.forEach(m => { MEMBER_MAP[m[0]] = m; });
 
-// ===== ドロップダウン構築 =====
-(function buildDropdown() {
+// ドロップダウン
+(function() {
   const sel = document.getElementById('member');
   const groups = {};
   MEMBERS.forEach(m => {
-    const type = m[0].startsWith('H') ? 'H形鋼 ' + m[13] : m[13];
-    if (!groups[type]) groups[type] = [];
-    groups[type].push(m);
+    const g = m[0].startsWith('H') ? 'H形鋼 '+m[13] : m[13];
+    if (!groups[g]) groups[g] = [];
+    groups[g].push(m);
   });
-  Object.entries(groups).forEach(([gname, members]) => {
-    const og = document.createElement('optgroup');
-    og.label = gname;
-    members.forEach(m => {
-      const opt = document.createElement('option');
-      opt.value = m[0];
-      opt.textContent = m[0] + '  (W=' + m[12] + ' kg/m)';
-      og.appendChild(opt);
+  Object.entries(groups).forEach(([g, ms]) => {
+    const og = document.createElement('optgroup'); og.label = g;
+    ms.forEach(m => {
+      const o = document.createElement('option');
+      o.value = m[0]; o.textContent = m[0]+'  (W='+m[12]+' kg/m)';
+      og.appendChild(o);
     });
     sel.appendChild(og);
   });
 })();
 
-// ===== メンバーマップ =====
-const MEMBER_MAP = {};
-MEMBERS.forEach(m => { MEMBER_MAP[m[0]] = m; });
+// ===== ヘルパー =====
+const E = 21000;
+function calcNu(lb_val) {
+  if (lb_val <= 60)  return 1.0;
+  if (lb_val <= 130) return 1.0 - 0.4 * ((lb_val - 60) / 70);
+  return 89000 / (lb_val * lb_val);
+}
+function barColor(r) {
+  if (r <= 0.7) return '#43a047';
+  if (r <= 1.0) return '#ffa726';
+  return '#e53935';
+}
+function fmtR(r) { return isFinite(r) ? (r*100).toFixed(1)+'%' : '—'; }
+function fmtL(L) { return (!isFinite(L)||L>99) ? '制限なし' : L.toFixed(2)+' m'; }
+function judgeClass(r) { return (!isFinite(r)||r>1) ? 'ng' : 'ok'; }
 
-// ===== 計算 =====
-function calc() {
-  const W   = parseFloat(document.getElementById('W').value)   || 0;
-  const Hw  = parseFloat(document.getElementById('Hw').value)  || 0;
+// ===== 2点支持計算 =====
+function calcSimple(m, P1, fb0, L, Lb) {
+  const [,H,,tw,tf,,Ix,Zx,ib] = m;
+  const M   = P1 * L / 4;
+  const sb  = M * 100 / Zx;
+  const lb  = Lb * 100 / ib;
+  const nu  = calcNu(lb);
+  const fbp = nu * fb0;
+  const Aw  = (H - 2*tf) * tw / 100;
+  const fs  = fb0 / Math.sqrt(3);
+  const tau = (P1/2) / Aw;
+  const Lcm = L * 100;
+  const delta  = P1 * Math.pow(Lcm,3) / (48 * E * Ix);
+  const delta_a = Lcm / 800;
+  return {
+    rb: sb/fb0, rltb: sb/fbp, rs: tau/fs, rd: delta/delta_a,
+    sb, fb0, fbp, tau, fs, delta, delta_a, nu, lb, Aw, M, P1,
+  };
+}
+
+// ===== 片持ち：任意Lで比率 =====
+function calcCant(m, P1, fb0, deflN, L) {
+  const [,H,,tw,tf,,Ix,Zx,ib] = m;
+  const sb   = P1 * L * 100 / Zx;
+  const lb   = 2 * L * 100 / ib;
+  const nu   = calcNu(lb);
+  const fbp  = nu * fb0;
+  const Aw   = (H - 2*tf) * tw / 100;
+  const fs   = fb0 / Math.sqrt(3);
+  const tau  = P1 / Aw;
+  const Lcm  = L * 100;
+  const delta  = P1 * Math.pow(Lcm,3) / (3 * E * Ix);
+  const delta_a = Lcm / deflN;
+  return { rb: sb/fb0, rltb: sb/fbp, rs: tau/fs, rd: delta/delta_a, tau, fs, Aw, nu, lb, fbp };
+}
+
+// ===== 片持ち：最大スパン =====
+function maxSpan(m, P1, fb0, deflN) {
+  const [,H,,tw,tf,,Ix,Zx,ib] = m;
+  const Aw  = (H - 2*tf) * tw / 100;
+  const fs  = fb0 / Math.sqrt(3);
+  const tau = P1 / Aw;
+
+  // ① 曲げ（fb0ベース）
+  const L_b = fb0 * Zx / (P1 * 100);
+
+  // ② 横座屈（二分法）
+  let lo=0.01, hi=200;
+  for (let i=0;i<80;i++) {
+    const mid=(lo+hi)/2;
+    const lb=2*mid*100/ib, nu=calcNu(lb), fbp=nu*fb0;
+    (P1*mid*100/Zx - fbp <= 0) ? lo=mid : hi=mid;
+  }
+  const L_ltb = lo;
+
+  // ③ せん断（L非依存）
+  const shear_ok = tau <= fs;
+
+  // ④ たわみ
+  const L_d = Math.sqrt(3 * E * Ix / (P1 * deflN)) / 100;
+
+  const L_gov = Math.min(L_b, L_ltb, shear_ok ? Infinity : 0, L_d);
+  return { L_b, L_ltb, shear_ok, L_d, L_gov, tau, fs, Aw };
+}
+
+// ===== UI更新 =====
+function getShared() {
+  const W   = parseFloat(document.getElementById('W').value);
+  const Hw  = parseFloat(document.getElementById('Hw').value);
   const phi = parseFloat(document.getElementById('phi').value) || 1.2;
-  const L   = parseFloat(document.getElementById('L').value)   || 5.0;
   const fb0 = parseFloat(document.getElementById('fb0').value) || 15.6;
-  const Lb  = parseFloat(document.getElementById('Lb').value)  || L;
-  const name = document.getElementById('member').value;
-  const m = MEMBER_MAP[name];
-  if (!m) return;
+  const m   = MEMBER_MAP[document.getElementById('member').value];
+  if (!m || isNaN(W) || isNaN(Hw) || W <= 0) return null;
+  const P1 = (W + Hw) * phi * 9.81 / 1000;
+  return { P1, fb0, m };
+}
 
-  const [_n, H, B, tw, tf, A, Ix, Zx, ib, eta, Iy, Zy, Wkg, type] = m;
-
-  // 断面プロパティ表示
+function updateMemberProps(m) {
+  const [,H,B,tw,tf,,Ix,Zx,ib,,,,Wkg] = m;
   document.getElementById('p-H').textContent  = H;
   document.getElementById('p-B').textContent  = B;
   document.getElementById('p-Ix').textContent = Ix.toLocaleString();
   document.getElementById('p-Zx').textContent = Zx.toLocaleString();
   document.getElementById('p-ib').textContent = ib;
-  document.getElementById('p-eta').textContent= eta;
   document.getElementById('p-tw').textContent = tw;
   document.getElementById('p-tf').textContent = tf;
+  document.getElementById('p-W').textContent  = Wkg;
   document.getElementById('member-props').style.display = 'grid';
-  document.getElementById('result-card').style.display  = 'block';
-
-  // 設計荷重
-  const P1  = (W + Hw) * phi * 9.81 / 1000; // kN
-  const M   = P1 * L / 4;                    // kN·m
-  const Q   = P1 / 2;                         // kN
-  const E   = 21000;                          // kN/cm²
-
-  // ① 曲げ
-  const sb  = M * 100 / Zx;                  // kN/cm²
-  const rb  = sb / fb0;
-
-  // ② 横座屈
-  const lb  = Lb * 100 / ib;                 // スレンダー比
-  let nu;
-  if (lb <= 60) {
-    nu = 1.0;
-  } else if (lb <= 130) {
-    nu = 1.0 - 0.4 * ((lb - 60) / 70);
-  } else {
-    nu = 89000 / (lb * lb);
-  }
-  const fb_prime = nu * fb0;
-  const rltb = sb / fb_prime;
-
-  // ③ せん断
-  const Aw  = (H - 2 * tf) * tw / 100;      // cm²
-  const tau = Q / Aw;                         // kN/cm²
-  const fs  = fb0 / Math.sqrt(3);
-  const rs  = tau / fs;
-
-  // ④ たわみ
-  const delta  = P1 * Math.pow(L * 100, 3) / (48 * E * Ix); // cm
-  const delta_a = L * 100 / 800;                              // cm
-  const rd     = delta / delta_a;
-
-  // 判定ヘルパー
-  function judgeClass(r) {
-    if (isNaN(r) || !isFinite(r)) return 'na';
-    return r <= 1.0 ? 'ok' : 'ng';
-  }
-  function fmt(v, dec) {
-    if (isNaN(v) || !isFinite(v)) return '—';
-    return v.toFixed(dec);
-  }
-  function ratioText(r) {
-    if (isNaN(r) || !isFinite(r)) return '—';
-    return (r * 100).toFixed(1) + '%';
-  }
-  function barWidth(r) {
-    if (isNaN(r) || !isFinite(r)) return '0%';
-    return Math.min(r * 100, 100) + '%';
-  }
-  function barColor(r) {
-    if (isNaN(r) || !isFinite(r)) return '#ccc';
-    if (r <= 0.7) return '#43a047';
-    if (r <= 1.0) return '#ffa726';
-    return '#e53935';
-  }
-
-  // 曲げ
-  document.getElementById('r-sb').textContent  = fmt(sb, 2) + ' kN/cm²';
-  document.getElementById('r-fb').textContent  = fmt(fb0, 2) + ' kN/cm²';
-  document.getElementById('rv-b').textContent  = ratioText(rb);
-  document.getElementById('rf-b').style.width  = barWidth(rb);
-  document.getElementById('rf-b').style.background = barColor(rb);
-  const bb = document.getElementById('badge-b');
-  bb.className = 'badge ' + judgeClass(rb);
-  bb.textContent = judgeClass(rb).toUpperCase();
-
-  // 横座屈
-  document.getElementById('r-sb2').textContent  = fmt(sb, 2) + ' kN/cm²';
-  document.getElementById('r-fb2').textContent  = fmt(fb_prime, 2) + ' kN/cm²';
-  document.getElementById('rv-ltb').textContent = ratioText(rltb);
-  document.getElementById('rf-ltb').style.width = barWidth(rltb);
-  document.getElementById('rf-ltb').style.background = barColor(rltb);
-  const bltb = document.getElementById('badge-ltb');
-  bltb.className = 'badge ' + judgeClass(rltb);
-  bltb.textContent = judgeClass(rltb).toUpperCase();
-
-  // せん断
-  document.getElementById('r-tau').textContent = fmt(tau, 2) + ' kN/cm²';
-  document.getElementById('r-fs').textContent  = fmt(fs, 2) + ' kN/cm²';
-  document.getElementById('rv-s').textContent  = ratioText(rs);
-  document.getElementById('rf-s').style.width  = barWidth(rs);
-  document.getElementById('rf-s').style.background = barColor(rs);
-  const bs = document.getElementById('badge-s');
-  bs.className = 'badge ' + judgeClass(rs);
-  bs.textContent = judgeClass(rs).toUpperCase();
-
-  // たわみ
-  document.getElementById('r-delta').textContent  = fmt(delta, 2) + ' cm';
-  document.getElementById('r-deltaa').textContent = fmt(delta_a, 2) + ' cm (L/800)';
-  document.getElementById('rv-d').textContent     = ratioText(rd);
-  document.getElementById('rf-d').style.width     = barWidth(rd);
-  document.getElementById('rf-d').style.background = barColor(rd);
-  const bd = document.getElementById('badge-d');
-  bd.className = 'badge ' + judgeClass(rd);
-  bd.textContent = judgeClass(rd).toUpperCase();
-
-  // 総合判定
-  const allR = [rb, rltb, rs, rd];
-  const allOk = allR.every(r => isFinite(r) && r <= 1.0);
-  const anyNg = allR.some(r => !isFinite(r) || r > 1.0);
-  const sb2 = document.getElementById('summary-box');
-  if (allOk) {
-    sb2.className = 'summary-box ok';
-    sb2.textContent = '✅ 全項目 OK — 部材は十分な強度を有します';
-  } else if (anyNg) {
-    const maxR = Math.max(...allR.filter(isFinite));
-    sb2.className = 'summary-box ng';
-    sb2.textContent = '❌ NG — 最大比率 ' + (maxR * 100).toFixed(1) + '%（大きい部材を選択してください）';
-  }
-
-  // 中間値
-  const items = [
-    ['設計荷重 P₁', fmt(P1,2) + ' kN'],
-    ['曲げモーメント M', fmt(M,2) + ' kN·m'],
-    ['せん断力 Q', fmt(Q,2) + ' kN'],
-    ['腹板断面積 Aw', fmt(Aw,2) + ' cm²'],
-    ['λb（座屈スレンダー比）', fmt(lb,1)],
-    ['ν（低減係数）', fmt(nu,3)],
-    ['fb′（横座屈許容）', fmt(fb_prime,2) + ' kN/cm²'],
-    ['fs（許容せん断）', fmt(fs,2) + ' kN/cm²'],
-  ];
-  const grid = document.getElementById('inter-grid');
-  grid.innerHTML = items.map(([k,v]) =>
-    `<div class="inter-item"><div class="k">${k}</div><div class="v">${v}</div></div>`
-  ).join('');
-
-  // 注記
-  const note = document.getElementById('calc-note');
-  let noteText = '※ SS400, F=235N/mm², E=21,000kN/cm²。';
-  if (type === 'I形鋼') noteText += ' I形鋼はib≈iy（弱軸）で近似。';
-  if (lb > 130) noteText += ` λb=${fmt(lb,0)}>130のため放物線式適用。`;
-  else if (lb > 60) noteText += ` λb=${fmt(lb,0)}∈(60,130)のため線形低減。`;
-  else noteText += ` λb=${fmt(lb,0)}≤60のためν=1.0（座屈無視）。`;
-  note.textContent = noteText;
 }
 
-// ===== イベント =====
-['W','Hw','phi','L','fb0','Lb','member'].forEach(id => {
-  document.getElementById(id).addEventListener('input', calc);
-  document.getElementById(id).addEventListener('change', calc);
-});
-// Lb を L と連動（初期値）
-document.getElementById('L').addEventListener('input', function() {
-  document.getElementById('Lb').value = this.value;
-  calc();
+function updateSimple(shared) {
+  const L  = parseFloat(document.getElementById('L').value)  || 5;
+  const Lb = parseFloat(document.getElementById('Lb').value) || L;
+  const { P1, fb0, m } = shared;
+  const r = calcSimple(m, P1, fb0, L, Lb);
+
+  document.getElementById('simple-result').style.display = 'block';
+
+  function setRow(sfx, calc, allow, ratio) {
+    document.getElementById('s-' + sfx).textContent = calc;
+    const el = document.getElementById('s-r' + sfx) || null;
+    document.getElementById('s-rv-' + sfx.replace('sb','b').replace('sb2','ltb').replace('tau','s').replace('delta','d')).textContent = fmtR(ratio);
+    const fill = document.getElementById('s-rf-' + sfx.replace('sb','b').replace('sb2','ltb').replace('tau','s').replace('delta','d'));
+    fill.style.width = Math.min(ratio*100,100)+'%';
+    fill.style.background = barColor(ratio);
+    const badge = document.getElementById('s-badge-' + sfx.replace('sb','b').replace('sb2','ltb').replace('tau','s').replace('delta','d'));
+    badge.className = 'badge '+judgeClass(ratio);
+    badge.textContent = judgeClass(ratio).toUpperCase();
+    document.getElementById('s-' + sfx.replace('sb','fb').replace('sb2','fb2').replace('tau','fs').replace('delta','deltaa')) && (document.getElementById('s-' + sfx.replace('sb','fb').replace('sb2','fb2').replace('tau','fs').replace('delta','deltaa')).textContent = allow);
+  }
+  // 曲げ
+  document.getElementById('s-sb').textContent   = r.sb.toFixed(2)+' kN/cm²';
+  document.getElementById('s-fb').textContent   = r.fb0.toFixed(2)+' kN/cm²';
+  document.getElementById('s-rv-b').textContent = fmtR(r.rb);
+  document.getElementById('s-rf-b').style.cssText = `width:${Math.min(r.rb*100,100)}%;background:${barColor(r.rb)}`;
+  setB('s-badge-b', r.rb);
+  // 横座屈
+  document.getElementById('s-sb2').textContent   = r.sb.toFixed(2)+' kN/cm²';
+  document.getElementById('s-fb2').textContent   = r.fbp.toFixed(2)+' kN/cm²';
+  document.getElementById('s-rv-ltb').textContent = fmtR(r.rltb);
+  document.getElementById('s-rf-ltb').style.cssText = `width:${Math.min(r.rltb*100,100)}%;background:${barColor(r.rltb)}`;
+  setB('s-badge-ltb', r.rltb);
+  // せん断
+  document.getElementById('s-tau').textContent  = r.tau.toFixed(2)+' kN/cm²';
+  document.getElementById('s-fs').textContent   = r.fs.toFixed(2)+' kN/cm²';
+  document.getElementById('s-rv-s').textContent = fmtR(r.rs);
+  document.getElementById('s-rf-s').style.cssText = `width:${Math.min(r.rs*100,100)}%;background:${barColor(r.rs)}`;
+  setB('s-badge-s', r.rs);
+  // たわみ
+  document.getElementById('s-delta').textContent  = r.delta.toFixed(2)+' cm';
+  document.getElementById('s-deltaa').textContent = r.delta_a.toFixed(2)+' cm (L/800)';
+  document.getElementById('s-rv-d').textContent   = fmtR(r.rd);
+  document.getElementById('s-rf-d').style.cssText = `width:${Math.min(r.rd*100,100)}%;background:${barColor(r.rd)}`;
+  setB('s-badge-d', r.rd);
+
+  const allOk = [r.rb,r.rltb,r.rs,r.rd].every(v=>isFinite(v)&&v<=1);
+  const sb = document.getElementById('simple-summary');
+  sb.className = 'summary-box '+(allOk?'ok':'ng');
+  sb.textContent = allOk ? '✅ 全項目 OK' :
+    '❌ NG — 最大比率 '+(Math.max(r.rb,r.rltb,r.rs,r.rd)*100).toFixed(1)+'%';
+
+  // 中間値
+  document.getElementById('s-inter').innerHTML = [
+    ['P₁',r.P1.toFixed(2)+' kN'],
+    ['M',r.M.toFixed(2)+' kN·m'],
+    ['Aw',r.Aw.toFixed(2)+' cm²'],
+    ['λb',r.lb.toFixed(1)],
+    ['ν',r.nu.toFixed(3)],
+    ['fb′',r.fbp.toFixed(2)+' kN/cm²'],
+  ].map(([k,v])=>`<div class="inter-item"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+
+  const type = m[13];
+  document.getElementById('s-note').textContent =
+    '※ SS400, E=21,000kN/cm²。'+(type==='I形鋼'?' I形鋼はib≈iy近似。':'');
+}
+
+function setB(id, r) {
+  const el = document.getElementById(id);
+  el.className = 'badge '+judgeClass(r);
+  el.textContent = judgeClass(r).toUpperCase();
+}
+
+let cantState = null;
+
+function updateCant(shared) {
+  const deflN = parseFloat(document.getElementById('deflN').value) || 300;
+  const { P1, fb0, m } = shared;
+  const res = maxSpan(m, P1, fb0, deflN);
+  cantState = { m, P1, fb0, deflN, res };
+
+  document.getElementById('cant-result').style.display = 'block';
+
+  const Lg = res.L_gov;
+  document.getElementById('c-maxspan').innerHTML =
+    (Lg > 99 ? '∞' : Lg.toFixed(2)) + '<span class="ms-unit"> m</span>';
+
+  const names = ['曲げ','横座屈','せん断','たわみ'];
+  const Ls    = [res.L_b, res.L_ltb, res.shear_ok ? Infinity : 0, res.L_d];
+  const ids   = ['b','ltb','s','d'];
+
+  let govName = '—';
+  ids.forEach((id, i) => {
+    document.getElementById('c-lim-'+id).textContent = Ls[i]===0 ? 'NG（部材不足）' : fmtL(Ls[i]);
+    const isGov = isFinite(Lg) && Math.abs(Ls[i]-Lg)<0.001;
+    document.getElementById('c-tag-'+id).innerHTML = isGov ? '<span class="tag-gov">支配</span>' : '';
+    if (isGov) govName = names[i];
+  });
+  document.getElementById('c-gov').textContent = '支配：'+govName+' 検討';
+
+  // スライダー設定
+  const slider = document.getElementById('c-slider');
+  const sliderMax = isFinite(Lg) && Lg < 100 ? Math.min(+(Lg*1.6).toFixed(1), 30) : 20;
+  slider.max = sliderMax;
+  document.getElementById('c-slider-max').textContent = sliderMax+'m';
+  const initL = isFinite(Lg)&&Lg<100 ? Math.min(+(Lg*0.8).toFixed(1), sliderMax) : 2;
+  slider.value = initL;
+  updateCantSlider(initL);
+
+  // 中間値
+  document.getElementById('c-inter').innerHTML = [
+    ['P₁', P1.toFixed(2)+' kN'],
+    ['Aw', res.Aw.toFixed(2)+' cm²'],
+    ['fs', res.fs.toFixed(2)+' kN/cm²'],
+    ['τ',  res.tau.toFixed(2)+' kN/cm²'],
+    ['たわみ制限', 'L/'+deflN],
+    ['せん断', res.shear_ok?'OK':'NG'],
+  ].map(([k,v])=>`<div class="inter-item"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+
+  document.getElementById('c-note').textContent =
+    '※ 先端集中荷重・単純片持ち。横座屈有効長=2L（上フランジ自由）。'+
+    (m[13]==='I形鋼'?' I形鋼はib≈iy近似。':'');
+}
+
+function updateCantSlider(L) {
+  if (!cantState) return;
+  L = parseFloat(L);
+  document.getElementById('c-slider-L').textContent = L.toFixed(1);
+  const { m, P1, fb0, deflN } = cantState;
+  const ck = calcCant(m, P1, fb0, deflN, L);
+  const checks = [
+    {name:'① 曲げ',   r: ck.rb},
+    {name:'② 横座屈', r: ck.rltb},
+    {name:'③ せん断', r: ck.rs},
+    {name:'④ たわみ', r: ck.rd},
+  ];
+  document.getElementById('c-ratios').innerHTML = checks.map(c =>
+    `<div class="sratio-row">
+      <div class="sratio-name">${c.name}</div>
+      <div class="sratio-bar-wrap"><div class="sratio-fill" style="width:${Math.min(c.r*100,100)}%;background:${barColor(c.r)}"></div></div>
+      <div class="sratio-num">${fmtR(c.r)}</div>
+      <div class="sratio-badge ${judgeClass(c.r)}">${judgeClass(c.r).toUpperCase()}</div>
+    </div>`
+  ).join('');
+}
+
+// ===== メイン更新 =====
+function update() {
+  const shared = getShared();
+  if (!shared) {
+    document.getElementById('member-props').style.display = 'none';
+    document.getElementById('simple-result').style.display = 'none';
+    document.getElementById('cant-result').style.display   = 'none';
+    cantState = null;
+    return;
+  }
+  updateMemberProps(shared.m);
+  updateSimple(shared);
+  updateCant(shared);
+}
+
+// ===== タブ切り替え =====
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    this.classList.add('active');
+    document.getElementById('tab-'+this.dataset.tab).classList.add('active');
+  });
 });
 
-// ===== クリアボタン =====
+// ===== イベント =====
+['W','Hw','phi','fb0','member','L','Lb','deflN'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) {
+    el.addEventListener('input',  update);
+    el.addEventListener('change', update);
+  }
+});
+document.getElementById('L').addEventListener('input', function() {
+  document.getElementById('Lb').value = this.value;
+});
+document.getElementById('c-slider').addEventListener('input', function() {
+  updateCantSlider(this.value);
+});
 document.getElementById('clear-btn').addEventListener('click', function() {
-  document.getElementById('W').value   = '';
-  document.getElementById('Hw').value  = '';
-  document.getElementById('L').value   = '';
-  document.getElementById('Lb').value  = '';
-  document.getElementById('phi').value = 1.2;
-  document.getElementById('fb0').value = 15.6;
+  document.getElementById('W').value  = '';
+  document.getElementById('Hw').value = '';
+  document.getElementById('phi').value  = 1.2;
+  document.getElementById('fb0').value  = 15.6;
   document.getElementById('member').selectedIndex = 0;
-  document.getElementById('member-props').style.display = 'none';
-  document.getElementById('result-card').style.display  = 'none';
+  cantState = null;
+  update();
   document.getElementById('W').focus();
 });
 
-calc();
+update();
 </script>
 </body>
 </html>
