@@ -176,7 +176,7 @@
 <div class="page-wrap">
 <header>
   🏗 ホイストレール検討
-  <small>許容応力度設計（AIJ） — SS400 / F=235N/mm²</small>
+  <small>許容応力度設計（AIJ） — SS400 / F=235N/mm² — 下フランジ荷重・上フランジ固定専用</small>
 </header>
 
 <div class="container">
@@ -228,16 +228,11 @@
 <!-- ===== TAB: 2点支持 ===== -->
 <div id="tab-simple" class="tab-content active">
   <div class="card">
-    <h2>📐 2点支持 — スパン・座屈長</h2>
+    <h2>📐 2点支持 — スパン入力</h2>
     <div class="form-grid">
-      <div class="form-group">
+      <div class="form-group full">
         <label>スパン L (m)</label>
         <input type="number" id="L" value="5.0" min="0.5" max="30" step="0.1">
-      </div>
-      <div class="form-group">
-        <label>座屈支点間距離 Lb (m)</label>
-        <input type="number" id="Lb" value="5.0" min="0" step="0.1">
-        <div class="form-sub">※ 上フランジ拘束点間距離</div>
       </div>
     </div>
   </div>
@@ -256,19 +251,13 @@
           <td><span class="badge na" id="s-badge-b">—</span></td>
         </tr>
         <tr>
-          <td>② 横座屈</td>
-          <td id="s-sb2">—</td><td id="s-fb2">—</td>
-          <td><div class="ratio-bar-wrap"><span class="ratio-val" id="s-rv-ltb">—</span><div class="ratio-bar"><div class="ratio-fill" id="s-rf-ltb" style="width:0%"></div></div></div></td>
-          <td><span class="badge na" id="s-badge-ltb">—</span></td>
-        </tr>
-        <tr>
-          <td>③ せん断</td>
+          <td>② せん断</td>
           <td id="s-tau">—</td><td id="s-fs">—</td>
           <td><div class="ratio-bar-wrap"><span class="ratio-val" id="s-rv-s">—</span><div class="ratio-bar"><div class="ratio-fill" id="s-rf-s" style="width:0%"></div></div></div></td>
           <td><span class="badge na" id="s-badge-s">—</span></td>
         </tr>
         <tr>
-          <td>④ たわみ</td>
+          <td>③ たわみ</td>
           <td id="s-delta">—</td><td id="s-deltaa">—</td>
           <td><div class="ratio-bar-wrap"><span class="ratio-val" id="s-rv-d">—</span><div class="ratio-bar"><div class="ratio-fill" id="s-rf-d" style="width:0%"></div></div></div></td>
           <td><span class="badge na" id="s-badge-d">—</span></td>
@@ -307,9 +296,8 @@
       <thead><tr><th>検討項目</th><th>上限スパン</th><th></th></tr></thead>
       <tbody>
         <tr><td>① 曲げ応力</td><td class="L-val" id="c-lim-b">—</td><td id="c-tag-b"></td></tr>
-        <tr><td>② 横座屈（Lb=2L）</td><td class="L-val" id="c-lim-ltb">—</td><td id="c-tag-ltb"></td></tr>
-        <tr><td>③ せん断</td><td class="L-val" id="c-lim-s">—</td><td id="c-tag-s"></td></tr>
-        <tr><td>④ たわみ（L/n）</td><td class="L-val" id="c-lim-d">—</td><td id="c-tag-d"></td></tr>
+        <tr><td>② せん断</td><td class="L-val" id="c-lim-s">—</td><td id="c-tag-s"></td></tr>
+        <tr><td>③ たわみ（L/n）</td><td class="L-val" id="c-lim-d">—</td><td id="c-tag-d"></td></tr>
       </tbody>
     </table>
 
@@ -351,13 +339,13 @@
         M = P₁×L [kN·m]（固定端）<br>
         Q = P₁ [kN]<br>
         σb = M×100/Zx<br>
-        δ = P₁L³/(3EI) ≤ L/n<br>
-        Lb_eff = 2L（上フランジ自由）
+        δ = P₁L³/(3EI) ≤ L/n
       </p>
     </div>
   </div>
   <p style="font-size:11px;color:var(--sub);margin-top:8px">
-    共通：P₁=(W+Hw)×φ×9.81/1000 [kN]、fb′=ν×fb₀（AIJ横座屈低減）、fs=fb₀/√3、E=21,000 kN/cm²
+    共通：P₁=(W+Hw)×φ×9.81/1000 [kN]、fs=fb₀/√3、E=21,000 kN/cm²
+    ※ 上フランジ固定・下フランジ荷重のため横座屈は省略
   </p>
 </div>
 
@@ -443,11 +431,7 @@ MEMBERS.forEach(m => { MEMBER_MAP[m[0]] = m; });
 
 // ===== ヘルパー =====
 const E = 21000;
-function calcNu(lb_val) {
-  if (lb_val <= 60)  return 1.0;
-  if (lb_val <= 130) return 1.0 - 0.4 * ((lb_val - 60) / 70);
-  return 89000 / (lb_val * lb_val);
-}
+
 function barColor(r) {
   if (r <= 0.7) return '#43a047';
   if (r <= 1.0) return '#ffa726';
@@ -458,44 +442,38 @@ function fmtL(L) { return (!isFinite(L)||L>99) ? '制限なし' : L.toFixed(2)+'
 function judgeClass(r) { return (!isFinite(r)||r>1) ? 'ng' : 'ok'; }
 
 // ===== 2点支持計算 =====
-function calcSimple(m, P1, fb0, L, Lb) {
-  const [,H,,tw,tf,,Ix,Zx,ib] = m;
+function calcSimple(m, P1, fb0, L) {
+  const [,H,,tw,tf,,Ix,Zx] = m;
   const M   = P1 * L / 4;
   const sb  = M * 100 / Zx;
-  const lb  = Lb * 100 / ib;
-  const nu  = calcNu(lb);
-  const fbp = nu * fb0;
   const Aw  = (H - 2*tf) * tw / 100;
   const fs  = fb0 / Math.sqrt(3);
   const tau = (P1/2) / Aw;
   const Lcm = L * 100;
-  const delta  = P1 * Math.pow(Lcm,3) / (48 * E * Ix);
+  const delta   = P1 * Math.pow(Lcm,3) / (48 * E * Ix);
   const delta_a = Lcm / 800;
   return {
-    rb: sb/fb0, rltb: sb/fbp, rs: tau/fs, rd: delta/delta_a,
-    sb, fb0, fbp, tau, fs, delta, delta_a, nu, lb, Aw, M, P1,
+    rb: sb/fb0, rs: tau/fs, rd: delta/delta_a,
+    sb, fb0, tau, fs, delta, delta_a, Aw, M, P1,
   };
 }
 
 // ===== 片持ち：任意Lで比率 =====
 function calcCant(m, P1, fb0, deflN, L) {
-  const [,H,,tw,tf,,Ix,Zx,ib] = m;
+  const [,H,,tw,tf,,Ix,Zx] = m;
   const sb   = P1 * L * 100 / Zx;
-  const lb   = 2 * L * 100 / ib;
-  const nu   = calcNu(lb);
-  const fbp  = nu * fb0;
   const Aw   = (H - 2*tf) * tw / 100;
   const fs   = fb0 / Math.sqrt(3);
   const tau  = P1 / Aw;
   const Lcm  = L * 100;
-  const delta  = P1 * Math.pow(Lcm,3) / (3 * E * Ix);
+  const delta   = P1 * Math.pow(Lcm,3) / (3 * E * Ix);
   const delta_a = Lcm / deflN;
-  return { rb: sb/fb0, rltb: sb/fbp, rs: tau/fs, rd: delta/delta_a, tau, fs, Aw, nu, lb, fbp };
+  return { rb: sb/fb0, rs: tau/fs, rd: delta/delta_a, tau, fs, Aw };
 }
 
 // ===== 片持ち：最大スパン =====
 function maxSpan(m, P1, fb0, deflN) {
-  const [,H,,tw,tf,,Ix,Zx,ib] = m;
+  const [,H,,tw,tf,,Ix,Zx] = m;
   const Aw  = (H - 2*tf) * tw / 100;
   const fs  = fb0 / Math.sqrt(3);
   const tau = P1 / Aw;
@@ -503,23 +481,14 @@ function maxSpan(m, P1, fb0, deflN) {
   // ① 曲げ（fb0ベース）
   const L_b = fb0 * Zx / (P1 * 100);
 
-  // ② 横座屈（二分法）
-  let lo=0.01, hi=200;
-  for (let i=0;i<80;i++) {
-    const mid=(lo+hi)/2;
-    const lb=2*mid*100/ib, nu=calcNu(lb), fbp=nu*fb0;
-    (P1*mid*100/Zx - fbp <= 0) ? lo=mid : hi=mid;
-  }
-  const L_ltb = lo;
-
-  // ③ せん断（L非依存）
+  // ② せん断（L非依存）
   const shear_ok = tau <= fs;
 
-  // ④ たわみ
+  // ③ たわみ
   const L_d = Math.sqrt(3 * E * Ix / (P1 * deflN)) / 100;
 
-  const L_gov = Math.min(L_b, L_ltb, shear_ok ? Infinity : 0, L_d);
-  return { L_b, L_ltb, shear_ok, L_d, L_gov, tau, fs, Aw };
+  const L_gov = Math.min(L_b, shear_ok ? Infinity : 0, L_d);
+  return { L_b, shear_ok, L_d, L_gov, tau, fs, Aw };
 }
 
 // ===== UI更新 =====
@@ -548,37 +517,18 @@ function updateMemberProps(m) {
 }
 
 function updateSimple(shared) {
-  const L  = parseFloat(document.getElementById('L').value)  || 5;
-  const Lb = parseFloat(document.getElementById('Lb').value) || L;
+  const L  = parseFloat(document.getElementById('L').value) || 5;
   const { P1, fb0, m } = shared;
-  const r = calcSimple(m, P1, fb0, L, Lb);
+  const r = calcSimple(m, P1, fb0, L);
 
   document.getElementById('simple-result').style.display = 'block';
 
-  function setRow(sfx, calc, allow, ratio) {
-    document.getElementById('s-' + sfx).textContent = calc;
-    const el = document.getElementById('s-r' + sfx) || null;
-    document.getElementById('s-rv-' + sfx.replace('sb','b').replace('sb2','ltb').replace('tau','s').replace('delta','d')).textContent = fmtR(ratio);
-    const fill = document.getElementById('s-rf-' + sfx.replace('sb','b').replace('sb2','ltb').replace('tau','s').replace('delta','d'));
-    fill.style.width = Math.min(ratio*100,100)+'%';
-    fill.style.background = barColor(ratio);
-    const badge = document.getElementById('s-badge-' + sfx.replace('sb','b').replace('sb2','ltb').replace('tau','s').replace('delta','d'));
-    badge.className = 'badge '+judgeClass(ratio);
-    badge.textContent = judgeClass(ratio).toUpperCase();
-    document.getElementById('s-' + sfx.replace('sb','fb').replace('sb2','fb2').replace('tau','fs').replace('delta','deltaa')) && (document.getElementById('s-' + sfx.replace('sb','fb').replace('sb2','fb2').replace('tau','fs').replace('delta','deltaa')).textContent = allow);
-  }
   // 曲げ
   document.getElementById('s-sb').textContent   = r.sb.toFixed(2)+' kN/cm²';
   document.getElementById('s-fb').textContent   = r.fb0.toFixed(2)+' kN/cm²';
   document.getElementById('s-rv-b').textContent = fmtR(r.rb);
   document.getElementById('s-rf-b').style.cssText = `width:${Math.min(r.rb*100,100)}%;background:${barColor(r.rb)}`;
   setB('s-badge-b', r.rb);
-  // 横座屈
-  document.getElementById('s-sb2').textContent   = r.sb.toFixed(2)+' kN/cm²';
-  document.getElementById('s-fb2').textContent   = r.fbp.toFixed(2)+' kN/cm²';
-  document.getElementById('s-rv-ltb').textContent = fmtR(r.rltb);
-  document.getElementById('s-rf-ltb').style.cssText = `width:${Math.min(r.rltb*100,100)}%;background:${barColor(r.rltb)}`;
-  setB('s-badge-ltb', r.rltb);
   // せん断
   document.getElementById('s-tau').textContent  = r.tau.toFixed(2)+' kN/cm²';
   document.getElementById('s-fs').textContent   = r.fs.toFixed(2)+' kN/cm²';
@@ -592,25 +542,22 @@ function updateSimple(shared) {
   document.getElementById('s-rf-d').style.cssText = `width:${Math.min(r.rd*100,100)}%;background:${barColor(r.rd)}`;
   setB('s-badge-d', r.rd);
 
-  const allOk = [r.rb,r.rltb,r.rs,r.rd].every(v=>isFinite(v)&&v<=1);
+  const checkR = [r.rb, r.rs, r.rd];
+  const allOk  = checkR.every(v=>isFinite(v)&&v<=1);
   const sb = document.getElementById('simple-summary');
   sb.className = 'summary-box '+(allOk?'ok':'ng');
   sb.textContent = allOk ? '✅ 全項目 OK' :
-    '❌ NG — 最大比率 '+(Math.max(r.rb,r.rltb,r.rs,r.rd)*100).toFixed(1)+'%';
+    '❌ NG — 最大比率 '+(Math.max(...checkR)*100).toFixed(1)+'%';
 
   // 中間値
   document.getElementById('s-inter').innerHTML = [
-    ['P₁',r.P1.toFixed(2)+' kN'],
-    ['M',r.M.toFixed(2)+' kN·m'],
-    ['Aw',r.Aw.toFixed(2)+' cm²'],
-    ['λb',r.lb.toFixed(1)],
-    ['ν',r.nu.toFixed(3)],
-    ['fb′',r.fbp.toFixed(2)+' kN/cm²'],
+    ['P₁', r.P1.toFixed(2)+' kN'],
+    ['M',  r.M.toFixed(2)+' kN·m'],
+    ['Aw', r.Aw.toFixed(2)+' cm²'],
   ].map(([k,v])=>`<div class="inter-item"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
 
-  const type = m[13];
   document.getElementById('s-note').textContent =
-    '※ SS400, E=21,000kN/cm²。'+(type==='I形鋼'?' I形鋼はib≈iy近似。':'');
+    '※ SS400, E=21,000kN/cm²。上フランジ固定・下フランジ荷重のため横座屈省略。';
 }
 
 function setB(id, r) {
@@ -633,9 +580,9 @@ function updateCant(shared) {
   document.getElementById('c-maxspan').innerHTML =
     (Lg > 99 ? '∞' : Lg.toFixed(2)) + '<span class="ms-unit"> m</span>';
 
-  const names = ['曲げ','横座屈','せん断','たわみ'];
-  const Ls    = [res.L_b, res.L_ltb, res.shear_ok ? Infinity : 0, res.L_d];
-  const ids   = ['b','ltb','s','d'];
+  const names = ['曲げ','せん断','たわみ'];
+  const Ls    = [res.L_b, res.shear_ok ? Infinity : 0, res.L_d];
+  const ids   = ['b','s','d'];
 
   let govName = '—';
   ids.forEach((id, i) => {
@@ -666,7 +613,7 @@ function updateCant(shared) {
   ].map(([k,v])=>`<div class="inter-item"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
 
   document.getElementById('c-note').textContent =
-    '※ 先端集中荷重・単純片持ち。横座屈有効長=2L（上フランジ自由）。'+
+    '※ 先端集中荷重・単純片持ち。上フランジ固定・下フランジ荷重のため横座屈省略。'+
     (m[13]==='I形鋼'?' I形鋼はib≈iy近似。':'');
 }
 
@@ -678,9 +625,8 @@ function updateCantSlider(L) {
   const ck = calcCant(m, P1, fb0, deflN, L);
   const checks = [
     {name:'① 曲げ',   r: ck.rb},
-    {name:'② 横座屈', r: ck.rltb},
-    {name:'③ せん断', r: ck.rs},
-    {name:'④ たわみ', r: ck.rd},
+    {name:'② せん断', r: ck.rs},
+    {name:'③ たわみ', r: ck.rd},
   ];
   document.getElementById('c-ratios').innerHTML = checks.map(c =>
     `<div class="sratio-row">
@@ -718,15 +664,12 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // ===== イベント =====
-['W','Hw','phi','fb0','member','L','Lb','deflN'].forEach(id => {
+['W','Hw','phi','fb0','member','L','deflN'].forEach(id => {
   const el = document.getElementById(id);
   if (el) {
     el.addEventListener('input',  update);
     el.addEventListener('change', update);
   }
-});
-document.getElementById('L').addEventListener('input', function() {
-  document.getElementById('Lb').value = this.value;
 });
 document.getElementById('c-slider').addEventListener('input', function() {
   updateCantSlider(this.value);
