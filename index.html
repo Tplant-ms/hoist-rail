@@ -170,6 +170,13 @@
   .note { font-size: 11px; color: var(--sub); margin-top: 8px; line-height: 1.6; }
   .divider { border: none; border-top: 1px solid #e0e0e0; margin: 10px 0; }
   .form-sub { font-size: 11px; color: var(--sub); margin-top: 2px; }
+  .defl-preset {
+    padding: 4px 10px; border: 1px solid #bbb; border-radius: 14px;
+    background: #f5f5f5; font-size: 12px; font-weight: bold; color: #555;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .defl-preset:hover  { background: #e8f0fe; border-color: var(--primary); color: var(--primary); }
+  .defl-preset.active { background: var(--primary); border-color: var(--primary); color: #fff; }
 </style>
 </head>
 <body>
@@ -276,10 +283,14 @@
   <div class="card">
     <h2>📐 片持ち梁 — たわみ制限</h2>
     <div class="form-grid">
-      <div class="form-group">
+      <div class="form-group full">
         <label>たわみ制限 1/n（nを入力）</label>
         <input type="number" id="deflN" value="300" min="100" step="50">
-        <div class="form-sub">片持ち梁は L/300 程度が一般的</div>
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+          <button class="defl-preset" data-n="300" title="一般的">L/300<span style="font-size:10px;margin-left:4px;opacity:.7">一般的</span></button>
+          <button class="defl-preset" data-n="400" title="やや厳しく">L/400<span style="font-size:10px;margin-left:4px;opacity:.7">やや厳しく</span></button>
+          <button class="defl-preset" data-n="500" title="精密・振れを嫌う場合">L/500<span style="font-size:10px;margin-left:4px;opacity:.7">精密作業</span></button>
+        </div>
       </div>
     </div>
   </div>
@@ -662,6 +673,30 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById('tab-'+this.dataset.tab).classList.add('active');
   });
 });
+
+// ===== テキストボックス：クリックで全選択 =====
+document.querySelectorAll('input[type=number]').forEach(el => {
+  el.addEventListener('focus', function() { this.select(); });
+});
+
+// ===== たわみプリセットボタン =====
+function updateDeflPreset(n) {
+  document.querySelectorAll('.defl-preset').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.n === String(n));
+  });
+}
+document.querySelectorAll('.defl-preset').forEach(btn => {
+  btn.addEventListener('click', function() {
+    const n = this.dataset.n;
+    document.getElementById('deflN').value = n;
+    updateDeflPreset(n);
+    update();
+  });
+});
+document.getElementById('deflN').addEventListener('input', function() {
+  updateDeflPreset(this.value);
+});
+updateDeflPreset(300);
 
 // ===== イベント =====
 ['W','Hw','phi','fb0','member','L','deflN'].forEach(id => {
