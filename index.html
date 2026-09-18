@@ -317,7 +317,7 @@
       <h3>🔍 任意スパンで比率確認</h3>
       <div class="slider-row">
         <span style="font-size:12px;color:var(--sub)">0.5m</span>
-        <input type="range" id="c-slider" min="0.5" max="20" step="0.1" value="2">
+        <input type="range" id="c-slider" min="0.5" max="20" step="0.01" value="2">
         <span style="font-size:12px;color:var(--sub)" id="c-slider-max">20m</span>
         <div class="slider-val"><span id="c-slider-L">2.0</span> m</div>
       </div>
@@ -449,7 +449,9 @@ function barColor(r) {
   return '#e53935';
 }
 function fmtR(r) { return isFinite(r) ? (r*100).toFixed(1)+'%' : '—'; }
-function fmtL(L) { return (!isFinite(L)||L>99) ? '制限なし' : L.toFixed(2)+' m'; }
+// 切り捨て表示（四捨五入すると上限超えを安全に見せてしまうため）
+function floorTo2(L) { return Math.floor(L * 100) / 100; }
+function fmtL(L) { return (!isFinite(L)||L>99) ? '制限なし' : floorTo2(L).toFixed(2)+' m'; }
 function judgeClass(r) { return (!isFinite(r)||r>1) ? 'ng' : 'ok'; }
 
 // ===== 2点支持計算 =====
@@ -589,7 +591,7 @@ function updateCant(shared) {
 
   const Lg = res.L_gov;
   document.getElementById('c-maxspan').innerHTML =
-    (Lg > 99 ? '∞' : Lg.toFixed(2)) + '<span class="ms-unit"> m</span>';
+    (Lg > 99 ? '∞' : floorTo2(Lg).toFixed(2)) + '<span class="ms-unit"> m</span>';
 
   const names = ['曲げ','せん断','たわみ'];
   const Ls    = [res.L_b, res.shear_ok ? Infinity : 0, res.L_d];
@@ -609,7 +611,7 @@ function updateCant(shared) {
   const sliderMax = isFinite(Lg) && Lg < 100 ? Math.min(+(Lg*1.6).toFixed(1), 30) : 20;
   slider.max = sliderMax;
   document.getElementById('c-slider-max').textContent = sliderMax+'m';
-  const initL = isFinite(Lg)&&Lg<100 ? Math.min(+(Lg*0.8).toFixed(1), sliderMax) : 2;
+  const initL = isFinite(Lg)&&Lg<100 ? Math.min(+(Lg*0.8).toFixed(2), sliderMax) : 2;
   slider.value = initL;
   updateCantSlider(initL);
 
@@ -631,7 +633,7 @@ function updateCant(shared) {
 function updateCantSlider(L) {
   if (!cantState) return;
   L = parseFloat(L);
-  document.getElementById('c-slider-L').textContent = L.toFixed(1);
+  document.getElementById('c-slider-L').textContent = L.toFixed(2);
   const { m, P1, fb0, deflN } = cantState;
   const ck = calcCant(m, P1, fb0, deflN, L);
   const checks = [
