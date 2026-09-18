@@ -192,6 +192,47 @@
     font-size: 10px; color: var(--sub); margin-top: 1px;
     user-select: none;
   }
+
+  /* MANUAL */
+  .manual-toggle {
+    display: flex; align-items: center; gap: 8px;
+    background: none; border: none; cursor: pointer;
+    width: 100%; padding: 0; font-size: 13px;
+    font-weight: bold; color: var(--primary); text-align: left;
+  }
+  .manual-toggle .arrow {
+    font-size: 11px; transition: transform .2s; display: inline-block;
+  }
+  .manual-toggle.open .arrow { transform: rotate(90deg); }
+  .manual-body { display: none; margin-top: 10px; }
+  .manual-body.open { display: block; }
+  .manual-section { margin-bottom: 12px; }
+  .manual-section h3 {
+    font-size: 12px; font-weight: bold; color: var(--primary);
+    margin-bottom: 5px; display: flex; align-items: center; gap: 5px;
+  }
+  .manual-section p, .manual-section li {
+    font-size: 12px; color: var(--sub); line-height: 1.7;
+  }
+  .manual-section ul { padding-left: 16px; }
+  .manual-step {
+    display: flex; gap: 10px; align-items: flex-start;
+    margin-bottom: 6px;
+  }
+  .manual-step .step-num {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    font-size: 11px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .manual-step p { margin: 0; font-size: 12px; color: var(--sub); line-height: 1.6; }
+  .manual-tip {
+    background: #fff8e1; border-left: 3px solid #f9a825;
+    padding: 6px 10px; border-radius: 0 5px 5px 0;
+    font-size: 11px; color: #5d4037; line-height: 1.6;
+    margin-top: 8px;
+  }
+  .manual-divider { border: none; border-top: 1px solid #eee; margin: 10px 0; }
 </style>
 </head>
 <body>
@@ -202,6 +243,82 @@
 </header>
 
 <div class="container">
+
+<!-- ===== 使い方マニュアル ===== -->
+<div class="card">
+  <button class="manual-toggle" id="manual-toggle" onclick="toggleManual()">
+    <span class="arrow">▶</span>📖 使い方ガイド（はじめての方へ）
+  </button>
+  <div class="manual-body" id="manual-body">
+
+    <div class="manual-section">
+      <h3>🔧 このツールでできること</h3>
+      <p>ホイストクレーンのレールに使うH形鋼（またはI形鋼）が、吊り荷重に対して安全かどうかを判定します。<br>
+      <strong>曲げ応力・せん断応力・たわみ</strong>の3項目を許容応力度設計（AIJ基準）で自動計算します。</p>
+    </div>
+
+    <hr class="manual-divider">
+
+    <div class="manual-section">
+      <h3>📋 基本的な使い方（手順）</h3>
+      <div class="manual-step">
+        <div class="step-num">1</div>
+        <p><strong>吊り荷重 W</strong>（クレーンで持ち上げるものの重さ）と<strong>ホイスト自重 Hw</strong>（クレーン本体の重さ）を入力します。<br>
+        スライダーでも入力できます。数値を入れるとスライダーが連動します。</p>
+      </div>
+      <div class="manual-step">
+        <div class="step-num">2</div>
+        <p><strong>衝撃係数 φ</strong> はクレーン走行時の衝撃分の割増係数です。通常は <strong>1.2</strong> のままでOKです。<br>
+        <strong>許容曲げ応力度 fb₀</strong> もSS400なら <strong>15.6 kN/cm²</strong> のままでOKです。</p>
+      </div>
+      <div class="manual-step">
+        <div class="step-num">3</div>
+        <p><strong>部材選択</strong> でレールに使うH形鋼を選びます。グループは「細幅・中幅・広幅・I形鋼」に分かれています。<br>
+        選ぶと断面寸法（H・B・Ix・Zxなど）が自動で表示されます。</p>
+      </div>
+      <div class="manual-step">
+        <div class="step-num">4</div>
+        <p>上部の <strong>「⚖ 2点支持」「↗ 片持ち梁」</strong> タブで梁の形式を選び、スパンを入力または確認します。</p>
+      </div>
+    </div>
+
+    <hr class="manual-divider">
+
+    <div class="manual-section">
+      <h3>⚖ 2点支持タブ（単純梁）</h3>
+      <p>両端で支えるレールの検討です。<strong>スパン L（m）</strong> を入力すると、曲げ・せん断・たわみの3項目を即座に判定します。</p>
+      <ul>
+        <li>結果は <span style="color:#2e7d32;font-weight:bold">OK（緑）</span> / <span style="color:#c62828;font-weight:bold">NG（赤）</span> のバッジで表示されます。</li>
+        <li>棒グラフは「許容値に対して何%使っているか」を示します。100%を超えるとNGです。</li>
+        <li>たわみ許容値は <strong>L/800</strong> を使用しています。</li>
+      </ul>
+    </div>
+
+    <hr class="manual-divider">
+
+    <div class="manual-section">
+      <h3>↗ 片持ち梁タブ（最大スパン算定）</h3>
+      <p>一端を壁や柱に固定するタイプのレールです。このタブでは「<strong>この部材で何mまで張り出せるか</strong>」を自動計算します。</p>
+      <ul>
+        <li><strong>たわみ制限 1/n</strong>：L/300（一般）・L/400（やや厳しい）・L/500（精密作業）から選べます。</li>
+        <li>大きく表示されるのが<strong>最大スパン</strong>（曲げ・せん断・たわみのうち最も厳しい条件で決まる値）です。</li>
+        <li>「支配」タグが付いた項目が決定要因です。</li>
+      </ul>
+      <p style="margin-top:6px"><strong>🔍 任意スパンで比率確認</strong>のスライダーを使うと、特定のスパンでの各比率をリアルタイムで確認できます。δ（実際のたわみ量）とδa（許容たわみ量）もmm単位で表示されます。</p>
+    </div>
+
+    <hr class="manual-divider">
+
+    <div class="manual-section">
+      <h3>🎚 スライダーの使い方（NG→OKの境界探し）</h3>
+      <p>現在の条件でNGになっている場合、スライダーで<strong>吊り荷重・ホイスト自重・スパン</strong>を動かすと、どこまで下げればOKになるかをすぐに確認できます。</p>
+      <div class="manual-tip">
+        💡 例：「スパン6mでNGになった」→ スパンのスライダーを左に動かして、OK/NGの境目のスパンを読み取る
+      </div>
+    </div>
+
+  </div>
+</div>
 
 <!-- ===== 共通入力 ===== -->
 <div class="card">
@@ -383,7 +500,25 @@
 
 </div></div>
 
+<!-- ページ末尾リンク -->
+<div style="text-align:center;padding:24px 16px 40px;">
+  <a href="../"
+     style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;
+            background:#1B3A5C;color:#fff;text-decoration:none;border-radius:6px;
+            font-size:.85rem;font-weight:700;letter-spacing:.04em;">
+    🏠 配管・鋼材計算ツール トップへ
+  </a>
+</div>
+
 <script>
+// ===== 使い方マニュアル =====
+function toggleManual() {
+  const btn  = document.getElementById('manual-toggle');
+  const body = document.getElementById('manual-body');
+  const open = body.classList.toggle('open');
+  btn.classList.toggle('open', open);
+}
+
 // ===== 部材データ =====
 const MEMBERS = [
   ['H-150×75×5×7',150,75,5,7,17.85,666,88.8,1.96,5.6,49.5,13.2,14,'細幅'],
