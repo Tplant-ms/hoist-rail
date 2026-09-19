@@ -804,7 +804,7 @@ function maxSpan(m, P1, fb0, deflN) {
   const tau = P1 / Aw;
   const L_b = fb0 * Zx / (P1 * 100);
   const shear_ok = tau <= fs;
-  const L_d = Math.cbrt(3 * E_kNcm2 * Ix / (P1 * deflN)) / 100;
+  const L_d = Math.sqrt(3 * E_kNcm2 * Ix / (P1 * deflN)) / 100;
   const L_gov = Math.min(L_b, shear_ok ? Infinity : 0, L_d);
   return { L_b, shear_ok, L_d, L_gov, tau, fs, Aw };
 }
