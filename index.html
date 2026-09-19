@@ -301,6 +301,35 @@
       各ホイストの荷重：P = (W/2 + Hw) × φ × g　（吊り荷重を2点で均等分担）<br>
       支点間スパン L・片持ち長さ La・吊り点間距離 d を設定し、ホイスト位置スライダーで最悪ケースを探してください。<br>
       反力がマイナスの支点では<strong>引き抜き力（タイダウン）</strong>が必要です。</p>
+      <div class="manual-tip" style="margin-top:8px;">
+        💡 <strong>引き抜き力が発生しても、実務上ほぼ問題ありません。</strong><br>
+        仮設ホイストレールは通常、以下の方法で上部構造へ固定するため、
+        ボルトは純粋な引張（吊り）方向にのみ力を受けます（せん断力は生じません）。<br>
+        ・<strong>コンクリート天井の場合</strong>：あと施工アンカーにて固定<br>
+        ・<strong>鋼製架台の場合</strong>：SS400ボルト・ナットで穴あけ締め付け固定<br>
+        SS400ボルトの引張許容耐力の目安：
+        <table style="margin:6px 0 2px;border-collapse:collapse;font-size:12px;width:100%;max-width:360px;">
+          <tr style="background:#e3eaf5;font-weight:700;">
+            <td style="padding:4px 8px;border:1px solid #b0bec5;">ボルト径</td>
+            <td style="padding:4px 8px;border:1px solid #b0bec5;">呼び断面積</td>
+            <td style="padding:4px 8px;border:1px solid #b0bec5;">引張許容耐力（1本）</td>
+            <td style="padding:4px 8px;border:1px solid #b0bec5;">4本合計</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 8px;border:1px solid #b0bec5;">M12</td>
+            <td style="padding:4px 8px;border:1px solid #b0bec5;">84.3 mm²</td>
+            <td style="padding:4px 8px;border:1px solid #b0bec5;">約 13 kN</td>
+            <td style="padding:4px 8px;border:1px solid #b0bec5;">約 52 kN</td>
+          </tr>
+          <tr style="background:#f5f5f5;">
+            <td style="padding:4px 8px;border:1px solid #b0bec5;">M16</td>
+            <td style="padding:4px 8px;border:1px solid #b0bec5;">157 mm²</td>
+            <td style="padding:4px 8px;border:1px solid #b0bec5;">約 24 kN</td>
+            <td style="padding:4px 8px;border:1px solid #b0bec5;">約 96 kN</td>
+          </tr>
+        </table>
+        <span style="font-size:11px;color:#555;">※ 引張許容応力度 ft = 15.6 kN/cm²（SS400）として算出。M16×4本の場合、96 kN の固定力に対し引き抜き力が数 kN 程度であれば安全率は20倍以上となり構造上問題ありません。</span>
+      </div>
     </div>
     <hr class="manual-divider">
     <div class="manual-section">
