@@ -971,6 +971,20 @@ function updateSimple(shared) {
   sb2.textContent = allOk ? '✅ 全項目 OK' :
     '❌ NG — 最大比率 '+(Math.max(r.rb,r.rs,r.rd)*100).toFixed(1)+'%';
 
+  // カード枠色
+  const sCard = document.getElementById('simple-result');
+  if (allOk) {
+    sCard.style.border = '1px solid #ddd';
+    sCard.style.backgroundColor = '#ffffff';
+    sCard.querySelector('h2').style.color = 'var(--primary)';
+    sCard.querySelector('h2').textContent = '📊 単純梁 — 検討結果';
+  } else {
+    sCard.style.border = '2px solid #c62828';
+    sCard.style.backgroundColor = '#fff5f5';
+    sCard.querySelector('h2').style.color = '#c62828';
+    sCard.querySelector('h2').textContent = '⚠️ 単純梁 — 検討結果 — NG あり';
+  }
+
   document.getElementById('s-inter').innerHTML = [
     ['P',  r.P1.toFixed(2)+' kN'],
     ['M',  r.M.toFixed(2)+' kN·m'],
@@ -1054,6 +1068,21 @@ function updateCantSlider(L) {
       ${c.sub ? `<div class="sratio-sub">${c.sub}</div>` : ''}
     </div>`
   ).join('');
+
+  // カード枠色（任意スパンのOK/NG）
+  const cantAllOk = checks.every(c => isFinite(c.r) && c.r <= 1);
+  const cCard = document.getElementById('cant-result');
+  if (cantAllOk) {
+    cCard.style.border = '1px solid #ddd';
+    cCard.style.backgroundColor = '#ffffff';
+    cCard.querySelector('h2').style.color = 'var(--primary)';
+    cCard.querySelector('h2').textContent = '📊 片持ち梁 — 最大スパン算定';
+  } else {
+    cCard.style.border = '2px solid #c62828';
+    cCard.style.backgroundColor = '#fff5f5';
+    cCard.querySelector('h2').style.color = '#c62828';
+    cCard.querySelector('h2').textContent = '⚠️ 片持ち梁 — 最大スパン算定 — NG あり';
+  }
 }
 
 /* ==================================================
@@ -1210,6 +1239,20 @@ function updateTwoPoint(shared) {
 
   // BMD 描画
   drawTwoPointDiagram(r);
+
+  // 梁図カードの枠色をNG/OKで切り替え
+  const diagCard = document.getElementById('tp-diagram-card');
+  if (r.allOK) {
+    diagCard.style.border = '1px solid #ddd';
+    diagCard.style.backgroundColor = '#ffffff';
+    diagCard.querySelector('h2').style.color = 'var(--primary)';
+    diagCard.querySelector('h2').textContent = '📊 梁図・曲げモーメント図';
+  } else {
+    diagCard.style.border = '2px solid #c62828';
+    diagCard.style.backgroundColor = '#fff5f5';
+    diagCard.querySelector('h2').style.color = '#c62828';
+    diagCard.querySelector('h2').textContent = '⚠️ 梁図・曲げモーメント図 — NG あり';
+  }
 
   // 反力表示
   const raOK = r.RA >= 0, rbOK = r.RB >= 0;
