@@ -427,7 +427,11 @@
         <span style="font-size:12px;color:var(--sub)" id="s-pos-min-lbl">0m</span>
         <input type="range" id="s-pos-slider" min="0" max="5" step="0.05" value="2.5">
         <span style="font-size:12px;color:var(--sub)" id="s-pos-max-lbl">5m</span>
-        <div class="slider-val"><span id="s-pos-val">2.50</span> m</div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px">
+        <label style="font-size:12px;color:var(--sub)">荷重位置</label>
+        <input type="number" id="s-pos-input" step="0.05" style="width:80px;padding:3px 6px;font-size:13px;font-weight:700;border:1px solid #bbb;border-radius:4px;text-align:right;color:var(--primary)">
+        <span style="font-size:12px;color:var(--sub)">m</span>
       </div>
       <div id="s-pos-zone" style="text-align:center;font-size:11px;color:var(--sub);margin:3px 0 5px"></div>
       <div class="sratios" id="s-pos-ratios"></div>
@@ -551,6 +555,11 @@
       <div class="tp-pos-label">左側ホイスト x₁（支点Aからの距離 m）</div>
       <input type="range" id="tp-x1-slider" min="-1.5" max="2.0" step="0.05" value="0"
              style="width:100%;accent-color:var(--primary);cursor:pointer">
+      <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px">
+        <label style="font-size:12px;color:var(--sub)">x₁</label>
+        <input type="number" id="tp-x1-input" step="0.05" style="width:80px;padding:3px 6px;font-size:13px;font-weight:700;border:1px solid #bbb;border-radius:4px;text-align:right;color:var(--primary)">
+        <span style="font-size:12px;color:var(--sub)">m</span>
+      </div>
       <div class="tp-pos-val" id="tp-x1-desc">x₁ = 0.00 m（支点A上）</div>
       <div class="tp-pos-ends">
         <span id="tp-x1-min-lbl">← 片持ち端 0.00m</span>
@@ -1039,6 +1048,9 @@ function updateSimple(shared) {
     const maxLbl  = document.getElementById('s-pos-max-lbl');
     if (minLbl) minLbl.textContent = Lc > 0 ? `${(-Lc).toFixed(2)}m` : '0m';
     if (maxLbl) maxLbl.textContent = `${L.toFixed(2)}m`;
+    // テキストボックスのmin/maxも設定
+    const posInp = document.getElementById('s-pos-input');
+    if (posInp) { posInp.min = minPos.toFixed(2); posInp.max = maxPos.toFixed(2); }
     const defaultPos = Lc > 0 ? -(Lc / 2) : L / 2;
     posSlider.value = defaultPos.toFixed(2);
     updateSimpleSlider(defaultPos.toFixed(2));
@@ -1324,12 +1336,22 @@ function updateLcSliderMax(maxLc) {
 /* ==================================================
    単純梁 荷重位置スライダー更新
 ================================================== */
-function updateSimpleSlider(posStr) {
+function updateSimpleSlider(posStr, skipSync) {
   if (!simpleState) return;
-  const pos = parseFloat(posStr);
-  const posValEl = document.getElementById('s-pos-val');
-  if (posValEl) posValEl.textContent = pos.toFixed(2);
-  const { m, P1, fb0, Lc, Ls } = simpleState;
+  const { Lc, Ls } = simpleState;
+  let pos = parseFloat(posStr);
+  // 範囲クランプ
+  const minPos = -Lc, maxPos = Ls;
+  if (pos < minPos) pos = minPos;
+  if (pos > maxPos) pos = maxPos;
+  // スライダーとテキストボックスを同期
+  if (!skipSync) {
+    const sld = document.getElementById('s-pos-slider');
+    const inp = document.getElementById('s-pos-input');
+    if (sld) sld.value = pos;
+    if (inp) inp.value = pos.toFixed(2);
+  }
+  const { m, P1, fb0 } = simpleState;
   const deflN_cant = cantState ? cantState.deflN : 300;
   const ck = calcAtPosCombined(m, P1, fb0, Lc, Ls, pos, deflN_cant);
   let zone;
@@ -1485,11 +1507,15 @@ function updateTwoPoint(shared) {
   const x1min = -La;
   const x1max = Lsp - d;
   const sld   = document.getElementById('tp-x1-slider');
+  const inp   = document.getElementById('tp-x1-input');
+  const safeMax = (x1max > x1min ? x1max : x1min + 0.01);
   sld.min = x1min.toFixed(2);
-  sld.max = (x1max > x1min ? x1max : x1min + 0.01).toFixed(2);
+  sld.max = safeMax.toFixed(2);
+  if (inp) { inp.min = x1min.toFixed(2); inp.max = safeMax.toFixed(2); }
   let x1v = parseFloat(sld.value);
   if (x1v < x1min) { sld.value = x1min.toFixed(2); x1v = x1min; }
   if (x1v > x1max) { sld.value = x1max.toFixed(2); x1v = x1max; }
+  if (inp) inp.value = x1v.toFixed(2);
 
   document.getElementById('tp-x1-min-lbl').textContent = `← 片持ち端 ${x1min.toFixed(2)}m`;
   document.getElementById('tp-x1-max-lbl').textContent = `スパン右端 ${x1max.toFixed(2)}m →`;
@@ -1654,6 +1680,14 @@ document.getElementById('c-slider').addEventListener('input', function() {
 document.getElementById('s-pos-slider').addEventListener('input', function() {
   updateSimpleSlider(this.value);
 });
+document.getElementById('s-pos-input').addEventListener('input', function() {
+  const sld = document.getElementById('s-pos-slider');
+  if (sld) sld.value = this.value;
+  updateSimpleSlider(this.value, true);
+});
+document.getElementById('s-pos-input').addEventListener('change', function() {
+  updateSimpleSlider(this.value);
+});
 
 /* ==================================================
    イベント：2点吊り梁専用
@@ -1668,7 +1702,37 @@ document.getElementById('s-pos-slider').addEventListener('input', function() {
 document.getElementById('tp-x1-slider').addEventListener('input', function() {
   const Lsp = parseFloat(document.getElementById('tp-L').value)  || 4.0;
   const La  = parseFloat(document.getElementById('tp-La').value) || 0;
+  const inp = document.getElementById('tp-x1-input');
+  if (inp) inp.value = parseFloat(this.value).toFixed(2);
   updateTPx1Display(parseFloat(this.value), Lsp, La);
+  update();
+});
+document.getElementById('tp-x1-input').addEventListener('input', function() {
+  const Lsp = parseFloat(document.getElementById('tp-L').value)  || 4.0;
+  const La  = parseFloat(document.getElementById('tp-La').value) || 0;
+  const La_  = -La, Lmax = Lsp - (parseFloat(document.getElementById('tp-d').value) || 2.0);
+  let v = parseFloat(this.value);
+  if (isNaN(v)) return;
+  if (v < La_) v = La_;
+  if (v > Lmax) v = Lmax;
+  const sld = document.getElementById('tp-x1-slider');
+  if (sld) sld.value = v;
+  updateTPx1Display(v, Lsp, La);
+  update();
+});
+document.getElementById('tp-x1-input').addEventListener('change', function() {
+  // changeで範囲外の値を最終クランプ
+  const Lsp = parseFloat(document.getElementById('tp-L').value)  || 4.0;
+  const La  = parseFloat(document.getElementById('tp-La').value) || 0;
+  const La_  = -La, Lmax = Lsp - (parseFloat(document.getElementById('tp-d').value) || 2.0);
+  let v = parseFloat(this.value);
+  if (isNaN(v)) v = 0;
+  if (v < La_) v = La_;
+  if (v > Lmax) v = Lmax;
+  this.value = v.toFixed(2);
+  const sld = document.getElementById('tp-x1-slider');
+  if (sld) sld.value = v;
+  updateTPx1Display(v, Lsp, La);
   update();
 });
 
