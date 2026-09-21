@@ -284,9 +284,16 @@
     </div>
     <hr class="manual-divider">
     <div class="manual-section">
-      <h3>⚖ 単純梁タブ</h3>
-      <p>両端支持（2点支持）のレール。<strong>スパン L</strong> を入力すると曲げ・せん断・たわみを判定します。<br>
+      <h3>⚖ 単純梁タブ（＋片持ち延長）</h3>
+      <p>両端支持（2点吊り）のレール。<strong>スパン L</strong> と <strong>片持ち延長 Lc</strong> を入力します。<br>
       荷重：P = (W + Hw) × φ × g　（1台のホイストが全荷重を負担）</p>
+      <ul style="font-size:12px;margin:4px 0 4px 16px;line-height:1.9">
+        <li><strong>片持ち延長 Lc</strong>：支点Aから先の張り出し長（0 ＝ なし）。片持ち梁タブで算定した最大スパン以下で設定してください。</li>
+        <li><strong>物理モデル</strong>：[自由端]─────[A]────────[B]<br>
+          &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&emsp;← Lc →← スパン L →</li>
+        <li><strong>荷重位置スライダー</strong>：支点Aを 0 m として −Lc〜+L の範囲で荷重を動かし、任意位置での曲げ・せん断・たわみ比率と BMD をリアルタイム確認できます。</li>
+        <li>片持ち域（pos ≤ 0）ではオレンジ色の負曲げ BMD、梁域（pos > 0）では青の正曲げ BMD が表示されます。</li>
+      </ul>
     </div>
     <hr class="manual-divider">
     <div class="manual-section">
@@ -405,12 +412,33 @@
         <input type="range" class="form-slider" id="L-slider" min="0.5" max="20" step="0.1" value="5.0">
         <div class="form-slider-labels"><span>0.5 m</span><span>20 m</span></div>
       </div>
+      <div class="form-group full">
+        <label>↙ 片持ち延長 L<sub>c</sub> (m) <span style="font-weight:normal;font-size:11px;color:#888">0 = なし ｜ 片持ち梁タブの最大スパン以下</span></label>
+        <input type="number" id="Lc" value="0" min="0" max="20" step="0.1">
+        <input type="range" class="form-slider" id="Lc-slider" min="0" max="20" step="0.1" value="0">
+        <div class="form-slider-labels"><span>0 m</span><span id="Lc-slider-max-lbl">20 m</span></div>
+      </div>
     </div>
   </div>
 
   <div class="card" id="simple-result" style="display:none">
-    <h2>📊 単純梁 — 検討結果</h2>
+    <h2>📊 単純梁（＋片持ち延長）— 検討結果</h2>
     <div class="summary-box na" id="simple-summary">— 計算中 —</div>
+    <div class="tp-diagram-wrap" style="margin-top:10px">
+      <svg id="s-diagram" viewBox="0 0 700 230" style="display:block;width:100%;height:auto;min-width:280px"></svg>
+    </div>
+    <div style="font-size:10px;color:#888;margin-bottom:4px;text-align:center">BMD：▼ 正曲げ（引張下側） ▲ 負曲げ（片持ち側・橙）</div>
+    <div class="slider-section" style="margin-bottom:8px" id="s-pos-section">
+      <h3>🔍 荷重位置を動かして確認（支点Aを 0 m とする）</h3>
+      <div class="slider-row">
+        <span style="font-size:12px;color:var(--sub)" id="s-pos-min-lbl">0m</span>
+        <input type="range" id="s-pos-slider" min="0" max="5" step="0.05" value="2.5">
+        <span style="font-size:12px;color:var(--sub)" id="s-pos-max-lbl">5m</span>
+        <div class="slider-val"><span id="s-pos-val">2.50</span> m</div>
+      </div>
+      <div id="s-pos-zone" style="text-align:center;font-size:11px;color:var(--sub);margin:3px 0 5px"></div>
+      <div class="sratios" id="s-pos-ratios"></div>
+    </div>
     <hr class="divider">
     <table class="result-table">
       <thead><tr><th>検討項目</th><th>計算値</th><th>許容値</th><th>比率</th><th>判定</th></tr></thead>
@@ -608,12 +636,16 @@
   <h2>📐 計算式概要</h2>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
     <div>
-      <div style="font-size:11px;font-weight:bold;color:var(--primary);margin-bottom:4px">⚖ 単純梁</div>
+      <div style="font-size:11px;font-weight:bold;color:var(--primary);margin-bottom:4px">⚖ 単純梁（＋片持ち延長）</div>
       <p style="font-size:11px;line-height:1.8;color:var(--sub)">
-        M = P·L/4 [kN·m]<br>
-        Q = P/2 [kN]<br>
-        σb = M×100/Zx<br>
-        δ = PL³/(48EI) ≤ L/800
+        <span style="color:#d35400;font-weight:bold">■ 片持ち域 pos ≤ 0（a = −pos）</span><br>
+        M = P·a [kN·m]<br>
+        Q = P(L+a)/L [kN]<br>
+        δ = Pa³/(3EI) ≤ a/n<br>
+        <span style="color:var(--primary);font-weight:bold">■ 梁域 0 &lt; pos &lt; L</span><br>
+        M = P(L−x)x/L [kN·m]<br>
+        Q = max(Ra, Rb) [kN]<br>
+        δ = Pa²b²/(3EIL) ≤ L/800
       </p>
     </div>
     <div>
@@ -944,10 +976,17 @@ function updateMemberProps(m) {
 }
 
 /* ==================================================
+   状態変数
+================================================== */
+let cantState   = null;
+let simpleState = null;
+
+/* ==================================================
    単純梁 UI 更新
 ================================================== */
 function updateSimple(shared) {
-  const L = parseFloat(document.getElementById('L').value) || 5;
+  const L  = parseFloat(document.getElementById('L').value)  || 5;
+  const Lc = Math.max(0, parseFloat(document.getElementById('Lc').value) || 0);
   const { P1, fb0, m } = shared;
   const r = calcSimple(m, P1, fb0, L);
 
@@ -994,13 +1033,28 @@ function updateSimple(shared) {
 
   document.getElementById('s-note').textContent =
     '※ P=(W+Hw)×φ×g。SS400, E=21,000kN/cm²。上フランジ固定・下フランジ荷重のため横座屈省略。';
+
+  // 複合梁スライダー設定
+  simpleState = { m, P1, fb0, Lc, Ls: L };
+  const posSlider = document.getElementById('s-pos-slider');
+  if (posSlider) {
+    const minPos  = Lc > 0 ? -Lc : 0.05;
+    const maxPos  = L;
+    posSlider.min = minPos.toFixed(2);
+    posSlider.max = maxPos.toFixed(2);
+    const minLbl  = document.getElementById('s-pos-min-lbl');
+    const maxLbl  = document.getElementById('s-pos-max-lbl');
+    if (minLbl) minLbl.textContent = Lc > 0 ? `${(-Lc).toFixed(2)}m` : '0m';
+    if (maxLbl) maxLbl.textContent = `${L.toFixed(2)}m`;
+    const defaultPos = Lc > 0 ? -(Lc / 2) : L / 2;
+    posSlider.value = defaultPos.toFixed(2);
+    updateSimpleSlider(defaultPos.toFixed(2));
+  }
 }
 
 /* ==================================================
    片持ち梁 UI 更新
 ================================================== */
-let cantState = null;
-
 function updateCant(shared) {
   const deflN = parseFloat(document.getElementById('deflN').value) || 300;
   const { P1, fb0, m } = shared;
@@ -1025,6 +1079,9 @@ function updateCant(shared) {
     if (isGov) govName = names[i];
   });
   document.getElementById('c-gov').textContent = '支配：'+govName+' 検討';
+
+  // Lc スライダー上限を片持ち最大スパンに合わせる
+  updateLcSliderMax(isFinite(Lg)&&Lg<100 ? Lg : 20);
 
   const slider = document.getElementById('c-slider');
   const sliderMax = isFinite(Lg) && Lg < 100 ? Math.min(+(Lg*1.6).toFixed(1), 30) : 20;
@@ -1094,6 +1151,222 @@ function updateTPx1Display(x1, Lsp, La) {
   else if (x1 < 0)                   desc += '（片持ち側）';
   else if (Math.abs(x1 - Lsp) < 0.01) desc += '（支点B上）';
   document.getElementById('tp-x1-desc').textContent = desc;
+}
+
+/* ==================================================
+   片持ち+単純梁 BMD 計算ヘルパー
+================================================== */
+function momentAtCombined(P1, Lc, Ls, pos, xi) {
+  // pos: 荷重位置（支点Aを0, 片持ち側は負）
+  // xi:  断面位置（同スケール）
+  if (pos <= 0) {
+    const a = -pos;
+    if (xi <= pos) return 0;
+    if (xi <= 0)  return -P1 * (xi - pos); // 片持ち区間：負曲げ
+    return -P1 * a * (1 - xi / Ls);        // スパン内：線形減衰・負曲げ
+  } else {
+    const Ra = P1 * (Ls - pos) / Ls;
+    const Rb = P1 * pos / Ls;
+    if (xi <= 0)   return 0;
+    if (xi <= pos) return Ra * xi;
+    return Rb * (Ls - xi);
+  }
+}
+
+function calcAtPosCombined(m, P1, fb0, Lc, Ls, pos, deflN_cant) {
+  const H=m[1], tw=m[3], tf=m[4], Ix=m[6], Zx=m[7];
+  const Aw = (H - 2*tf) * tw / 100; // cm²
+  const fs = fb0 / Math.sqrt(3);
+  const E  = E_kNcm2;
+  let M_abs, tau, delta, delta_a;
+  if (pos <= 0) {
+    const a = Math.max(-pos, 0.001);
+    M_abs   = P1 * a;
+    const Ra = P1 * (Ls + a) / Ls; // 張り出し梁の支点A反力（せん断用）
+    tau     = Ra / Aw;
+    const acm = a * 100; // cm
+    // 片持ち梁タブと同じ単純固定端公式 δ=Pa³/(3EI) で統一
+    delta   = P1 * Math.pow(acm, 3) / (3 * E * Ix) * 10; // cm×10 → mm
+    delta_a = acm / deflN_cant * 10;                       // cm×10 → mm
+  } else {
+    const x  = pos;
+    M_abs    = P1 * (Ls - x) * x / Ls;
+    const Ra = P1 * (Ls - x) / Ls;
+    const Rb = P1 * x / Ls;
+    tau      = Math.max(Ra, Rb) / Aw;
+    const acm = x*100, bcm = (Ls-x)*100, Lcm = Ls*100;
+    delta    = P1 * acm*acm * bcm*bcm / (3 * E * Ix * Lcm) * 10; // cm×10 → mm
+    delta_a  = Lcm / 800 * 10;                                      // cm×10 → mm
+  }
+  const sb = M_abs * 100 / Zx; // kN/cm²
+  return { rb: sb/fb0, rs: tau/fs, rd: delta/delta_a, M_abs, sb, tau, delta, delta_a };
+}
+
+/* ==================================================
+   複合梁 BMD 描画（片持ち+単純梁）
+================================================== */
+function drawCombinedDiagram(Lc, Ls, pos, P1) {
+  const svg = document.getElementById('s-diagram');
+  if (!svg) return;
+  const W_svg=700, H_svg=230;
+  const ml=65, mr=45;
+  const totalLen = Lc + Ls;
+  const span_px  = W_svg - ml - mr;
+  const scale    = totalLen > 0 ? span_px / totalLen : 1;
+
+  const freeX  = ml;                      // 片持ち自由端
+  const suppAX = ml + Lc * scale;         // 支点A
+  const suppBX = ml + totalLen * scale;   // 支点B
+  const beamY  = 88;
+  const bmdScale = 55;
+
+  function toX(xm) { return suppAX + xm * scale; }
+
+  // BMD点列 (片持ち自由端から支点Bまで)
+  const N = 300;
+  const dx = totalLen / N;
+  const pts = [];
+  let Mmax_abs = 0;
+  for (let i = 0; i <= N; i++) {
+    const xm = -Lc + i * dx; // 支点Aからの距離
+    const mm = momentAtCombined(P1, Lc, Ls, pos, xm);
+    const xa = toX(xm);
+    pts.push({ xa, mm });
+    Mmax_abs = Math.max(Mmax_abs, Math.abs(mm));
+  }
+  if (Mmax_abs < 0.001) Mmax_abs = 0.001;
+
+  function toY(mm) { return beamY - (mm / Mmax_abs) * bmdScale; }
+
+  let s = '';
+
+  // ── BMD 塗り + 輪郭 ──
+  // 正曲げ (pos>0): 下方向・青
+  // 負曲げ (pos<=0): 上方向・橙
+  const polyPts = pts.map(p => `${p.xa.toFixed(1)},${toY(p.mm).toFixed(1)}`).join(' ');
+  const bxClose = pts[pts.length-1].xa.toFixed(1);
+  const bxOpen  = pts[0].xa.toFixed(1);
+  const inCant  = pos <= 0;
+  const bmdColor = inCant ? '#e65100' : '#1565c0';
+  const bmdFill  = inCant ? 'rgba(230,81,0,0.12)' : 'rgba(21,101,192,0.12)';
+  s += `<polygon points="${bxOpen},${beamY} ${polyPts} ${bxClose},${beamY}" fill="${bmdFill}" stroke="none"/>`;
+  s += `<polyline points="${polyPts}" fill="none" stroke="${bmdColor}" stroke-width="1.5"/>`;
+
+  // BMD ピーク値ラベル
+  const peakM  = inCant ? -Mmax_abs : Mmax_abs;
+  const peakXm = inCant ? pos : pos; // loadX
+  const peakY  = toY(peakM);
+  const loadX  = toX(pos);
+  const lbAnchor = loadX < suppAX + 10 ? 'start' : 'middle';
+  s += `<text x="${loadX.toFixed(1)}" y="${(peakY + (inCant?-4:13)).toFixed(1)}" text-anchor="${lbAnchor}" font-size="10" fill="${bmdColor}" font-weight="700">${Mmax_abs.toFixed(1)} kN·m</text>`;
+
+  // ── 梁 ──
+  s += `<line x1="${freeX}" y1="${beamY}" x2="${suppBX.toFixed(1)}" y2="${beamY}" stroke="#1565c0" stroke-width="5"/>`;
+
+  // ── 支点A (三角+接地) ──
+  const suppBase = beamY + 22;
+  const th = 14, tb = 10;
+  s += `<polygon points="${suppAX.toFixed(1)},${beamY} ${(suppAX-th/2).toFixed(1)},${suppBase} ${(suppAX+th/2).toFixed(1)},${suppBase}" fill="#1565c0"/>`;
+  s += `<line x1="${(suppAX-tb).toFixed(1)}" y1="${suppBase}" x2="${(suppAX+tb).toFixed(1)}" y2="${suppBase}" stroke="#1565c0" stroke-width="2"/>`;
+  for (let hx = suppAX-tb; hx <= suppAX+tb; hx += 5)
+    s += `<line x1="${hx.toFixed(1)}" y1="${suppBase}" x2="${(hx-4).toFixed(1)}" y2="${suppBase+6}" stroke="#1565c0" stroke-width="1"/>`;
+  s += `<text x="${suppAX.toFixed(1)}" y="${suppBase+18}" text-anchor="middle" font-size="11" fill="#1565c0" font-weight="700">A</text>`;
+
+  // ── 支点B (三角+接地) ──
+  s += `<polygon points="${suppBX.toFixed(1)},${beamY} ${(suppBX-th/2).toFixed(1)},${suppBase} ${(suppBX+th/2).toFixed(1)},${suppBase}" fill="#1565c0"/>`;
+  s += `<line x1="${(suppBX-tb).toFixed(1)}" y1="${suppBase}" x2="${(suppBX+tb).toFixed(1)}" y2="${suppBase}" stroke="#1565c0" stroke-width="2"/>`;
+  for (let hx = suppBX-tb; hx <= suppBX+tb; hx += 5)
+    s += `<line x1="${hx.toFixed(1)}" y1="${suppBase}" x2="${(hx-4).toFixed(1)}" y2="${suppBase+6}" stroke="#1565c0" stroke-width="1"/>`;
+  s += `<text x="${suppBX.toFixed(1)}" y="${suppBase+18}" text-anchor="middle" font-size="11" fill="#1565c0" font-weight="700">B</text>`;
+
+  // ── 荷重矢印 P ──
+  const arrowTop = beamY - 40;
+  s += `<line x1="${loadX.toFixed(1)}" y1="${arrowTop}" x2="${loadX.toFixed(1)}" y2="${beamY-2}" stroke="#c62828" stroke-width="2.5"/>`;
+  s += `<polygon points="${loadX.toFixed(1)},${beamY} ${(loadX-5).toFixed(1)},${beamY-11} ${(loadX+5).toFixed(1)},${beamY-11}" fill="#c62828"/>`;
+  s += `<text x="${loadX.toFixed(1)}" y="${arrowTop-5}" text-anchor="middle" font-size="10" fill="#c62828" font-weight="700">P</text>`;
+
+  // ── 寸法線 ──
+  const dimY = H_svg - 14;
+  // Lc寸法（橙破線）
+  if (Lc > 0.01) {
+    s += `<line x1="${freeX}" y1="${dimY}" x2="${suppAX.toFixed(1)}" y2="${dimY}" stroke="#e65100" stroke-width="1" stroke-dasharray="4,3"/>`;
+    [freeX, suppAX].forEach(px =>
+      s += `<line x1="${px.toFixed(1)}" y1="${dimY-4}" x2="${px.toFixed(1)}" y2="${dimY+4}" stroke="#e65100" stroke-width="1"/>`
+    );
+    const lcMid = (freeX + suppAX) / 2;
+    s += `<text x="${lcMid.toFixed(1)}" y="${dimY-6}" text-anchor="middle" font-size="10" fill="#e65100" font-weight="700">Lc=${Lc.toFixed(2)}m</text>`;
+  }
+  // Ls寸法（青）
+  s += `<line x1="${suppAX.toFixed(1)}" y1="${dimY}" x2="${suppBX.toFixed(1)}" y2="${dimY}" stroke="#1565c0" stroke-width="1"/>`;
+  [suppAX, suppBX].forEach(px =>
+    s += `<line x1="${px.toFixed(1)}" y1="${dimY-4}" x2="${px.toFixed(1)}" y2="${dimY+4}" stroke="#1565c0" stroke-width="1"/>`
+  );
+  const lsMid = (suppAX + suppBX) / 2;
+  s += `<text x="${lsMid.toFixed(1)}" y="${Lc > 0.01 ? dimY-6 : dimY+12}" text-anchor="middle" font-size="10" fill="#1565c0" font-weight="700">L=${Ls.toFixed(2)}m</text>`;
+
+  s += `<text x="4" y="${H_svg-2}" font-size="9" fill="#888">M (kN·m)</text>`;
+
+  svg.innerHTML = s;
+}
+
+/* ==================================================
+   Lc スライダー上限更新
+================================================== */
+function updateLcSliderMax(maxLc) {
+  const sld = document.getElementById('Lc-slider');
+  const inp = document.getElementById('Lc');
+  if (!sld || !inp) return;
+  const newMax = Math.max(0, Math.round(maxLc * 100) / 100);
+  sld.max = newMax;
+  const lbl = document.getElementById('Lc-slider-max-lbl');
+  if (lbl) lbl.textContent = newMax.toFixed(2) + 'm（片持ち最大）';
+  const curVal = parseFloat(inp.value) || 0;
+  if (curVal > newMax) {
+    inp.value = newMax.toFixed(2);
+    sld.value = newMax;
+    update();
+  }
+}
+
+/* ==================================================
+   単純梁 荷重位置スライダー更新
+================================================== */
+function updateSimpleSlider(posStr) {
+  if (!simpleState) return;
+  const pos = parseFloat(posStr);
+  const posValEl = document.getElementById('s-pos-val');
+  if (posValEl) posValEl.textContent = pos.toFixed(2);
+  const { m, P1, fb0, Lc, Ls } = simpleState;
+  const deflN_cant = cantState ? cantState.deflN : 300;
+  const ck = calcAtPosCombined(m, P1, fb0, Lc, Ls, pos, deflN_cant);
+  let zone;
+  if (pos < -0.01)
+    zone = `↙ 片持ち域（支点Aから ${Math.abs(pos).toFixed(2)}m 左、M = ${ck.M_abs.toFixed(2)} kN·m）`;
+  else if (pos <= 0.01)
+    zone = `⊕ 支点A 上（M ≈ 0）`;
+  else if (pos >= Ls - 0.01)
+    zone = `⊕ 支点B 上（M ≈ 0）`;
+  else
+    zone = `⚖ 梁域（支点Aから ${pos.toFixed(2)}m 右、M = ${ck.M_abs.toFixed(2)} kN·m）`;
+  const zoneEl = document.getElementById('s-pos-zone');
+  if (zoneEl) zoneEl.textContent = zone;
+  const checks = [
+    { name: '① 曲げ',   r: ck.rb },
+    { name: '② せん断', r: ck.rs },
+    { name: '③ たわみ', r: ck.rd,
+      sub: `δ=${ck.delta.toFixed(2)} mm　δa=${ck.delta_a.toFixed(2)} mm` },
+  ];
+  const ratiosEl = document.getElementById('s-pos-ratios');
+  if (ratiosEl) ratiosEl.innerHTML = checks.map(c =>
+    `<div class="sratio-row">
+      <div class="sratio-name">${c.name}</div>
+      <div class="sratio-bar-wrap"><div class="sratio-fill" style="width:${Math.min(c.r*100,100)}%;background:${barColor(c.r)}"></div></div>
+      <div class="sratio-num">${fmtR(c.r)}</div>
+      <div class="sratio-badge ${judgeClass(c.r)}">${judgeClass(c.r).toUpperCase()}</div>
+      ${c.sub ? `<div class="sratio-sub">${c.sub}</div>` : ''}
+    </div>`
+  ).join('');
+  drawCombinedDiagram(Lc, Ls, pos, P1);
 }
 
 /* ==================================================
@@ -1323,7 +1596,8 @@ function update() {
     document.getElementById('tp-pos-card').style.display    = 'none';
     document.getElementById('tp-diagram-card').style.display= 'none';
     document.getElementById('tp-result-card').style.display = 'none';
-    cantState = null;
+    cantState   = null;
+    simpleState = null;
     return;
   }
   updateMemberProps(shared.m);
@@ -1374,7 +1648,7 @@ updateDeflPreset(300);
 /* ==================================================
    イベント：共通入力
 ================================================== */
-['W','Hw','phi','fb0','member','L','deflN'].forEach(id => {
+['W','Hw','phi','fb0','member','L','Lc','deflN'].forEach(id => {
   const el = document.getElementById(id);
   if (el) {
     el.addEventListener('input',  update);
@@ -1383,6 +1657,9 @@ updateDeflPreset(300);
 });
 document.getElementById('c-slider').addEventListener('input', function() {
   updateCantSlider(this.value);
+});
+document.getElementById('s-pos-slider').addEventListener('input', function() {
+  updateSimpleSlider(this.value);
 });
 
 /* ==================================================
@@ -1409,6 +1686,7 @@ document.getElementById('tp-x1-slider').addEventListener('input', function() {
   ['W',     'W-slider',      0,    10000, 50],
   ['Hw',    'Hw-slider',     0,    2000,  10],
   ['L',     'L-slider',      0.5,  20,    0.1],
+  ['Lc',    'Lc-slider',     0,    20,    0.1],
   ['tp-L',  'tp-L-slider',   0.5,  20,    0.1],
   ['tp-La', 'tp-La-slider',  0,    10,    0.1],
   ['tp-d',  'tp-d-slider',   0.1,  20,    0.1],
@@ -1442,7 +1720,8 @@ document.getElementById('clear-btn').addEventListener('click', function() {
   document.getElementById('phi').value  = 1.2;
   document.getElementById('fb0').value  = 15.6;
   document.getElementById('member').selectedIndex = 0;
-  cantState = null;
+  cantState   = null;
+  simpleState = null;
   update();
   document.getElementById('W').focus();
 });
