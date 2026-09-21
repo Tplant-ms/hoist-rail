@@ -58,13 +58,6 @@
     background: #fff9c4; box-shadow: 0 0 0 2px rgba(21,101,192,.15);
   }
   .form-group.full { grid-column: 1 / -1; }
-  .clear-btn {
-    display: block; width: 100%; margin-top: 10px; padding: 9px;
-    background: #fff; border: 1px solid #bbb; border-radius: 5px;
-    font-size: 13px; color: #555; cursor: pointer;
-    transition: background .15s, border-color .15s;
-  }
-  .clear-btn:hover { background: #fce4ec; border-color: #e57373; color: #c62828; }
 
   /* MEMBER PROPS */
   .member-props {
@@ -390,7 +383,7 @@
     <div class="prop-box"><div class="val" id="p-tf">—</div><div class="lbl">tf (mm)</div></div>
     <div class="prop-box"><div class="val" id="p-W">—</div><div class="lbl">自重(kg/m)</div></div>
   </div>
-  <button class="clear-btn" id="clear-btn">🗑 クリア（吊り荷重・ホイスト自重を消去）</button>
+
 </div>
 
 <!-- ===== タブ ===== -->
@@ -1711,20 +1704,6 @@ document.getElementById('tp-x1-slider').addEventListener('input', function() {
   inp.addEventListener('change', syncSlider);
 });
 
-/* ==================================================
-   クリアボタン
-================================================== */
-document.getElementById('clear-btn').addEventListener('click', function() {
-  document.getElementById('W').value    = '';
-  document.getElementById('Hw').value   = '';
-  document.getElementById('phi').value  = 1.2;
-  document.getElementById('fb0').value  = 15.6;
-  document.getElementById('member').selectedIndex = 0;
-  cantState   = null;
-  simpleState = null;
-  update();
-  document.getElementById('W').focus();
-});
 
 /* ==================================================
    使い方マニュアル
