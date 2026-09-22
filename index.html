@@ -169,6 +169,13 @@
   }
   .defl-preset:hover  { background: #e8f0fe; border-color: var(--primary); color: var(--primary); }
   .defl-preset.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .action-btn {
+    padding: 5px 12px; border: 1px solid #bbb; border-radius: 14px;
+    background: #f5f5f5; font-size: 12px; font-weight: bold; color: #555;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px;
+  }
+  .action-btn:hover { background: #e8f0fe; border-color: var(--primary); color: var(--primary); }
 
   /* FORM SLIDER */
   .form-slider {
@@ -423,8 +430,7 @@
     <div style="font-size:10px;color:#888;margin-bottom:4px;text-align:center">BMD：▼ 正曲げ（引張下側） ▲ 負曲げ（片持ち側・橙）</div>
     <div class="slider-section" style="margin-bottom:8px" id="s-pos-section">
       <h3>🔍 荷重位置を動かして確認（支点Aを 0 m とする）</h3>
-      <button class="defl-preset" onclick="setSimpleCenter()"
-              style="display:inline-flex;align-items:center;gap:4px;margin-bottom:8px;padding:5px 12px;font-size:12px;">
+      <button class="action-btn" onclick="setSimpleCenter()">
         📍 中央（最大たわみ位置）へ
       </button>
       <div class="slider-row">
@@ -566,8 +572,8 @@
       </div>
       <div class="tp-pos-val" id="tp-x1-desc">x₁ = 0.00 m（支点A上）</div>
       <div style="text-align:center;margin-top:8px;">
-        <button class="defl-preset" id="tp-maxdefl-btn" onclick="setMaxDeflTP()"
-                style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;font-size:12px;width:100%;">
+        <button class="action-btn" id="tp-maxdefl-btn" onclick="setMaxDeflTP()"
+                style="width:100%;justify-content:center;">
           📈 最大たわみ位置へ
         </button>
       </div>
