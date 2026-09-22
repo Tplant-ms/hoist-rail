@@ -423,6 +423,10 @@
     <div style="font-size:10px;color:#888;margin-bottom:4px;text-align:center">BMD：▼ 正曲げ（引張下側） ▲ 負曲げ（片持ち側・橙）</div>
     <div class="slider-section" style="margin-bottom:8px" id="s-pos-section">
       <h3>🔍 荷重位置を動かして確認（支点Aを 0 m とする）</h3>
+      <button class="defl-preset" onclick="setSimpleCenter()"
+              style="display:inline-flex;align-items:center;gap:4px;margin-bottom:8px;padding:5px 12px;font-size:12px;">
+        📍 中央（最大たわみ位置）へ
+      </button>
       <div class="slider-row">
         <span style="font-size:12px;color:var(--sub)" id="s-pos-min-lbl">0m</span>
         <input type="range" id="s-pos-slider" min="0" max="5" step="0.05" value="2.5">
@@ -561,6 +565,12 @@
         <span style="font-size:12px;color:var(--sub)">m</span>
       </div>
       <div class="tp-pos-val" id="tp-x1-desc">x₁ = 0.00 m（支点A上）</div>
+      <div style="text-align:center;margin-top:8px;">
+        <button class="defl-preset" id="tp-maxdefl-btn" onclick="setMaxDeflTP()"
+                style="display:inline-flex;align-items:center;gap:4px;padding:5px 12px;font-size:12px;width:100%;">
+          📈 最大たわみ位置へ
+        </button>
+      </div>
       <div class="tp-pos-ends">
         <span id="tp-x1-min-lbl">← 片持ち端 0.00m</span>
         <span id="tp-x1-max-lbl">スパン右端 2.00m →</span>
@@ -1777,6 +1787,50 @@ function toggleManual() {
   const body = document.getElementById('manual-body');
   const open = body.classList.toggle('open');
   btn.classList.toggle('open', open);
+}
+
+/* ==================================================
+   中央セットボタン — 単純梁（単純梁の最大たわみは中央荷重時）
+================================================== */
+function setSimpleCenter() {
+  if (!simpleState) return;
+  const Ls = simpleState.Ls;
+  if (!isFinite(Ls) || Ls <= 0) return;
+  updateSimpleSlider((Ls / 2).toFixed(2));
+}
+
+/* ==================================================
+   最大たわみ位置ボタン — 2点吊り梁
+================================================== */
+function setMaxDeflTP() {
+  const shared = getShared();
+  if (!shared) return;
+  const { m, W, Hw, phi, fb0 } = shared;
+  const Lsp = parseFloat(document.getElementById('tp-L').value)  || 4.0;
+  const La  = parseFloat(document.getElementById('tp-La').value) || 0;
+  const d   = parseFloat(document.getElementById('tp-d').value)  || 2.0;
+  if (d >= Lsp + La) return; // 吊り間隔が梁全長より大きい
+  const x1min = -La;
+  const x1max = Lsp - d;
+  if (x1max < x1min) return;
+  // 200点スキャンで最大たわみ位置を探す
+  let bestX1 = x1min, bestDelta = -1;
+  const steps = 300;
+  for (let i = 0; i <= steps; i++) {
+    const x1 = x1min + (x1max - x1min) * i / steps;
+    const r = calcTwoPoint(m, W, Hw, phi, fb0, Lsp, La, d, x1);
+    if (r && r.delta_mm > bestDelta) {
+      bestDelta = r.delta_mm;
+      bestX1 = x1;
+    }
+  }
+  // スライダーと入力欄を更新
+  const sld = document.getElementById('tp-x1-slider');
+  const inp = document.getElementById('tp-x1-input');
+  sld.value = bestX1.toFixed(2);
+  if (inp) inp.value = bestX1.toFixed(2);
+  updateTPx1Display(bestX1, Lsp, La);
+  update();
 }
 
 /* ==================================================
