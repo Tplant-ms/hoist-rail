@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ホイストレール検討（やさしい解説版）</title>
+<title>ホイストレール強度検討書</title>
 <style>
   :root{
     --navy:#1F3864; --blue:#2F5597; --bg:#F3F6FB; --card:#FFFFFF; --line:#D8E0EC; --text:#1E2733; --sub:#5A6675;
@@ -104,10 +104,11 @@
   footer{margin-top:26px;font-size:13px;color:var(--sub)}
   footer ul{padding-left:1.3em}
   .printbtn{float:right}
+  header.hero .screenonly{opacity:.8;font-size:13px}
   @media print{
     body{background:#fff;font-size:12px}
     header.hero{background:#1F3864 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .modes,.inputs,.btnrow,.slider-box,.printbtn{display:none !important}
+    .modes,.inputs,.btnrow,.slider-box,.printbtn,.screenonly{display:none !important}
     .step,.card,.verdict{break-inside:avoid;page-break-inside:avoid}
     .wrap{padding:0}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -116,8 +117,9 @@
 </head>
 <body>
 <header class="hero"><div class="in">
-  <h1>ホイストレールは、この荷物を吊り上げても大丈夫？</h1>
-  <p>H形鋼のレールが「折れない・大きくたわまない」ことを、図と数字で順番に確かめます。下の数字を変えると、図も説明もすべて自動で変わります。</p>
+  <h1 id="docTitle">ホイストレール強度検討書</h1>
+  <p id="docSub"></p>
+  <p class="screenonly">H形鋼のレールが「折れない・大きくたわまない」ことを、図と数字で順番に確かめます。下の数字を変えると、図も説明もすべて自動で変わります。</p>
 </div></header>
 
 <div class="wrap">
@@ -254,6 +256,14 @@ const DEF = {
 };
 const S = {1:{...DEF[1]},2:{...DEF[2]},3:{...DEF[3]}};
 let mode = 1;
+const DOC = {title:'ホイストレール強度検討書', proj:''};
+const escH = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+function updateHero(){
+  const d=new Date(), ds=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+  $('docTitle').textContent = DOC.title || 'ホイストレール強度検討書';
+  document.title = DOC.title || 'ホイストレール強度検討書';
+  $('docSub').textContent = (DOC.proj?DOC.proj+'　／　':'') + MODE_INFO[mode][0] + '（' + MODE_INFO[mode][1] + '）　作成日：' + ds;
+}
 const FIELDS = {
   3:[['W','吊り荷重（合計）','kg',50,'荷物全体の重さ。2台で半分ずつ持ちます'],['Hw','ホイスト自重（1台）','kg',10,''],
      ['L','支点間スパン L','m',0.1,'2つの支点の間の長さ'],['La','張り出し長さ La','m',0.1,'支点Aの外側にはみ出す長さ（なし＝0）'],
@@ -698,7 +708,9 @@ function buildModes(){
 }
 function buildInputs(){
   const s=S[mode]; const flds=FIELDS[mode];
-  let h=`<h2>条件を入れる <button class="btn printbtn" onclick="window.print()">印刷する</button></h2><div class="grid">`;
+  let h=`<h2>条件を入れる <button class="btn printbtn" onclick="window.print()">印刷する</button></h2><div class="grid">
+   <div class="fld" style="grid-column:span 2"><label for="f_title">表題（印刷の一番上に出ます）</label><input id="f_title" type="text" value="${escH(DOC.title)}"></div>
+   <div class="fld" style="grid-column:span 2"><label for="f_proj">件名・工事名など（空欄なら表示しません）</label><input id="f_proj" type="text" value="${escH(DOC.proj)}" placeholder="例：○○工場 ホイストレール設置工事"></div>`;
   flds.forEach(([k,lab,u,st,hint])=>{ h+=`<div class="fld"><label for="f_${k}">${lab}</label><div class="row"><input id="f_${k}" data-k="${k}" type="number" inputmode="decimal" step="${st}" value="${s[k]}"><span class="u">${u}</span></div>${hint?`<div class="hint">${hint}</div>`:''}</div>`; });
   h+=`<div class="fld" style="grid-column:1/-1"><label for="f_mem">使用する部材（H形鋼・I形鋼）</label><select id="f_mem">${memberOptions(s.mem)}</select></div>
    <div class="fld" style="grid-column:1/-1"><label for="f_sw">梁の自重（梁自身の重さ）</label><select id="f_sw"><option value="1"${s.sw!=0?' selected':''}>考慮する（安全側・おすすめ）</option><option value="0"${s.sw==0?' selected':''}>考慮しない</option></select><div class="hint">梁(H形鋼)自身の重さも計算に入れるかどうかを選びます</div></div></div>`;
@@ -709,6 +721,8 @@ function buildInputs(){
   h+=`<div class="btnrow"><button class="btn" id="resetBtn">はじめの条件に戻す</button></div>`;
   $('inputs').innerHTML=h;
   $('inputs').querySelectorAll('input[data-k]').forEach(inp=>inp.addEventListener('input',()=>{ const v=parseFloat(inp.value); if(isFinite(v)){ S[mode][inp.dataset.k]=v; draw(); } }));
+  $('f_title').addEventListener('input',e=>{ DOC.title=e.target.value; updateHero(); });
+  $('f_proj').addEventListener('input',e=>{ DOC.proj=e.target.value; updateHero(); });
   $('f_mem').addEventListener('change',e=>{ S[mode].mem=e.target.value; draw(); });
   $('f_sw').addEventListener('change',e=>{ S[mode].sw=+e.target.value; draw(); });
   $('resetBtn').onclick=()=>{ S[mode]={...DEF[mode]}; buildInputs(); draw(); };
@@ -725,6 +739,7 @@ function bindDynamic(){
 }
 function draw(keepScroll){
   const y=window.scrollY;
+  updateHero();
   const out = mode===3?render3():(mode===1?render1():render2());
   $('story').innerHTML = typeof out==='string'?out:out.html;
   bindDynamic();
