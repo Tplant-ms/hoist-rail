@@ -251,12 +251,23 @@ function scan3(p,n){                          // ホイストを端から端ま�
 ===================================================================== */
 const DEF = {
   3:{W:2000,Hw:120,phi:1.2,L:4.3,La:1.5,d:2,x1:1.15,mem:'H-250×125×6×9',fb0:15.6,nd:800,sw:1},
-  1:{W:950,Hw:60,phi:1.2,L:4.3,La:0.5,x1:2.15,mem:'H-200×100×5.5×8',fb0:15.6,nd:800,sw:1},
+  1:{W:950,Hw:60,phi:1.2,L:4.3,La:0.5,x1:2.15,mem:'H-250×125×6×9',fb0:15.6,nd:800,sw:1},
   2:{W:950,Hw:60,phi:1.2,Lc:1.2,mem:'H-200×100×5.5×8',fb0:15.6,nd:400,sw:1},
 };
 const S = {1:{...DEF[1]},2:{...DEF[2]},3:{...DEF[3]}};
 let mode = 1;
 const DOC = {title:'ホイストレール強度検討書', proj:''};
+const SAVE_KEY='hoistRailCalc.v1';
+function snapshot(){ return {ver:1,mode,DOC:{...DOC},S:JSON.parse(JSON.stringify(S))}; }
+function applySnapshot(o){
+  if(!o||typeof o!=='object') return false;
+  if(o.S) for(const k of [1,2,3]){ if(o.S[k]){ for(const f in DEF[k]){ const v=o.S[k][f]; if(v!==undefined && (f==='mem'? !!MEMBER_MAP[v] : isFinite(v))) S[k][f]=v; } } }
+  if(o.DOC){ if(typeof o.DOC.title==='string') DOC.title=o.DOC.title; if(typeof o.DOC.proj==='string') DOC.proj=o.DOC.proj; }
+  if([1,2,3].includes(+o.mode)) mode=+o.mode;
+  return true;
+}
+function saveState(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(snapshot())); }catch(e){} }
+function loadState(){ try{ const j=localStorage.getItem(SAVE_KEY); if(j) applySnapshot(JSON.parse(j)); }catch(e){} }
 const escH = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
 function updateHero(){
   const d=new Date(), ds=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
@@ -663,14 +674,27 @@ function buildInputs(){
    <div class="fld"><label for="f_phi">衝撃係数 φ</label><div class="row"><input id="f_phi" data-k="phi" type="number" step="0.05" value="${s.phi}"><span class="u">倍</span></div><div class="hint">通常 1.2</div></div>
    <div class="fld"><label for="f_fb0">許容曲げ応力度 fb0</label><div class="row"><input id="f_fb0" data-k="fb0" type="number" step="0.1" value="${s.fb0}"><span class="u">kN/cm²</span></div><div class="hint">SS400（板厚40mm以下）は 15.6</div></div>
    <div class="fld"><label for="f_nd">たわみの制限 1/n</label><div class="row"><input id="f_nd" data-k="nd" type="number" step="50" value="${s.nd}"><span class="u">（n）</span></div><div class="hint">${mode==2?'片持ちは 300〜500':'クレーン用レールは 800'}</div></div></div></details>`;
-  h+=`<div class="btnrow"><button class="btn" id="resetBtn">はじめの条件に戻す</button></div>`;
+  h+=`<div class="btnrow"><button class="btn" id="resetBtn">はじめの条件に戻す</button><button class="btn" id="saveFileBtn">条件をファイルに保存</button><button class="btn" id="loadFileBtn">保存したファイルを読み込む</button><input id="loadFile" type="file" accept=".json,application/json" style="display:none"></div>
+   <p class="note" style="margin-top:6px">入れた条件は、自動で<b>このパソコンのこのブラウザ</b>に保存され、次に開いたときも残ります。別のパソコンへ移したいときや、案件ごとに残したいときは「条件をファイルに保存」を使います。</p>`;
   $('inputs').innerHTML=h;
   $('inputs').querySelectorAll('input[data-k]').forEach(inp=>inp.addEventListener('input',()=>{ const v=parseFloat(inp.value); if(isFinite(v)){ S[mode][inp.dataset.k]=v; draw(); } }));
-  $('f_title').addEventListener('input',e=>{ DOC.title=e.target.value; updateHero(); });
-  $('f_proj').addEventListener('input',e=>{ DOC.proj=e.target.value; updateHero(); });
+  $('f_title').addEventListener('input',e=>{ DOC.title=e.target.value; updateHero(); saveState(); });
+  $('f_proj').addEventListener('input',e=>{ DOC.proj=e.target.value; updateHero(); saveState(); });
   $('f_mem').addEventListener('change',e=>{ S[mode].mem=e.target.value; draw(); });
   $('f_sw').addEventListener('change',e=>{ S[mode].sw=+e.target.value; draw(); });
   $('resetBtn').onclick=()=>{ S[mode]={...DEF[mode]}; buildInputs(); draw(); };
+  $('saveFileBtn').onclick=()=>{
+    const blob=new Blob([JSON.stringify(snapshot(),null,1)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    const nm=(DOC.proj||'ホイストレール条件').replace(/[\\/:*?"<>|]/g,'_'); a.download=nm+'.json';
+    document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
+  };
+  $('loadFileBtn').onclick=()=>$('loadFile').click();
+  $('loadFile').addEventListener('change',e=>{
+    const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
+    rd.onload=()=>{ try{ if(applySnapshot(JSON.parse(rd.result))){ buildModes(); buildInputs(); draw(); } else alert('読み込めませんでした'); }catch(err){ alert('このファイルは読み込めません'); } };
+    rd.readAsText(f);
+  });
 }
 function bindDynamic(){
   const sl=$('x1s'); if(sl){ sl.addEventListener('input',()=>{ S[mode].x1=parseFloat(sl.value); draw(true); }); }
@@ -683,7 +707,7 @@ function bindDynamic(){
   });
 }
 function draw(keepScroll){
-  const y=window.scrollY;
+  const y=window.scrollY; saveState();
   updateHero();
   const out = mode===2?render2():renderBeam(mode);
   $('story').innerHTML = typeof out==='string'?out:out.html;
@@ -697,7 +721,7 @@ $('foot').innerHTML=`<h2 style="font-size:16px;color:var(--navy);margin-bottom:6
  <li>断面の数値は JIS G 3192（H形鋼・I形鋼）の断面性能表によります。</li>
  <li>梁を支える柱・ブラケット・ボルト・アンカー（支点まわり・固定部）そのものの検討は、この計算には含まれません。それらの検討に使う支点の力は、各画面の最後にある「アンカー・支点の検討に使う力」に示しています。走行やブレーキで生じる水平力は含みません。</li></ul>
 `;
-buildModes(); buildInputs(); draw();
+loadState(); buildModes(); buildInputs(); draw();
 </script>
 </body>
 </html>
