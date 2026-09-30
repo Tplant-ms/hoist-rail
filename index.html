@@ -224,15 +224,15 @@ function analyze(o){
           rb:sbb/fb0, rs:tau/fs, rd:dmax/da, mem,nd};
 }
 function selfW(p){ const m=MEMBER_MAP[p.mem]; return (p.sw!=0)? m.kg*9.81/1000 : 0; }
-function scan3(p){                          // ホイストを端から端まで動かす
-  const m=MEMBER_MAP[p.mem]; const P=(p.W/2+p.Hw)*p.phi*9.81/1000; const w=selfW(p);
-  const xs=[]; const N=120, lo=-p.La, hi=p.L-p.d;
+function scan3(p,n){                          // ホイストを端から端まで動かす（n=1 or 2）
+  const m=MEMBER_MAP[p.mem]; const P=(p.W/n+p.Hw)*p.phi*9.81/1000; const w=selfW(p);
+  const dd=n==2?p.d:0; const N=120, lo=-p.La, hi=p.L-dd;
   if(hi<lo) return null;
   let worst={rb:0,rs:0,rd:0,xb:lo,xs:lo,xd:lo,RBmin:1e9,xRB:lo,tipmax:-1e9,xtip:lo,RAmax:-1e9,xRAmax:lo,RBmax:-1e9,xRBmax:lo};
   const rows=[];
   for(let i=0;i<=N;i++){
     const x1=lo+(hi-lo)*i/N;
-    const r=analyze({P,w,L:p.L,La:p.La,loads:[x1,x1+p.d],mem:m,fb0:p.fb0,nd:p.nd});
+    const r=analyze({P,w,L:p.L,La:p.La,loads:n==2?[x1,x1+p.d]:[x1],mem:m,fb0:p.fb0,nd:p.nd});
     rows.push({x1,rb:r.rb,rs:r.rs,rd:r.rd,RA:r.RA,RB:r.RB,tip:r.tip});
     if(r.rb>worst.rb){worst.rb=r.rb;worst.xb=x1;}
     if(r.rs>worst.rs){worst.rs=r.rs;worst.xs=x1;}
@@ -251,7 +251,7 @@ function scan3(p){                          // ホイストを端から端まで
 ===================================================================== */
 const DEF = {
   3:{W:2000,Hw:120,phi:1.2,L:4.3,La:1.5,d:2,x1:1.15,mem:'H-250×125×6×9',fb0:15.6,nd:800,sw:1},
-  1:{W:950,Hw:60,phi:1.2,L:4.3,mem:'H-200×100×5.5×8',fb0:15.6,nd:800,sw:1},
+  1:{W:950,Hw:60,phi:1.2,L:4.3,La:0.5,x1:2.15,mem:'H-200×100×5.5×8',fb0:15.6,nd:800,sw:1},
   2:{W:950,Hw:60,phi:1.2,Lc:1.2,mem:'H-200×100×5.5×8',fb0:15.6,nd:400,sw:1},
 };
 const S = {1:{...DEF[1]},2:{...DEF[2]},3:{...DEF[3]}};
@@ -268,12 +268,12 @@ const FIELDS = {
   3:[['W','吊り荷重（合計）','kg',50,'荷物全体の重さ。2台で半分ずつ持ちます'],['Hw','ホイスト自重（1台）','kg',10,''],
      ['L','支点間スパン L','m',0.1,'2つの支点の間の長さ'],['La','張り出し長さ La','m',0.1,'支点Aの外側にはみ出す長さ（なし＝0）'],
      ['d','吊り間隔 d','m',0.1,'2台のホイストの間の距離']],
-  1:[['W','吊り荷重','kg',50,'吊り上げる荷物の重さ'],['Hw','ホイスト自重','kg',10,''],['L','支点間スパン L','m',0.1,'2つの支点の間の長さ']],
+  1:[['W','吊り荷重','kg',50,'吊り上げる荷物の重さ'],['Hw','ホイスト自重','kg',10,''],['L','支点間スパン L','m',0.1,'2つの支点の間の長さ'],['La','張り出し長さ La','m',0.1,'支点Aの外側にはみ出す長さ（なし＝0）']],
   2:[['W','吊り荷重','kg',50,'吊り上げる荷物の重さ'],['Hw','ホイスト自重','kg',10,''],['Lc','張り出し長さ Lc','m',0.1,'固定した根元から先端まで']],
 };
 const MODE_INFO = {
   3:['③ 2点吊り（張り出し付き）','ホイスト2台・支点の外側に張り出しあり'],
-  1:['① 単純梁','ホイスト1台・両端を支える梁'],
+  1:['① 単純梁＋張り出し','ホイスト1台・張り出しあり（0なら単純梁）'],
   2:['② 片持ち梁','ホイスト1台・片側だけを固定して張り出す梁'],
 };
 function memberOptions(sel){
@@ -428,18 +428,18 @@ function stepJudge(no,r,extraNote){
    </div>${extraNote||''}`;
   return step(no,'梁の強さと比べて、安全かどうかを判定する',body);
 }
-function verdictHTML(r,subj){
+function verdictHTML(r,spec,load,moved){
   const ok=r.rb<=1&&r.rs<=1&&r.rd<=1;
   const ngs=[r.rb>1?'曲げ':'',r.rs>1?'せん断':'',r.rd>1?'たわみ':''].filter(Boolean).join('・');
   return `<section class="verdict ${ok?'ok':'ng'}"><div class="big"><div class="mark">${ok?'OK':'NG'}</div>
-   <div class="msg">${ok?`<b>${r.mem.n}</b> のレールは、${subj}曲げ・せん断・たわみのすべてが基準以内なので、<u>安全です</u>。`:`${subj}<b>${ngs}</b> が基準を超えています。<b>${r.mem.n}</b> のままでは<u>安全とは言えません</u>。より大きな部材にするか、スパン（張り出し）を短くしてください。`}</div></div>
+   <div class="msg">${ok?`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げても、曲げ・せん断・たわみのすべてが基準以内${moved?'（ホイストを梁の上で動かした場合の一番きびしい位置を含む）':''}なので、<u>安全です</u>。`:`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げるとき、<b>${ngs}</b>が基準を超えています。<u>安全とは言えません</u>。より大きな部材にするか、スパン（張り出し）を短くしてください。`}</div></div>
    <div class="gauges">
     ${gauge('曲げ','梁が折れないか',r.rb,'#EF8A45')}
     ${gauge('せん断','梁がずれ切られないか',r.rs,'#A66BC0')}
     ${gauge('たわみ','梁が下がりすぎないか',r.rd,'#4F8FD9')}
-   </div><p class="note" style="margin-top:8px">使用率＝「実際にかかる値 ÷ 基準で決まった限度」。100%以下なら基準を満たしています。理由は、下の STEP 1 から順に説明します。</p></section>`;
+   </div><p class="note" style="margin-top:8px">使用率＝「実際にかかる値 ÷ 基準で決まった限度」。100%以下なら基準を満たしています。${moved?'この判定は、今の位置とホイストを動かした全位置のうち、きびしいほうの値を使っています。':''}理由は、下の STEP 1 から順に説明します。</p></section>`;
 }
-const swTxt=p=>p.sw!=0?'梁の自重も含めて、':'梁の自重は含めずに、';
+const swTxt=p=>p.sw!=0?'梁の自重を含む':'梁の自重は含まない';
 
 const selfLabel=(w)=> w>0 ? `${fmt(w,2)}kN/m` : null;
 function anchorStep(no,inner){
@@ -469,42 +469,42 @@ function qPtsOf(r,La,L){
 }
 
 /* =====================================================================
-   ③ 2点吊り（張り出し付き）
+   ①③ 単純梁＋張り出し（① ホイスト1台／③ ホイスト2台）
 ===================================================================== */
-function render3(){
-  const p=S[3]; const m=MEMBER_MAP[p.mem]; const La=Math.max(0,p.La), L=p.L;
-  const sf=stepForce(p,2); const P=sf.P, w=sf.w;
-  const lo=-La, hi=L-p.d;
-  if(!(L>0)||!(p.d>0)||hi<lo){ return `<div class="warn">ホイストの間隔 d がスパン＋張り出しより大きすぎます。数字を見直してください。</div>`; }
+function renderBeam(k){
+  const two=(k==3), n=two?2:1; const p=S[k]; const m=MEMBER_MAP[p.mem]; const La=Math.max(0,p.La), L=p.L;
+  const sf=stepForce(p,n); const P=sf.P, w=sf.w;
+  const dd=two?p.d:0; const lo=-La, hi=L-dd;
+  if(!(L>0)||(two&&!(p.d>0))||hi<lo){ return `<div class="warn">数字を見直してください（スパン・ホイストの間隔 d が正しくありません）。</div>`; }
   p.x1=clamp(p.x1,lo,hi);
-  const x1=p.x1, x2=x1+p.d;
-  const r=analyze({P,w,L,La,loads:[x1,x2],mem:m,fb0:p.fb0,nd:p.nd}); r.M=r.Mmax; r.Q=r.Qmax;
+  const x1=p.x1, x2=x1+dd; const xsL=two?[x1,x2]:[x1];
+  const r=analyze({P,w,L,La,loads:xsL,mem:m,fb0:p.fb0,nd:p.nd}); r.M=r.Mmax; r.Q=r.Qmax;
   const fr=frame(-La,L);
   const supports=[[0,'支点A'],[L,'支点B']];
   const dims=[]; if(La>0) dims.push({a:-La,b:0,y:by(),label:`張り出し La＝${fmt(La,2)}m`});
   function by(){return 118+92;}
   dims.push({a:0,b:L,y:by(),label:`支点間スパン L＝${fmt(L,2)}m`});
   dims.push({a:Math.min(0,x1),b:Math.max(0,x1),y:by()+34,label:`x1＝${fmtN(x1,2)}m`});
-  dims.push({a:x1,b:x2,y:by()+64,label:`吊り間隔 d＝${fmt(p.d,2)}m`});
-  const loads=[{x:x1,label:`P＝${fmt(P,2)}kN`,tag:'左ホイスト'},{x:x2,label:`P＝${fmt(P,2)}kN`,tag:'右ホイスト'}];
+  if(two) dims.push({a:x1,b:x2,y:by()+64,label:`吊り間隔 d＝${fmt(p.d,2)}m`});
+  const loads=two?[{x:x1,label:`P＝${fmt(P,2)}kN`,tag:'左ホイスト'},{x:x2,label:`P＝${fmt(P,2)}kN`,tag:'右ホイスト'}]:[{x:x1,label:`P＝${fmt(P,2)}kN`,tag:'ホイスト'}];
   const beam0=beamSVG(fr,{loads,supports,overhang:La>0,dims,h:296,selfw:selfLabel(w)});
-  const slider=`<div class="slider-box"><label class="note" for="x1s"><b>ホイスト位置を動かしてみましょう</b>（左ホイスト x1：支点Aから ${fmtN(x1,2)} m）</label>
+  const slider=`<div class="slider-box"><label class="note" for="x1s"><b>ホイスト位置を動かしてみましょう</b>（${two?'左ホイスト ':'ホイスト '}x1：支点Aから ${fmtN(x1,2)} m）</label>
      <input id="x1s" class="slider" type="range" min="${lo}" max="${hi}" step="0.05" value="${x1}">
-     <div class="btnrow"><button class="btn" data-go="worst">曲げが最大になる位置へ</button><button class="btn" data-go="mid">2台が真ん中に並ぶ位置へ（たわみ最大）</button><button class="btn" data-go="reset">はじめの位置へ</button></div></div>`;
+     <div class="btnrow"><button class="btn" data-go="worst">曲げが最大になる位置へ</button><button class="btn" data-go="mid">${two?'2台が真ん中に並ぶ位置へ（たわみ最大）':'ホイストが真ん中にくる位置へ（たわみ最大）'}</button><button class="btn" data-go="reset">はじめの位置へ</button></div></div>`;
   // ---- STEP 2 反力
-  const lever=`${fmt(P,3)}×${fmtP(x1)} ＋ ${fmt(P,3)}×${fmtP(x2)}`;
+  const lever=two?`${fmt(P,3)}×${fmtP(x1)} ＋ ${fmt(P,3)}×${fmtP(x2)}`:`${fmt(P,3)}×${fmtP(x1)}`;
   const s2=step(2,'2つの支点は、どれくらいの力で梁を支えている？',`
     <p class="lead">ホイストと梁自身の重さが梁を押し下げる力を、支点AとBが<b>下から押し返して支えています</b>。この「支える力」を<b>反力（はんりょく）</b>といいます。</p>
     ${beamSVG(fr,{loads,supports,overhang:La>0,dims:[],reactions:[{x:0,v:r.RA,label:`RA＝${fmtN(r.RA,2)}kN`},{x:L,v:r.RB,label:`RB＝${fmtN(r.RB,2)}kN`}],h:262,selfw:selfLabel(w)})}
-    <p class="lead"><b>「てこ（シーソー）のつり合い」</b>で求めます。支点Aを回転の中心と考えると、2台のホイストが梁を回そうとする力（力×Aからの距離）と、支点Bが押し返す力（RB×L）がつり合います。</p>
-    ${eq('ホイスト分：RBp ＝ ( P×x1 ＋ P×x2 ) ÷ L',`RBp ＝ ( ${lever} ) ÷ ${fmt(L,2)}`,`RBp ＝ ${fmtN(r.RBp,3)} kN`)}
+    <p class="lead"><b>「てこ（シーソー）のつり合い」</b>で求めます。支点Aを回転の中心と考えると、${two?'2台のホイスト':'ホイスト'}が梁を回そうとする力（力×Aからの距離）と、支点Bが押し返す力（RB×L）がつり合います。</p>
+    ${eq(two?'ホイスト分：RBp ＝ ( P×x1 ＋ P×x2 ) ÷ L':'ホイスト分：RBp ＝ P × x1 ÷ L',two?`RBp ＝ ( ${lever} ) ÷ ${fmt(L,2)}`:`RBp ＝ ${lever} ÷ ${fmt(L,2)}`,`RBp ＝ ${fmtN(r.RBp,3)} kN`)}
     ${w>0?`<p class="lead">梁自身の重さは、張り出し部分を含む全長（L＋La）に均等にかかります。その合計 w×(L＋La) が全長の真ん中にかかっていると考えて、同じ「てこ」で求めます。</p>
     ${eq('自重分：RBw ＝ w × ( L² − La² ) ÷ ( 2 × L )',`RBw ＝ ${fmt(w,3)} × ( ${fmt(L,2)}² − ${fmt(La,2)}² ) ÷ ( 2 × ${fmt(L,2)} )`,`RBw ＝ ${fmt(r.RBw,3)} kN`)}`:''}
     ${eq('支点B：RB ＝ RBp ＋ RBw',`RB ＝ ${fmtN(r.RBp,3)} ＋ ${fmt(r.RBw,3)}`,`支点B：RB ＝ ${fmtN(r.RB,3)} kN`)}
-    ${eq('ホイスト分：RAp ＝ 2×P − RBp（全部の力から、Bの分を引いた残り）',`RAp ＝ 2 × ${fmt(P,3)} − ${fmtN(r.RBp,3)}`,`RAp ＝ ${fmtN(r.RAp,3)} kN`)}
+    ${eq(two?'ホイスト分：RAp ＝ 2×P − RBp（全部の力から、Bの分を引いた残り）':'ホイスト分：RAp ＝ P − RBp（全部の力から、Bの分を引いた残り）',two?`RAp ＝ 2 × ${fmt(P,3)} − ${fmtN(r.RBp,3)}`:`RAp ＝ ${fmt(P,3)} − ${fmtN(r.RBp,3)}`,`RAp ＝ ${fmtN(r.RAp,3)} kN`)}
     ${w>0?eq('自重分：RAw ＝ w × ( L ＋ La ) − RBw',`RAw ＝ ${fmt(w,3)} × ( ${fmt(L,2)} ＋ ${fmt(La,2)} ) − ${fmt(r.RBw,3)}`,`RAw ＝ ${fmt(r.RAw,3)} kN`):''}
     ${eq('支点A：RA ＝ RAp ＋ RAw',`RA ＝ ${fmtN(r.RAp,3)} ＋ ${fmt(r.RAw,3)}`,`支点A：RA ＝ ${fmtN(r.RA,3)} kN`)}
-    <p class="note">検算：RA ＋ RB ＝ ${fmtN(r.RA,3)} ＋ ${fmtN(r.RB,3)} ＝ ${fmtN(r.RA+r.RB,3)} kN ＝ 2P ＋ w×(L＋La)（${fmt(2*P+w*(L+La),3)} kN）で一致。</p>
+    <p class="note">検算：RA ＋ RB ＝ ${fmtN(r.RA,3)} ＋ ${fmtN(r.RB,3)} ＝ ${fmtN(r.RA+r.RB,3)} kN ＝ ${two?'2P':'P'} ＋ w×(L＋La)（${fmt(n*P+w*(L+La),3)} kN）で一致。</p>
     ${tip('シーソーで、支点から遠いところに座るほど大きく回すのと同じです。ホイストが支点Bに近いほど、Bが受け持つ力は大きくなります。')}
     ${Math.min(r.RA,r.RB)<0?`<div class="warn"><b>この位置では、片方の支点の反力がマイナスです。</b>梁がその支点から<b>浮き上がろうとします</b>（引き抜き力 ${fmt(-Math.min(r.RA,r.RB),2)} kN）。その支点をボルトなどで固定する必要があります。</div>`:`<div class="okbox">反力は2つとも「押す力」（プラス）なので、梁が支点から浮き上がることはありません。</div>`}`);
   // ---- STEP 3 曲げ
@@ -518,7 +518,7 @@ function render3(){
   const s3=step(3,'梁は、どれくらいの力で曲げられている？（曲げモーメント）',`
     <p class="lead">荷物を吊ると梁は曲げられます。曲げる力の大きさを<b>曲げモーメント M</b>といい、<b>「力 × 距離」</b>で表します（単位：kN・m）。梁の場所ごとに大きさが違うので、図にして「一番大きいところ」を探します。</p>
     ${plotSVG(fr,ptsM,{title:'曲げモーメント図（山が高いほど、強く曲げられている）',color:'#E65100',guides:gd,marks,foot:'kN・m　上向き＝梁の下側が引っぱられる（プラス）／下向き＝上側が引っぱられる（マイナス）'})}
-    <p class="lead">ある場所 x の曲げモーメントは、「その場所より左側にある力」に「その場所までの距離」を掛けて足し引きします。<b>M(x) ＝ RA×x − P×(x−x1) − P×(x−x2)${w>0?' − w×(x＋La)²÷2':''}</b>（ホイストが x より左にあるものだけ引く）。${w>0?'最後の項が梁の自重の分です。x より左にある梁の重さ w×(x＋La) が、その真ん中にかかるので、距離は (x＋La)÷2 になります。':''}</p>
+    <p class="lead">ある場所 x の曲げモーメントは、「その場所より左側にある力」に「その場所までの距離」を掛けて足し引きします。<b>M(x) ＝ RA×x − P×(x−x1)${two?' − P×(x−x2)':''}${w>0?' − w×(x＋La)²÷2':''}</b>（ホイストが x より左にあるものだけ引く）。${w>0?'最後の項が梁の自重の分です。x より左にある梁の重さ w×(x＋La) が、その真ん中にかかるので、距離は (x＋La)÷2 になります。':''}</p>
     ${w>0?'<p class="lead">梁の自重があると、ホイストの真下でなくても、<b>せん断力が0になる場所で曲げモーメントが山になる</b>ことがあります（次のSTEPのせん断力図で、0を横切る場所です）。表の「山」の行はその場所です。</p>':''}
     <table class="tbl"><tr><th>調べる場所</th><th>Aからの距離</th><th>数字を入れると</th><th>M（kN・m）</th></tr>
     ${mrows.map(pt=>`<tr><td>${pt.name}</td><td>${fmtN(pt.x,2)} m</td><td style="text-align:left">${mtxt(pt.x)}</td><td><b>${fmtN(pt.v,3)}</b></td></tr>`).join('')}
@@ -540,14 +540,14 @@ function render3(){
   const s5=step(5,'梁は、どれくらい下がる？（たわみ）',`
     <p class="lead">荷物を吊ると、梁は少したわんで下がります。下がりすぎるとホイストが動きにくくなるので、<b>「スパンの ${fmt(p.nd,0)} 分の 1 以下」</b>に抑えます（クレーン用レールの目安）。</p>
     ${plotSVG(fr,dpts,{title:'たわみ図（下向きが「下がる」向き／数字は実際の大きさ）',color:'#1565C0',down:true,guides:gd,marks:dm,h:190,foot:'mm　※図は見やすいよう縦方向を大きく描いています'})}
-    <p class="lead">左のホイストだけが作るたわみ、右のホイストだけが作るたわみ${w>0?'、梁の自重だけが作るたわみ':''}を、それぞれ材料力学の公式で求めて<b>足し合わせます</b>（重ね合わせ）。梁を細かく区切って一番下がる場所を探すと、支点Aから <b>${fmt(r.xd,2)} m</b> の位置でした。</p>
+    <p class="lead">${two?'左のホイストだけが作るたわみ、右のホイストだけが作るたわみ':'ホイストだけが作るたわみ'}${w>0?'、梁の自重だけが作るたわみ':''}を、それぞれ材料力学の公式で求めて<b>足し合わせます</b>（重ね合わせ）。梁を細かく区切って一番下がる場所を探すと、支点Aから <b>${fmt(r.xd,2)} m</b> の位置でした。</p>
     ${eq('たわみの限度 δa ＝ L ÷ n',`δa ＝ ${fmt(L,2)} m × 1000 ÷ ${fmt(p.nd,0)}`,`限度 δa ＝ ${fmt(r.da,3)} mm　／　実際 δ ＝ ${fmt(r.dmax,3)} mm`)}
     ${tip(`${fmt(r.dmax,1)}mm は、1円玉（厚さ1.5mm）を約 ${fmt(r.dmax/1.5,1)} 枚重ねた高さ。これが限度の ${fmt(r.da,1)}mm（1円玉 約 ${fmt(r.da/1.5,1)} 枚）より小さければOKです。`)}
     ${La>0?`<p class="note">参考：張り出し先端は、この位置にホイストがあるとき ${r.tip>=0?'下に':'上に'} ${fmt(Math.abs(r.tip),2)} mm 動きます（プラス＝下がる、マイナス＝跳ね上がる）。</p>`:''}`);
   // ---- STEP 6
   const s6=stepJudge(6,r);
   // ---- 位置を動かす
-  const sc=scan3(p);
+  const sc=scan3(p,n);
   let s7='', s8='';
   if(sc){
     const wv=sc.worst;
@@ -559,10 +559,10 @@ function render3(){
     ch+=`<line x1="${padL}" x2="${W2-padR}" y1="${Y(1)}" y2="${Y(1)}" stroke="#B3261E" stroke-width="2" stroke-dasharray="7 5"/><text x="${W2-padR}" y="${Y(1)-5}" font-size="12" text-anchor="end" fill="#B3261E" font-weight="700">限度 100%</text>`;
     ch+=line('rb','#E65100')+line('rs','#6A1B9A')+line('rd','#1565C0');
     ch+=`<line x1="${X(x1)}" x2="${X(x1)}" y1="${top-6}" y2="${Hc-bot}" stroke="#333" stroke-dasharray="3 3"/><text x="${X(x1)}" y="${top-8}" font-size="11" text-anchor="middle" fill="#333">今の位置</text>`;
-    ch+=`<text x="${padL}" y="${Hc-10}" font-size="12" fill="#6B7686">← 左ホイストが張り出し先端にある（x1＝${fmtN(sc.lo,2)}m）</text><text x="${W2-padR}" y="${Hc-10}" font-size="12" text-anchor="end" fill="#6B7686">右ホイストが支点Bの真上にある（x1＝${fmtN(sc.hi,2)}m） →</text></svg>`;
+    ch+=`<text x="${padL}" y="${Hc-10}" font-size="12" fill="#6B7686">← ${two?'左ホイスト':'ホイスト'}が張り出し先端にある（x1＝${fmtN(sc.lo,2)}m）</text><text x="${W2-padR}" y="${Hc-10}" font-size="12" text-anchor="end" fill="#6B7686">${two?'右ホイスト':'ホイスト'}が支点Bの真上にある（x1＝${fmtN(sc.hi,2)}m） →</text></svg>`;
     const allok=wv.rb<=1&&wv.rs<=1&&wv.rd<=1;
     s7=step(7,'ホイストを梁の上で動かしたら？（一番きびしい位置の確認）',`
-      <p class="lead">実際の作業では、ホイストは梁の上を動きます。そこで、2台のホイスト（間隔 d のまま）を<b>張り出し先端から支点Bまで少しずつずらして</b>、位置ごとの使用率を調べました。</p>
+      <p class="lead">実際の作業では、ホイストは梁の上を動きます。そこで、${two?'2台のホイスト（間隔 d のまま）':'ホイスト'}を<b>張り出し先端から支点Bまで少しずつずらして</b>、位置ごとの使用率を調べました。</p>
       ${ch}<div class="legend"><span><i style="background:#E65100"></i>曲げ</span><span><i style="background:#6A1B9A"></i>せん断</span><span><i style="background:#1565C0"></i>たわみ</span></div>
       <table class="tbl"><tr><th>項目</th><th>一番きびしい使用率</th><th>そのときの位置 x1</th></tr>
         <tr><td>曲げ</td><td><b>${pct(wv.rb)}</b></td><td>${fmtN(wv.xb,2)} m</td></tr>
@@ -579,66 +579,11 @@ function render3(){
       ${(minRA<0||minRB<0)?`<div class="warn"><b>引き抜き力がはたらきます。</b>ホイストが張り出しに出る位置では、${minRB<0?'支点B':'支点A'}が浮き上がろうとし、最大 ${fmt(-Math.min(minRA,minRB),2)} kN の引き抜き力になります。固定部（アンカー等）は、この力に耐える必要があります。</div>`:`<div class="okbox">どの位置でも支点は「押す向き」だけで、引き抜く向きの力ははたらきません。</div>`}
       <p class="note">押す向きの最大の力は、アンカーのせん断力・コンクリートの支圧の検討に、引き抜き力は、アンカーの引き抜きの検討に使います。</p>`);
   }
-  const desc=`${swTxt(p)}荷物 ${fmt(p.W,0)}kg を2台のホイスト（自重 ${fmt(p.Hw,0)}kg／台）で吊り上げても、`;
-  return {html: verdictHTML(r,desc)
-    + `<section class="card"><h2>今回の条件</h2><p class="note" style="margin:4px 0 8px">梁は2つの支点（A・B）で支えられ、支点Aの外側に張り出しがあります。2台のホイストで、長い荷物を吊ります。</p>${beam0}${slider}</section>`
+  const rv=sc?{...r,rb:Math.max(r.rb,sc.worst.rb),rs:Math.max(r.rs,sc.worst.rs),rd:Math.max(r.rd,sc.worst.rd)}:r;
+  return {html: verdictHTML(rv,`スパン ${fmt(L,2)}m・張り出し ${fmt(La,2)}m${two?`・吊り間隔 ${fmt(p.d,2)}m`:''}`,`荷物 ${fmt(p.W,0)}kg ＋ ホイスト自重 ${fmt(p.Hw,0)}kg${two?'×2台':''}${p.sw!=0?' ＋ 梁の自重':'（梁の自重は含まない）'}`,!!sc)
+    + `<section class="card"><h2>今回の条件</h2><p class="note" style="margin:4px 0 8px">梁は2つの支点（A・B）で支えられ、支点Aの外側に張り出し${two?'があります。2台のホイストで、長い荷物を吊ります。':'（なしの場合は 0）があります。ホイストは1台で、梁の上（張り出し先端〜支点B）のどこにでも動かせます。'}</p>${beam0}${slider}</section>`
     + `<p class="note" style="margin:14px 4px 0"><b>どうして安全と言えるの？</b>　次の順番で、ひとつずつ確かめます。</p>`
     + sf.html + s2 + s3 + s4 + s5 + s6 + s7 + s8};
-}
-
-/* =====================================================================
-   ① 単純梁
-===================================================================== */
-function render1(){
-  const p=S[1]; const m=MEMBER_MAP[p.mem]; const L=p.L;
-  const sf=stepForce(p,1); const P=sf.P, w=sf.w;
-  const r=analyze({P,w,L,La:0,loads:[L/2],mem:m,fb0:p.fb0,nd:p.nd});
-  const Mp=P*L/4, Mw=w*L*L/8;
-  r.M=Mp+Mw; r.Rp=P/2; r.Rw=w*L/2; r.Qc=P/2+w*L/2; r.Qe=P+w*L/2; r.Q=Math.max(r.Qc,r.Qe); r.sb=r.M*100/m.Zx; r.tau=r.Q/r.Aw; r.rb=r.sb/p.fb0; r.rs=r.tau/r.fs;
-  const dP=P*Math.pow(L*100,3)/(48*r.EI)*10, dW=5*(w/100)*Math.pow(L*100,4)/(384*r.EI)*10;
-  r.dmax=dP+dW; r.rd=r.dmax/r.da;
-  const fr=frame(0,L);
-  const loads=[{x:L/2,label:`P＝${fmt(P,2)}kN`,tag:'ホイスト'}];
-  const dims=[{a:0,b:L,y:210,label:`支点間スパン L＝${fmt(L,2)}m`}];
-  const supports=[[0,'支点A'],[L,'支点B']];
-  const sw=selfLabel(w);
-  const s0=`<section class="card"><h2>今回の条件</h2><p class="note" style="margin:4px 0 8px">梁は両端の支点（A・B）で支えられ、ホイストが梁の上を動きます。ホイストが<b>真ん中</b>にきたときが、曲げとたわみにとって一番きびしい状態です。</p>${beamSVG(fr,{loads,supports,dims,h:250,selfw:sw})}</section>`;
-  const s2=step(2,'2つの支点は、どれくらいの力で梁を支えている？',`
-    <p class="lead">ホイストが真ん中にあるとき、荷物の力は左右の支点が<b>半分ずつ</b>支えます。${w>0?'梁自身の重さ（w×L）も、左右で半分ずつ支えます。':''}この「支える力」を<b>反力（はんりょく）</b>といいます。</p>
-    ${beamSVG(fr,{loads,supports,reactions:[{x:0,v:1,label:`RA＝${fmt(r.RA,2)}kN`},{x:L,v:1,label:`RB＝${fmt(r.RB,2)}kN`}],h:250,selfw:sw})}
-    ${eq('ホイスト分：P ÷ 2',`${fmt(P,3)} ÷ 2`,`${fmt(r.Rp,3)} kN`)}
-    ${w>0?eq('梁の自重分：w × L ÷ 2',`${fmt(w,3)} × ${fmt(L,2)} ÷ 2`,`${fmt(r.Rw,3)} kN`):''}
-    ${eq('RA ＝ RB ＝ P÷2 ＋ w×L÷2',`RA ＝ RB ＝ ${fmt(r.Rp,3)} ＋ ${fmt(r.Rw,3)}`,`RA ＝ RB ＝ ${fmt(r.RA,3)} kN`)}`);
-  const ptsM=mPtsOf(r,0,L);
-  const s3=step(3,'梁は、どれくらいの力で曲げられている？（曲げモーメント）',`
-    <p class="lead">荷物を吊ると梁は曲げられます。曲げる力の大きさを<b>曲げモーメント M</b>といい、<b>「力 × 距離」</b>で表します（単位：kN・m）。真ん中にホイストがあるとき、真ん中の断面が一番強く曲げられます。</p>
-    ${plotSVG(fr,ptsM,{title:'曲げモーメント図（山が高いほど、強く曲げられている）',color:'#E65100',guides:[0,L/2,L],marks:[{x:L/2,v:r.M,label:fmt(r.M,2)+' kN・m'}],foot:'kN・m'})}
-    ${eq('ホイスト分：Mp ＝ P × L ÷ 4（材料力学の公式）',`Mp ＝ ${fmt(P,3)} × ${fmt(L,2)} ÷ 4`,`Mp ＝ ${fmt(Mp,3)} kN・m`)}
-    ${w>0?eq('梁の自重分：Mw ＝ w × L² ÷ 8（材料力学の公式：等分布荷重）',`Mw ＝ ${fmt(w,3)} × ${fmt(L,2)}² ÷ 8`,`Mw ＝ ${fmt(Mw,3)} kN・m`):''}
-    ${eq('M ＝ Mp ＋ Mw',`M ＝ ${fmt(Mp,3)} ＋ ${fmt(Mw,3)}`,`M ＝ ${fmt(r.M,3)} kN・m`)}
-    ${tip('定規の両端を支えて真ん中を指で押すと、真ん中が一番曲がります。スパン（支点の間隔）が長いほど、また力が大きいほど、曲げモーメントは大きくなります。')}`);
-  const qp=qPtsOf(r,0,L);
-  const s4=step(4,'梁は、どれくらいの力でずらし切られそうになっている？（せん断力）',`
-    <p class="lead">ハサミで紙を切るときは、2枚の刃が紙を上下にずらして切ります。梁にもこれと同じ<b>「ずらし切る力」（せん断力 Q）</b>がかかります。</p>
-    ${plotSVG(fr,qp.pts,{title:'せん断力図（ホイストが真ん中のとき）',color:'#6A1B9A',guides:[0,L/2,L],marks:qp.marks,h:165,foot:'kN'})}
-    <table class="tbl"><tr><th>ホイストの位置</th><th>数字</th><th>Q（kN）</th></tr>
-     <tr><td>真ん中のとき</td><td style="text-align:left">Q ＝ P÷2 ＋ w×L÷2 ＝ ${fmt(P,3)} ÷ 2 ＋ ${fmt(w,3)} × ${fmt(L,2)} ÷ 2</td><td><b>${fmt(r.Qc,3)}</b></td></tr>
-     <tr><td>支点のすぐそばのとき</td><td style="text-align:left">ほぼ全部の力 P がかかる　Q ＝ P ＋ w×L÷2 ＝ ${fmt(P,3)} ＋ ${fmt(w,3)} × ${fmt(L,2)} ÷ 2</td><td><b>${fmt(r.Qe,3)}</b></td></tr></table>
-    ${eq('採用するせん断力（安全側に、大きいほう）',`Qmax ＝ ${fmt(r.Q,3)} kN（ホイストが支点のそばのとき）`,`Qmax ＝ ${fmt(r.Q,3)} kN`)}`);
-  const NS=120; const dpp=[]; for(let i=0;i<=NS;i++){ const x=L*i/NS; dpp.push([x,r.dfl(x)]); }
-  const s5=step(5,'梁は、どれくらい下がる？（たわみ）',`
-    <p class="lead">荷物を吊ると、梁は少したわんで下がります。下がりすぎるとホイストが動きにくくなるので、<b>「スパンの ${fmt(p.nd,0)} 分の 1 以下」</b>に抑えます（クレーン用レールの目安）。</p>
-    ${plotSVG(fr,dpp,{title:'たわみ図（下向きが「下がる」向き／数字は実際の大きさ）',color:'#1565C0',down:true,guides:[0,L/2,L],marks:[{x:L/2,v:r.dmax,label:fmt(r.dmax,2)+' mm'}],foot:'mm　※図は見やすいよう縦方向を大きく描いています'})}
-    ${eq('ホイスト分：δp ＝ P × L³ ÷ ( 48 × E × Ix )（材料力学の公式）',`δp ＝ ${fmt(P,3)} × (${fmt(L*100,0)}cm)³ ÷ ( 48 × ${fmt(E,0)} × ${fmt(m.Ix,0)} ) × 10`,`δp ＝ ${fmt(dP,3)} mm`)}
-    ${w>0?eq('梁の自重分：δw ＝ 5 × w × L⁴ ÷ ( 384 × E × Ix )（w は kN/cm に直す）',`δw ＝ 5 × ${fmt(w/100,5)} × (${fmt(L*100,0)}cm)⁴ ÷ ( 384 × ${fmt(E,0)} × ${fmt(m.Ix,0)} ) × 10`,`δw ＝ ${fmt(dW,3)} mm`):''}
-    ${eq('δ ＝ δp ＋ δw　／　限度 δa ＝ L ÷ n',`δ ＝ ${fmt(dP,3)} ＋ ${fmt(dW,3)}　／　δa ＝ ${fmt(L,2)} m × 1000 ÷ ${fmt(p.nd,0)}`,`実際 δ ＝ ${fmt(r.dmax,3)} mm　／　限度 δa ＝ ${fmt(r.da,3)} mm`)}
-    ${tip(`E（ヤング係数）は鋼の「のび縮みのしにくさ」、Ix は断面の形が決める「曲がりにくさ」です。掛け算した値が大きいほど、曲がりにくい梁です。`)}`);
-  const s6=stepJudge(6,r);
-  const s7=anchorStep(7,`<table class="tbl"><tr><th>項目</th><th>支点A・支点B（同じ値）</th></tr>
-      <tr><td>支点にかかる最大の力（下向き）<br><span class="note">ホイストが支点のすぐそばにきたとき　Rmax ＝ P ＋ w×L÷2</span></td><td><b>${fmt(r.Qe,2)} kN</b></td></tr>
-      <tr><td>ホイストが真ん中のとき（片側）</td><td>${fmt(r.RA,2)} kN</td></tr></table>
-      <div class="okbox">引き抜く向き（上向き）の力は出ません。単純梁では、荷重はどの位置でも支点を「押す」向きにだけはたらきます。</div>`);
-  return {html: verdictHTML(r,`${swTxt(p)}荷物 ${fmt(p.W,0)}kg とホイスト ${fmt(p.Hw,0)}kg で吊り上げても、`)+s0+`<p class="note" style="margin:14px 4px 0"><b>どうして安全と言えるの？</b>　次の順番で、ひとつずつ確かめます。</p>`+sf.html+s2+s3+s4+s5+s6+s7};
 }
 
 /* =====================================================================
@@ -696,7 +641,7 @@ function render2(){
       <tr><td>根元にかかる下向きの力 V ＝ Q<br><span class="note">アンカーのせん断力の検討に使います</span></td><td><b>${fmt(Q,2)} kN</b></td></tr>
       <tr><td>根元にかかる曲げモーメント M<br><span class="note">上側のアンカーを引き抜く力と、下側を押しつける力の組み合わせで受けます</span></td><td><b>${fmt(M,2)} kN・m</b></td></tr></table>
       <div class="tip"><span class="tag">目安</span>上下のアンカー（または固定部）の間隔を z (m) とすると、上側を引き抜く力は T ≒ M ÷ z (kN) で、大まかな値が分かります。実際の分担は、アンカーの配置や梁の剛性で変わるため、固定部の設計基準で確認してください。</div>`);
-  return {html: verdictHTML(r,`${swTxt(p)}荷物 ${fmt(p.W,0)}kg とホイスト ${fmt(p.Hw,0)}kg を、張り出し ${fmt(Lc,2)}m の先端で吊り上げても、`)+s0+`<p class="note" style="margin:14px 4px 0"><b>どうして安全と言えるの？</b>　次の順番で、ひとつずつ確かめます。</p>`+sf.html+s2+s3+s4+s5+s6+s7};
+  return {html: verdictHTML(r,`張り出し ${fmt(Lc,2)}m・先端に吊る`,`荷物 ${fmt(p.W,0)}kg ＋ ホイスト自重 ${fmt(p.Hw,0)}kg${p.sw!=0?' ＋ 梁の自重':'（梁の自重は含まない）'}`)+s0+`<p class="note" style="margin:14px 4px 0"><b>どうして安全と言えるの？</b>　次の順番で、ひとつずつ確かめます。</p>`+sf.html+s2+s3+s4+s5+s6+s7};
 }
 
 /* =====================================================================
@@ -728,19 +673,19 @@ function buildInputs(){
   $('resetBtn').onclick=()=>{ S[mode]={...DEF[mode]}; buildInputs(); draw(); };
 }
 function bindDynamic(){
-  const sl=$('x1s'); if(sl){ sl.addEventListener('input',()=>{ S[3].x1=parseFloat(sl.value); draw(true); }); }
+  const sl=$('x1s'); if(sl){ sl.addEventListener('input',()=>{ S[mode].x1=parseFloat(sl.value); draw(true); }); }
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
-    const p=S[3]; const lo=-Math.max(0,p.La), hi=p.L-p.d; const sc=scan3(p);
+    const p=S[mode]; const n=mode==3?2:1; const dd=n==2?p.d:0; const lo=-Math.max(0,p.La), hi=p.L-dd; const sc=scan3(p,n);
     if(b.dataset.go==='worst' && sc) p.x1=sc.worst.xb;
-    if(b.dataset.go==='mid') p.x1=(p.L-p.d)/2;
-    if(b.dataset.go==='reset') p.x1=DEF[3].x1;
+    if(b.dataset.go==='mid') p.x1=(p.L-dd)/2;
+    if(b.dataset.go==='reset') p.x1=DEF[mode].x1;
     p.x1=clamp(p.x1,lo,hi); draw(true);
   });
 }
 function draw(keepScroll){
   const y=window.scrollY;
   updateHero();
-  const out = mode===3?render3():(mode===1?render1():render2());
+  const out = mode===2?render2():renderBeam(mode);
   $('story').innerHTML = typeof out==='string'?out:out.html;
   bindDynamic();
   if(keepScroll) window.scrollTo(0,y);
@@ -751,7 +696,7 @@ $('foot').innerHTML=`<h2 style="font-size:16px;color:var(--navy);margin-bottom:6
  <li>許容応力度：fb0 ＝ 15.6 kN/cm²（SS400）、せん断 fs ＝ fb0 ÷ √3 ≒ 9.0 kN/cm²。ヤング係数 E ＝ 21,000 kN/cm²。</li>
  <li>断面の数値は JIS G 3192（H形鋼・I形鋼）の断面性能表によります。</li>
  <li>梁を支える柱・ブラケット・ボルト・アンカー（支点まわり・固定部）そのものの検討は、この計算には含まれません。それらの検討に使う支点の力は、各画面の最後にある「アンカー・支点の検討に使う力」に示しています。走行やブレーキで生じる水平力は含みません。</li></ul>
- <p style="margin-top:8px">同じ計算式を、Excel（計算書）にも「生きた数式」として入れています。セルをクリックすると、この画面と同じ式を確かめられます。</p>`;
+`;
 buildModes(); buildInputs(); draw();
 </script>
 </body>
