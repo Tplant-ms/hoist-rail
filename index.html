@@ -486,9 +486,21 @@ function verdictHTML(r,spec,load,moved){
 const swTxt=p=>p.sw!=0?'梁の自重を含む':'';
 
 const selfLabel=(w)=> w>0 ? `${fmt(w,2)}kN/m` : null;
-function anchorStep(no,inner){
+function anchorCap(shear,up){
+  const fsb=90;
+  const rows=[['M12',84.3,'R-12N',100,11.3],['M16',157,'R-16N',130,18.9],['M20',245,'R-19N',200,38.3]].map(([nm,a,prod,le,ta])=>({nm,a,prod,le,ta,sh:fsb*a/1000}));
+  const body=rows.map(q=>`<tr><td>${q.nm}<br><span class="note">有効断面積 ${q.a} mm²</span></td>
+    <td>${fsb} × ${q.a} ＝ <b>${fmt(q.sh,1)} kN</b></td>
+    <td><b>${fmt(q.ta,1)} kN</b><br><span class="note">${q.prod}　埋め込み ${q.le} mm</span></td>
+    ${shear!=null?`<td>せん断 ${fmt(Math.max(1,Math.ceil(shear/q.sh-1e-9)),0)} 本${up>0?`<br>引抜き ${fmt(Math.max(1,Math.ceil(up/q.ta-1e-9)),0)} 本`:''}</td>`:''}</tr>`).join('');
+  return `<h4 style="margin:14px 0 6px">アンカー・ボルト 1本あたりの耐力の目安（M12・M16・M20）</h4>
+  <p class="lead">上の力を1本あたりの耐力で割ると、必要な本数の目安が分かります。<b>SS400ボルトのせん断</b>は、許容せん断応力度 ${fsb} N/mm²（F＝235 を 1.5×√3 で割った長期の値）× 有効断面積です。<b>ケミカルアンカーの引き抜き</b>は、日本デコラックス ケミカルアンカー Rタイプ（回転・回転打撃式）のカタログ値（標準サイズの長期許容引張強度）です。</p>
+  <table class="tbl"><tr><th>呼び径</th><th>1本の せん断耐力</th><th>1本の 引き抜き耐力<br>（カタログ・長期）</th>${shear!=null?'<th>必要本数の目安</th>':''}</tr>${body}</table>
+  <p class="note">引き抜きの値は、コンクリート Fc＝21 N/mm² の条件で、ボルト自体とコンクリート側の小さいほうを考えた値です（カタログの注記による）。短期の力に対しては長期値の1.5倍が使えます。コンクリートの強度・縁端距離・間隔が違うときは、カタログの設計指針で確認してください。必要本数は、力を全部のアンカーで均等に受けた場合の最低本数で、曲げで生じる力・縁端距離や間隔による低下・せん断と引張の組合せは含みません。</p>`;
+}
+function anchorStep(no,inner,cap){
   return step(no,'アンカー・支点の検討に使う力（参考）',`<p class="lead">梁を支える場所（コンクリート梁へのケミカルアンカーなど）には、ここで求めた力がかかります。<b>アンカー1本あたりの引き抜き力・せん断力は、この力を、アンカーの本数と配置に応じて割り振って</b>求めます。</p>${inner}
-   <p class="note">走行やブレーキで生じる横向きの力（水平力）は、この計算に含まれません。</p>`);
+   <p class="note">走行やブレーキで生じる横向きの力（水平力）は、この計算に含まれません。</p>${cap||''}`);
 }
 /* 曲げモーメント図の点列（山の位置も含める） */
 function mPtsOf(r,La,L,extra){
@@ -631,7 +643,7 @@ function renderBeam(k){
       <tr><td>どの位置でも最大の力（押す向き）</td><td><b>${fmt(wv.RAmax,2)} kN</b><br><span class="note">x1＝${fmtN(wv.xRAmax,2)} m のとき</span></td><td><b>${fmt(wv.RBmax,2)} kN</b><br><span class="note">x1＝${fmtN(wv.xRBmax,2)} m のとき</span></td></tr>
       <tr><td>どの位置でも最小の力（マイナス＝引き抜く向き）</td><td><b>${fmtN(minRA,2)} kN</b></td><td><b>${fmtN(minRB,2)} kN</b></td></tr></table>
       ${(minRA<0||minRB<0)?`<div class="warn"><b>引き抜き力がはたらきます。</b>ホイストが張り出しに出る位置では、${minRB<0?'支点B':'支点A'}が浮き上がろうとし、最大 ${fmt(-Math.min(minRA,minRB),2)} kN の引き抜き力になります。固定部（アンカー等）は、この力に耐える必要があります。</div>`:`<div class="okbox">どの位置でも支点は「押す向き」だけで、引き抜く向きの力ははたらきません。</div>`}
-      <p class="note">押す向きの最大の力は、アンカーのせん断力・コンクリートの支圧の検討に、引き抜き力は、アンカーの引き抜きの検討に使います。</p>`);
+      <p class="note">押す向きの最大の力は、アンカーのせん断力・コンクリートの支圧の検討に、引き抜き力は、アンカーの引き抜きの検討に使います。</p>`,anchorCap(Math.max(wv.RAmax,wv.RBmax),Math.max(0,-Math.min(minRA,minRB))));
   }
     if(!two && La>=0){
     const cm=cantMax(P,w,m,p.fb0,p.nc); const Lm=cm.Lmax;
@@ -706,7 +718,7 @@ function render2(){
   const s7=anchorStep(7,`<table class="tbl"><tr><th>項目</th><th>値</th></tr>
       <tr><td>根元にかかる下向きの力 V ＝ Q<br><span class="note">アンカーのせん断力の検討に使います</span></td><td><b>${fmt(Q,2)} kN</b></td></tr>
       <tr><td>根元にかかる曲げモーメント M<br><span class="note">上側のアンカーを引き抜く力と、下側を押しつける力の組み合わせで受けます</span></td><td><b>${fmt(M,2)} kN・m</b></td></tr></table>
-      <div class="tip"><span class="tag">目安</span>上下のアンカー（または固定部）の間隔を z (m) とすると、上側を引き抜く力は T ≒ M ÷ z (kN) で、大まかな値が分かります。実際の分担は、アンカーの配置や梁の剛性で変わるため、固定部の設計基準で確認してください。</div>`);
+      <div class="tip"><span class="tag">目安</span>上下のアンカー（または固定部）の間隔を z (m) とすると、上側を引き抜く力は T ≒ M ÷ z (kN) で、大まかな値が分かります。実際の分担は、アンカーの配置や梁の剛性で変わるため、固定部の設計基準で確認してください。</div>`,anchorCap(null,0));
   return {html: verdictHTML(r,`張り出し ${fmt(Lc,2)}m・先端に吊る`,`荷物 ${fmt(p.W,0)}kg ＋ ホイスト自重 ${fmt(p.Hw,0)}kg${p.sw!=0?' ＋ 梁の自重':''}`)+s0+`<p class="note" style="margin:14px 4px 0"><b>どうして安全と言えるの？</b>　次の順番で、ひとつずつ確かめます。</p>`+sf.html+s2+s3+s4+s5+s6+s7};
 }
 
