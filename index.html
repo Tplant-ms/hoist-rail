@@ -482,6 +482,14 @@ function stepJudge(no,r,extraNote){
    </div>${extraNote||''}`;
   return step(no,'梁の強さと比べて、安全かどうかを判定する',body);
 }
+function braceAdvice(r){
+  const l=r.ltb; if(!l||!l.on||!(r.rb>1)) return '';
+  const lbN=Math.max(l.bm>0?l.lbSpan:r.L/2, l.La>0?l.La:0)*1000;   // 中央1か所＋先端をつないだ場合
+  const lbCur=l.lbe; if(!(lbN<lbCur-0.5)) return '';
+  const lam=lbN/l.i, f1=Math.max(0,1-0.4*lam*lam/(l.C*l.Lam*l.Lam))*l.F/(1.5+2/3*(lam/l.Lam)**2)/10, f2=0.433*205000/(lbN*r.mem.H/l.Af)*l.C/10;
+  const fbN=Math.min(Math.max(f1,f2),l.fb0), rN=r.rb*l.fb/fbN;
+  return `<div class="braceadv" style="margin-top:8px;font-size:0.95em"><b>振れ止めを入れた場合：</b>${l.La>0?'梁の中央をつなぎ、張り出し先端にも振れ止めを付ける':'梁の中央をつなぐ'}と、横座屈の長さが ${fmt(lbCur/1000,2)} m から ${fmt(lbN/1000,2)} m になり、曲げの使用率は <b>${pct(r.rb)}</b> から <b>${pct(rN)}</b> になります${rN<=1?'（曲げは基準以内）':'（それでも基準を超えるため、部材を大きくするか、スパンを短くしてください）'}。入力欄の「つなぎ」で選ぶと、この効果が計算に入ります。</div>`;
+}
 function braceSentence(r){
   const l=r.ltb; if(!l||!l.on||!(l.lbe<l.lbNo-0.5)) return '';
   const a=[]; if(l.bm>0) a.push([`梁を${l.bm}か所つなぎ`,`梁を${l.bm}か所つないだ`]); if(l.La>0&&l.bt) a.push(['先端に振れ止めを付け','先端に振れ止めを付けた']);
@@ -493,7 +501,7 @@ function verdictHTML(r,spec,load,moved){
   const ok=r.rb<=1&&r.rs<=1&&r.rd<=1;
   const ngs=[r.rb>1?'曲げ':'',r.rs>1?'せん断':'',r.rd>1?'たわみ':''].filter(Boolean).join('・');
   return `<section class="verdict ${ok?'ok':'ng'}"><div class="big"><div class="mark">${ok?'OK':'NG'}</div>
-   <div class="msg">${ok?`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げても、曲げ・せん断・たわみのすべてが基準以内${moved?'（ホイストを梁の上で動かした場合の一番きびしい位置を含む）':''}なので、<u>安全です</u>。`:`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げるとき、<b>${ngs}</b>が基準を超えています。<u>安全とは言えません</u>。より大きな部材にするか、スパン（張り出し）を短くしてください。`}${braceSentence(r)}</div></div>
+   <div class="msg">${ok?`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げても、曲げ・せん断・たわみのすべてが基準以内${moved?'（ホイストを梁の上で動かした場合の一番きびしい位置を含む）':''}なので、<u>安全です</u>。`:`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げるとき、<b>${ngs}</b>が基準を超えています。<u>安全とは言えません</u>。より大きな部材にするか、スパン（張り出し）を短くしてください。`}${braceSentence(r)}${ok?'':braceAdvice(r)}</div></div>
    <div class="gauges">
     ${gauge('曲げ','梁が折れないか',r.rb,'#EF8A45')}
     ${gauge('せん断','梁がずれ切られないか',r.rs,'#A66BC0')}
