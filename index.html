@@ -37,6 +37,7 @@
   .fld input:focus,.fld select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,85,151,.18)}
   .fld .u{font-size:13px;color:var(--sub);white-space:nowrap}
   .fld .hint{font-size:12px;color:var(--sub);margin-top:2px}
+  details.guide{margin-bottom:12px;padding:12px 16px} details.guide summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:15px} details.guide h3{font-size:14px;margin:12px 0 4px;color:var(--navy)} .gtbl{table-layout:auto} .gtbl th,.gtbl td{vertical-align:top;text-align:left !important;font-size:13px} .gtbl td:nth-child(1){white-space:nowrap;min-width:92px} .gtbl td:nth-child(2),.gtbl td:nth-child(3){white-space:nowrap} .gtbl .btn{margin-top:6px;font-size:12px;padding:4px 12px;white-space:nowrap;border-radius:14px}
   details.adv{margin-top:12px}
   details.adv summary{cursor:pointer;color:var(--blue);font-size:14px}
   .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -125,6 +126,29 @@
 
 <div class="wrap">
   <nav class="modes" id="modes"></nav>
+  <details class="card screenonly guide" id="guide">
+    <summary>初めて使う方へ（最初にお読みください）</summary>
+    <p class="note" style="margin:8px 0">この画面は、条件を入れるための部分です。印刷には出ません。印刷すると、選んだ条件が1ページ目の「今回の計算条件」に出ます。</p>
+    <h3>ステップ1　計算のしかたを3通りから選ぶ</h3>
+    <table class="tbl gtbl"><tr><th></th><th>梁の自重</th><th>横座屈</th><th>どんなときに使うか／注意</th></tr>
+      <tr><td><b>A　簡易</b><br><button class="btn gset" data-g="A">Aにする</button></td><td>考慮しない</td><td>しない</td><td>これまでの提出と同じ考え方です。スパンが短く、上フランジがレールとして連続して固定されているなど、前提を説明できるときに使います。<b>計算は一番楽ですが、安全側ではありません。</b></td></tr>
+      <tr><td><b>B　自重のみ</b><br><button class="btn gset" data-g="B">Bにする</button></td><td>考慮する</td><td>しない</td><td>梁自身の重さも見込みます。横座屈は、上フランジが連続して固定されていて、起きないと説明できるときだけ「しない」にします。</td></tr>
+      <tr><td><b>C　両方</b><br><button class="btn gset" data-g="C">Cにする</button></td><td>考慮する</td><td>する</td><td><b>一番安全側です（おすすめ）。</b>上フランジを固定していないときは、これを選びます。つなぎ（横ずれ止め）を入れた場合は、画面の「支間をつなぐ箇所の数」「張り出し先端をつなぐ」で選ぶと、使用率が下がります。</td></tr></table>
+    <p class="note" id="guideNow" style="margin:6px 0 0"></p>
+    <h3>ステップ2　張り出しがあるときは、自社基準（張り出し部のたわみ 1/250）を使うか決める</h3>
+    <ul class="plain">
+      <li><b>使う（チェックを入れる）</b>：先端が下がりすぎて、トロリーが勝手に動いたり、吊荷が振れたりするのを防ぎたいとき。作業者が近くにいる、レールの傾きが気になる、といった場合に向いています。</li>
+      <li><b>使わない（チェックなし）</b>：先端のたわみは参考値になり、判定には使いません。強度は、曲げ・せん断の応力で確認します。先端にはトロリーのストッパーを必ず付けてください。</li>
+      <li>注意：使うと、張り出しを短くするか、部材を大きくする必要が出ることがあります。画面に「OKとなる最大の張り出し長さ」が出るので、それを見て決めてください。</li>
+    </ul>
+    <h3>ステップ3　結果を確認して印刷する</h3>
+    <ul class="plain">
+      <li>上の判定が「OK」で、1ページ目の「今回の計算条件」が、実際に使う条件と合っているか確認してから、印刷してください。</li>
+      <li>AやBを選んだときは、「なぜ自重や横座屈を考えなくてよいか」を、提出先に説明できるようにしておいてください。</li>
+      <li>数字を変えたときは、その都度、結果が変わっていないか確認してください（OKのまま変わらないときは、使う部材が意図したものか、見てください）。</li>
+      <li>柱・ブラケット・ボルト・アンカー・溶接そのものの検討は、この計算には含まれません。</li>
+    </ul>
+  </details>
   <section class="card inputs" id="inputs"></section>
   <div id="story"></div>
   <footer id="foot"></footer>
@@ -914,7 +938,7 @@ function draw(keepScroll){
   updateHero();
   const out = mode===2?render2():renderBeam(mode);
   $('story').innerHTML = typeof out==='string'?out:out.html;
-  bindDynamic(); updateLmaxHint(); renderFoot();
+  bindDynamic(); updateLmaxHint(); renderFoot(); guideState();
   if(keepScroll) window.scrollTo(0,y);
 }
 function renderFoot(){
@@ -926,6 +950,20 @@ function renderFoot(){
  <li>断面の数値は JIS G 3192（H形鋼・I形鋼）の断面性能表によります。</li>
  <li>梁を支える柱・ブラケット・ボルト・アンカー（支点まわり・固定部）そのものの検討は、この計算には含まれません。それらの検討に使う支点の力は、各画面の最後にある「アンカー・支点の検討に使う力」に示しています。走行やブレーキで生じる水平力は含みません。</li></ul>`;
 }
+
+function guideState(){
+  const el=$('guideNow'); if(!el) return; const p=S[mode];
+  const sw=p.sw!=0, lt=(mode!==2)&&p.ltb!=0;
+  let nm = !sw&&!lt?'A（簡易）': sw&&!lt?'B（自重のみ）': sw&&lt?'C（両方）':'自重なし・横座屈あり（A〜Cのどれでもない組み合わせ）';
+  el.innerHTML='今の設定：<b>'+nm+'</b>'+(mode===2?'（②の片持ち梁では、自重だけを選べます）':'');
+}
+document.addEventListener('click',e=>{
+  const b=e.target.closest&&e.target.closest('.gset'); if(!b) return;
+  const g=b.dataset.g, p=S[mode];
+  p.sw = g==='A'?0:1;
+  if(mode!==2) p.ltb = g==='C'?1:0;
+  buildInputs(); draw();
+});
 loadState(); buildModes(); buildInputs(); draw();
 </script>
 </body>
