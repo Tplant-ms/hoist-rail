@@ -242,9 +242,9 @@ function ltbFb(p,m,L){
   return {lbNo,fbNo,on,C,i,lbe,lbIn,lbSpan,lbOv,bm,bt,La,lam,Lam,nu,fb1,fb2,fb,fb0,F,Af:B*tf};
 }
 function selfW(p){ const m=MEMBER_MAP[p.mem]; return (p.sw!=0)? m.kg*9.81/1000 : 0; }
-function scan3(p,n){                          // ホイストを端から端まで動かす（n=1 or 2）
+function scan3(p,n,NN){                          // ホイストを端から端まで動かす（n=1 or 2）
   const m=MEMBER_MAP[p.mem]; const P=(p.W/n+p.Hw)*p.phi*9.81/1000; const w=selfW(p); const lt=ltbFb(p,m,p.L);
-  const dd=n==2?p.d:0; const N=120, lo=-p.La, hi=p.L-dd;
+  const dd=n==2?p.d:0; const N=NN||120, lo=-p.La, hi=p.L-dd;
   if(hi<lo) return null;
   let worst={rb:0,rs:0,rd:0,xb:lo,xs:lo,xd:lo,RBmin:1e9,xRB:lo,tipmax:-1e9,xtip:lo,RAmax:-1e9,xRAmax:lo,RBmax:-1e9,xRBmax:lo};
   const rows=[];
@@ -268,8 +268,8 @@ function scan3(p,n){                          // ホイストを端から端ま�
    状態・入力定義
 ===================================================================== */
 const DEF = {
-  3:{W:2000,Hw:120,phi:1.2,L:4.3,La:1.5,d:2,x1:1.15,mem:'H-250×125×6×9',fb0:15.6,nd:800,sw:1,ltb:1,bm:0,bt:0,lb:0,Cb:1},
-  1:{W:950,Hw:60,phi:1.2,L:4.3,La:0.5,x1:2.15,mem:'H-250×125×6×9',fb0:15.6,nd:800,nc:400,sw:1,ltb:1,bm:0,bt:0,lb:0,Cb:1},
+  3:{W:2000,Hw:120,phi:1.2,L:4.3,La:1.0,d:2,x1:1.15,mem:'H-250×125×6×9',fb0:15.6,nd:800,nc:400,tipj:0,sw:1,ltb:1,bm:0,bt:0,lb:0,Cb:1},
+  1:{W:950,Hw:60,phi:1.2,L:4.3,La:0.5,x1:2.15,mem:'H-250×125×6×9',fb0:15.6,nd:800,nc:400,tipj:0,sw:1,ltb:1,bm:0,bt:0,lb:0,Cb:1},
   2:{W:950,Hw:60,phi:1.2,Lc:1.2,mem:'H-200×100×5.5×8',fb0:15.6,nd:400,sw:1},
 };
 const S = {1:{...DEF[1]},2:{...DEF[2]},3:{...DEF[3]}};
@@ -490,6 +490,69 @@ function braceAdvice(r){
   const fbN=Math.min(Math.max(f1,f2),l.fb0), rN=r.rb*l.fb/fbN;
   return `<div class="braceadv" style="margin-top:8px;font-size:0.95em"><b>振れ止めを入れた場合：</b>${l.La>0?'梁の中央をつなぎ、張り出し先端にも振れ止めを付ける':'梁の中央をつなぐ'}と、横座屈の長さが ${fmt(lbCur/1000,2)} m から ${fmt(lbN/1000,2)} m になり、曲げの使用率は <b>${pct(r.rb)}</b> から <b>${pct(rN)}</b> になります${rN<=1?'（曲げは基準以内）':'（それでも基準を超えるため、部材を大きくするか、スパンを短くしてください）'}。入力欄の「つなぎ」で選ぶと、この効果が計算に入ります。</div>`;
 }
+function okBS(p,n,La){   // 曲げ・せん断だけで見た合否（ホイストを動かした全位置）
+  const q={...p,La}; const s=scan3(q,n,40); if(!s) return false; return s.worst.rb<=1&&s.worst.rs<=1;
+}
+function exactMaxLaBS(p,n){
+  let lo=null,hi=null;
+  for(let i=0;i<=200;i++){ const La=i*0.05; if(okBS(p,n,La)){ lo=La; } else if(lo!=null){ hi=La; break; } }
+  if(lo==null) return 0;
+  if(hi!=null){ let a=lo,b=hi; for(let k=0;k<6;k++){ const mid=(a+b)/2; if(okBS(p,n,mid)) a=mid; else b=mid; } lo=a; }
+  let v=Math.floor(lo*100)/100;
+  const f=(La)=>{const s=scan3({...p,La},n,120); return s&&s.worst.rb<=1&&s.worst.rs<=1;};
+  while(v>0&&!f(v)) v=Math.round((v-0.01)*100)/100;
+  return v;
+}
+function sumBox(mode,p,rv,sc,r){
+  const m=MEMBER_MAP[p.mem]; const L=[]; const ok=x=>x?'<b style="color:#2E7D32">OK</b>':'<b style="color:#C0392B">NG</b>';
+  if(mode==2){
+    const P=(p.W+p.Hw)*p.phi*9.81/1000, w=selfW(p); const cm=cantMax(P,w,m,p.fb0,p.nd);
+    L.push(`<b>曲げ・せん断：</b>曲げの使用率 ${pct(r.rb)}、せん断の使用率 ${pct(r.rs)}　→ ${ok(r.rb<=1&&r.rs<=1)}`);
+    L.push(`<b>たわみ：</b>先端のたわみ ${fmt(r.dmax,2)} mm ≦ 制限 ${fmt(r.da,2)} mm（張り出し長さの 1/${fmt(p.nd,0)}）　→ ${ok(r.rd<=1)}`);
+    L.push(`<b>どこまで張り出せるか：</b>片持ち梁として、曲げ・せん断・たわみから求めた最大の張り出し長さは <b>${fmt(cm.Lmax,2)} m</b>。今の張り出し ${fmt(p.Lc,2)} m は、これ以内です。`.replace('これ以内です。',p.Lc<=cm.Lmax?'これ以内です。':'<b style="color:#C0392B">これを超えています。</b>'));
+  }else{
+    const n=mode==3?2:1; const La=Math.max(0,p.La);
+    const dA=rv.rd*rv.da, dlim=rv.da;
+    L.push(`<b>① 支点間（単純梁の部分）のたわみ：</b>ホイストを動かした全位置での最大 ${fmt(dA,2)} mm ≦ 制限 ${fmt(dlim,2)} mm（スパンの 1/${fmt(p.nd,0)}）　→ ${ok(rv.rd<=1)}`);
+    L.push(`<b>② 曲げ・せん断（梁全体）：</b>曲げの使用率 ${pct(rv.rb)}、せん断の使用率 ${pct(rv.rs)}　→ ${ok(rv.rb<=1&&rv.rs<=1)}`);
+    if(La>0){
+      const Lx=exactMaxLaBS(p,n);
+      L.push(`<b>③ 張り出し部分：</b>先端に荷重をかけたとき、根元（支点A）の曲げ・せん断が許容以内となる最大の張り出し長さは <b>約 ${fmt(Lx,2)} m</b>（ホイストを動かした全位置で確認）。今の張り出し ${fmt(La,2)} m は、${La<=Lx+1e-9?'これ以内です（余裕 '+fmt(Lx-La,2)+' m）。':'<b style="color:#C0392B">これを超えています。</b>'}`);
+      const tp=Math.max(0,sc.worst.tipmax);
+      L.push(`<b>④ 張り出し先端のたわみ（参考）：</b>最大 ${fmt(tp,1)} mm（張り出し長さの 1/${fmt(La*1000/Math.max(tp,1e-9),0)}）。弾性変形であり、応力が許容以内なら強度には影響しません。先端にはトロリーのストッパーを設けます。`);
+      const rmin=sc.worst.RBmin;
+      if(rmin<0) L.push(`<b>⑤ 支点の浮き上がり：</b>先端に吊ったとき、反対側の支点に最大 ${fmt(-rmin,2)} kN の引き抜き力がはたらきます。ボルト・アンカーで固定します（耐力は、後ろの「アンカー・支点の検討」の欄）。`);
+    }
+  }
+  return `<section class="card sumbox" style="margin:10px 0;padding:10px 14px"><h3 style="margin:0 0 4px;font-size:1em">計算の結論（なぜ大丈夫と言えるか）</h3><ul style="margin:0;padding-left:1.3em;line-height:1.6;font-size:0.95em">${L.map(t=>`<li style="margin-bottom:3px">${t}</li>`).join('')}</ul></section>`;
+}
+function condBox(mode,p,lt){
+  const m=MEMBER_MAP[p.mem]; const li=[];
+  li.push(['使用する部材',`${m.n}（${fmt(m.kg,1)} kg/m）`]);
+  if(mode==2){
+    li.push(['張り出し長さ（固定した根元から先端まで）',`${fmt(p.Lc,2)} m`]);
+  }else{
+    li.push(['支点間スパン L',`${fmt(p.L,2)} m`]);
+    li.push(['張り出し長さ La',p.La>0?`${fmt(p.La,2)} m`:'なし（0 m）']);
+    if(mode==3) li.push(['ホイストの吊り間隔 d',`${fmt(p.d,2)} m（2台）`]);
+  }
+  li.push(['吊り荷重',`${fmt(p.W,0)} kg`]);
+  li.push(['ホイスト自重',`${fmt(p.Hw,0)} kg${mode==3?'（1台）':''}`]);
+  if(p.sw!=0) li.push(['梁の自重','考慮する']);
+  if(mode!=2){
+    if(lt&&lt.on){
+      let t='';
+      t='考慮する（横座屈の長さ lb ＝ '+fmt(lt.lbe/1000,2)+' m）';
+      const c=[]; if(lt.bm>0) c.push(`支間を${lt.bm}か所つなぐ`); if(lt.La>0) c.push(lt.bt?'張り出し先端をつなぐ':'張り出し先端はつながない'); if(!lt.bm&&!(lt.La>0&&lt.bt)) c.push('つなぎなし');
+      t+='　［'+c.join('、')+'］';
+      li.push(['横座屈',t]);
+    }
+  }
+  li.push(['衝撃係数 φ',`${fmt(p.phi,2)}`]);
+  li.push(['許容曲げ応力度 fb0',`${fmt(p.fb0,1)} kN/cm²`]);
+  li.push(['たわみの制限',`1/${fmt(p.nd,0)}`]);
+  return `<section class="card condbox" style="margin:10px 0;padding:10px 14px"><h3 style="margin:0 0 4px;font-size:1em">今回の計算条件</h3><ul style="margin:0;padding-left:1.3em;line-height:1.5;columns:2;column-gap:24px;font-size:0.95em">${li.map(([a,b])=>`<li style="break-inside:avoid">${a}：<b>${b}</b></li>`).join('')}</ul></section>`;
+}
 function braceSentence(r){
   const l=r.ltb; if(!l||!l.on) return '';
   if(!(l.lbe<l.lbNo-0.5)){
@@ -503,14 +566,16 @@ function braceSentence(r){
   return `<div class="bracenote" style="margin-top:8px;font-size:0.95em">${how}ため、曲げの使用率は <b>${pct(r.rb)}</b> になりました。何もしない場合は <b>${pct(r0)}</b>${r0>1?'で<b style="color:#C0392B">NG</b>':'（OK）'}です。（詳細は「横座屈を考慮した許容曲げ応力度」の欄）</div>`;
 }
 function verdictHTML(r,spec,load,moved){
-  const ok=r.rb<=1&&r.rs<=1&&r.rd<=1;
-  const ngs=[r.rb>1?'曲げ':'',r.rs>1?'せん断':'',r.rd>1?'たわみ':''].filter(Boolean).join('・');
+  const hasT=(r.rt!=null);
+  const ok=r.rb<=1&&r.rs<=1&&r.rd<=1&&(!hasT||r.rt<=1);
+  const ngs=[r.rb>1?'曲げ':'',r.rs>1?'せん断':'',r.rd>1?'たわみ':'',(hasT&&r.rt>1)?'張り出し先端のたわみ':''].filter(Boolean).join('・');
   return `<section class="verdict ${ok?'ok':'ng'}"><div class="big"><div class="mark">${ok?'OK':'NG'}</div>
-   <div class="msg">${ok?`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げても、曲げ・せん断・たわみのすべてが基準以内${moved?'（ホイストを梁の上で動かした場合の一番きびしい位置を含む）':''}なので、<u>安全です</u>。`:`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げるとき、<b>${ngs}</b>が基準を超えています。<u>安全とは言えません</u>。より大きな部材にするか、スパン（張り出し）を短くしてください。`}${braceSentence(r)}${ok?'':braceAdvice(r)}</div></div>
+   <div class="msg">${ok?`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げても、曲げ・せん断・たわみ${hasT?'（張り出し先端を含む）':''}のすべてが基準以内${moved?'（ホイストを梁の上で動かした場合の一番きびしい位置を含む）':''}なので、<u>安全です</u>。`:`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げるとき、<b>${ngs}</b>が基準を超えています。<u>安全とは言えません</u>。より大きな部材にするか、スパン（張り出し）を短くしてください。`}${braceSentence(r)}${ok?'':braceAdvice(r)}${(ok||r.laMax==null)?'':`<div class="lamaxadv" style="margin-top:8px;font-size:0.95em"><b>張り出しを短くする場合：</b>${r.laMax>0?`今の部材・荷物のまま、張り出しを <b>約 ${fmt(r.laMax,2)} m 以下</b> にすると、すべて基準以内になります（今は ${fmt(r.La,2)} m）。`:'この部材・荷物では、張り出しをなくしても基準を超えます。部材か荷物を見直してください。'}</div>`}</div></div>
    <div class="gauges">
     ${gauge('曲げ','梁が折れないか',r.rb,'#EF8A45')}
     ${gauge('せん断','梁がずれ切られないか',r.rs,'#A66BC0')}
     ${gauge('たわみ','梁が下がりすぎないか',r.rd,'#4F8FD9')}
+    ${hasT?gauge('先端のたわみ','張り出し先端が下がりすぎないか',r.rt,'#2E9E9E'):''}
    </div><p class="note" style="margin-top:8px">使用率＝「実際にかかる値 ÷ 基準で決まった限度」。100%以下なら基準を満たしています。${moved?'この判定は、今の位置とホイストを動かした全位置のうち、きびしいほうの値を使っています。':''}理由は、下の STEP 1 から順に説明します。</p></section>`;
 }
 const swTxt=p=>p.sw!=0?'梁の自重を含む':'';
@@ -675,20 +740,14 @@ function renderBeam(k){
       ${(minRA<0||minRB<0)?`<div class="warn"><b>引き抜き力がはたらきます。</b>ホイストが張り出しに出る位置では、${minRB<0?'支点B':'支点A'}が浮き上がろうとし、最大 ${fmt(-Math.min(minRA,minRB),2)} kN の引き抜き力になります。固定部（アンカー等）は、この力に耐える必要があります。</div>`:`<div class="okbox">どの位置でも支点は「押す向き」だけで、引き抜く向きの力ははたらきません。</div>`}
       <p class="note">押す向きの最大の力は、アンカーのせん断力・コンクリートの支圧の検討に、引き抜き力は、アンカーの引き抜きの検討に使います。</p>`,anchorCap(Math.max(wv.RAmax,wv.RBmax),Math.max(0,-Math.min(minRA,minRB))));
   }
-    if(!two && La>=0){
-    const cm=cantMax(P,w,m,p.fb0,p.nc); const Lm=cm.Lmax;
-    sC=step(8,'おまけ：張り出し部分は、何メートルまで長くできる？（片持ち梁として）',`
-    <p class="lead">張り出し部分は、支点Aを根元とする<b>片持ち梁</b>とみなして、先端にホイストがきたときに、同じ部材・同じ荷物のまま<b>どこまで長くできるか</b>を逆算します（根元が動かない固定端とみなす、安全側の目安です）。曲げ・せん断・たわみのそれぞれで限界の長さを求め、<b>一番短いもの</b>が「最大の張り出し長さ」です。${w>0?'梁の自重は張り出しが長いほど重くなるので、曲げとたわみの限界の長さは少し短くなります。':''}たわみの限度は、張り出し長さの <b>${fmt(p.nc,0)} 分の 1</b>（「くわしい設定」で変えられます）です。</p>
-    <table class="tbl"><tr><th>検討項目</th><th>数字を入れると</th><th>限界の長さ</th></tr>
-     <tr><td>曲げから</td><td style="text-align:left">${w>0?`Lb ＝ (−P ＋ √(P² ＋ 2×w×Mall)) ÷ w　（Mall ＝ fb0×Zx÷100 ＝ ${fmt(cm.Mall,3)} kN・m）`:`Lb ＝ Mall ÷ P ＝ ${fmt(p.fb0,1)} × ${fmt(m.Zx,1)} ÷ 100 ÷ ${fmt(P,3)}`}</td><td><b>${fmt(cm.Lb,3)} m</b></td></tr>
-     <tr><td>せん断から</td><td style="text-align:left">${w>0?`Ls ＝ (fs×Aw − P) ÷ w ＝ (${fmt(cm.fs,3)}×${fmt(cm.Aw,2)} − ${fmt(P,3)}) ÷ ${fmt(w,3)}`:`張り出し長さに関係しない（${cm.Ls>0?'OK':'NG'}）`}</td><td><b>${cm.Ls===Infinity?'制限なし':fmt(cm.Ls,3)+' m'}</b></td></tr>
-     <tr><td>たわみから</td><td style="text-align:left">${w>0?`P×L²÷(3EI) ＋ w×L³÷(8EI) ＝ 1÷n となる L を、くり返し計算（ニュートン法）で求める。出発点 L0 ＝ √(3×E×Ix÷(P×n)) ＝ ${fmt(cm.L0,1)} cm`:`Ld ＝ √(3×E×Ix ÷ (P×n)) ÷ 100`}</td><td><b>${fmt(cm.Ld,3)} m</b></td></tr></table>
-    ${eq('最大の張り出し長さ（小数第2位で切り捨て）',`Lmax ＝ 一番短いもの`,`Lmax ＝ ${fmt(Lm,2)} m`)}
-    <div class="${La<=Lm?'okbox':'warn'}">今の張り出し ${fmt(La,2)} m は、限界の ${fmt(Lm,2)} m ${La<=Lm?`以内です（余裕 ${fmt(Lm-La,2)} m）。`:'を超えています。'}</div>
-    <p class="note">これは張り出し部分だけを見た目安です。支間側を含めた梁全体の安全性は、上の判定（STEP 7 までの結果）で確認しています。</p>`);
-  }
-  const rv=sc?{...r,rb:Math.max(r.rb,sc.worst.rb),rs:Math.max(r.rs,sc.worst.rs),rd:Math.max(r.rd,sc.worst.rd)}:r;
+  const ncT=(p.nc>0?p.nc:400);
+  const rtip=(La>0&&sc&&p.tipj==1)?Math.max(0,sc.worst.tipmax)/(La*1000/ncT):null;
+  const rv0=null;
+  const rv=sc?{...r,rb:Math.max(r.rb,sc.worst.rb),rs:Math.max(r.rs,sc.worst.rs),rd:Math.max(r.rd,sc.worst.rd),rt:rtip}:r;
+  if(sc&&!(rv.rb<=1&&rv.rs<=1&&rv.rd<=1&&(rv.rt==null||rv.rt<=1))) rv.laMax=exactMaxLa(p,n);
   return {html: verdictHTML(rv,`スパン ${fmt(L,2)}m・張り出し ${fmt(La,2)}m${two?`・吊り間隔 ${fmt(p.d,2)}m`:''}${lt.on?`・横座屈の長さ ${fmt(lt.lbe/1000,2)}m`:''}`,`荷物 ${fmt(p.W,0)}kg ＋ ホイスト自重 ${fmt(p.Hw,0)}kg${two?'×2台':''}${p.sw!=0?' ＋ 梁の自重':''}`,!!sc)
+    + condBox(k,p,lt)
+    + sumBox(k==3?3:1,p,rv,sc,r)
     + `<section class="card"><h2>今回の条件</h2><p class="note" style="margin:4px 0 8px">梁は2つの支点（A・B）で支えられ、支点Aの外側に張り出し${two?'があります。2台のホイストで、長い荷物を吊ります。':'（なしの場合は 0）があります。ホイストは1台で、梁の上（張り出し先端〜支点B）のどこにでも動かせます。'}</p>${beam0}${slider}</section>`
     + `<p class="note" style="margin:14px 4px 0"><b>どうして安全と言えるの？</b>　次の順番で、ひとつずつ確かめます。</p>`
     + sf.html + s2 + s3 + s4 + s5 + s6 + s7 + sC + s8};
@@ -749,7 +808,7 @@ function render2(){
       <tr><td>根元にかかる下向きの力 V ＝ Q<br><span class="note">アンカーのせん断力の検討に使います</span></td><td><b>${fmt(Q,2)} kN</b></td></tr>
       <tr><td>根元にかかる曲げモーメント M<br><span class="note">上側のアンカーを引き抜く力と、下側を押しつける力の組み合わせで受けます</span></td><td><b>${fmt(M,2)} kN・m</b></td></tr></table>
       <div class="tip"><span class="tag">目安</span>上下のアンカー（または固定部）の間隔を z (m) とすると、上側を引き抜く力は T ≒ M ÷ z (kN) で、大まかな値が分かります。実際の分担は、アンカーの配置や梁の剛性で変わるため、固定部の設計基準で確認してください。</div>`,anchorCap(null,0));
-  return {html: verdictHTML(r,`張り出し ${fmt(Lc,2)}m・先端に吊る`,`荷物 ${fmt(p.W,0)}kg ＋ ホイスト自重 ${fmt(p.Hw,0)}kg${p.sw!=0?' ＋ 梁の自重':''}`)+s0+`<p class="note" style="margin:14px 4px 0"><b>どうして安全と言えるの？</b>　次の順番で、ひとつずつ確かめます。</p>`+sf.html+s2+s3+s4+s5+s6+s7};
+  return {html: verdictHTML(r,`張り出し ${fmt(Lc,2)}m・先端に吊る`,`荷物 ${fmt(p.W,0)}kg ＋ ホイスト自重 ${fmt(p.Hw,0)}kg${p.sw!=0?' ＋ 梁の自重':''}`)+condBox(2,p,null)+sumBox(2,p,null,null,r)+s0+`<p class="note" style="margin:14px 4px 0"><b>どうして安全と言えるの？</b>　次の順番で、ひとつずつ確かめます。</p>`+sf.html+s2+s3+s4+s5+s6+s7};
 }
 
 /* =====================================================================
@@ -764,7 +823,7 @@ function buildInputs(){
   let h=`<h2>条件を入れる <button class="btn printbtn" onclick="window.print()">印刷する</button></h2><div class="grid">
    <div class="fld" style="grid-column:span 2"><label for="f_title">表題（印刷の一番上に出ます）</label><input id="f_title" type="text" value="${escH(DOC.title)}"></div>
    <div class="fld" style="grid-column:span 2"><label for="f_proj">件名・工事名など（空欄なら表示しません）</label><input id="f_proj" type="text" value="${escH(DOC.proj)}" placeholder="例：○○工場 ホイストレール設置工事"></div>`;
-  flds.forEach(([k,lab,u,st,hint])=>{ h+=`<div class="fld"><label for="f_${k}">${lab}</label><div class="row"><input id="f_${k}" data-k="${k}" type="number" inputmode="decimal" step="${st}" value="${s[k]}"><span class="u">${u}</span></div><div class="hint">${hint||''}${((mode==1&&k==='La')||(mode==2&&k==='Lc'))?`${hint?'<br>':''}<span id="lmaxHint" class="lmax"></span>`:''}</div></div>`; });
+  flds.forEach(([k,lab,u,st,hint])=>{ h+=`<div class="fld"><label for="f_${k}">${lab}</label><div class="row"><input id="f_${k}" data-k="${k}" type="number" inputmode="decimal" step="${st}" value="${s[k]}"><span class="u">${u}</span></div><div class="hint">${hint||''}${((mode!=2&&k==='La')||(mode==2&&k==='Lc'))?`${hint?'<br>':''}<span id="lmaxHint" class="lmax"></span>`:''}</div></div>`; });
   h+=`
    <div class="fld" style="grid-column:1/-1"><label for="f_mem">使用する部材（H形鋼・I形鋼）</label><select id="f_mem">${memberOptions(s.mem)}</select></div>
    <div class="fld" style="grid-column:1/-1"><label for="f_sw">梁の自重（梁自身の重さ）</label><select id="f_sw"><option value="1"${s.sw!=0?' selected':''}>考慮する（安全側・おすすめ）</option><option value="0"${s.sw==0?' selected':''}>考慮しない</option></select><div class="hint">梁(H形鋼)自身の重さも計算に入れるかどうかを選びます</div></div>
@@ -774,7 +833,7 @@ function buildInputs(){
   h+=`<details class="adv"><summary>くわしい設定（ふだんは変えなくてOK）</summary><div class="grid" style="margin-top:10px">
    <div class="fld"><label for="f_phi">衝撃係数 φ</label><div class="row"><input id="f_phi" data-k="phi" type="number" step="0.05" value="${s.phi}"><span class="u">倍</span></div><div class="hint">通常 1.2</div></div>
    <div class="fld"><label for="f_fb0">許容曲げ応力度 fb0</label><div class="row"><input id="f_fb0" data-k="fb0" type="number" step="0.1" value="${s.fb0}"><span class="u">kN/cm²</span></div><div class="hint">SS400（板厚40mm以下）は 15.6</div></div>
-   <div class="fld"><label for="f_nd">たわみの制限 1/n</label><div class="row"><input id="f_nd" data-k="nd" type="number" step="50" value="${s.nd}"><span class="u">（n）</span></div><div class="hint">${mode==2?'片持ちは 300〜500':'クレーン用レールは 800'}</div></div>${mode!==2?`<div class="fld"><label for="f_lb">横座屈の長さ lb を直接入れる</label><div class="row"><input id="f_lb" data-k="lb" type="number" step="0.1" value="${s.lb}"><span class="u">m</span></div><div class="hint">0＝上の「つなぎ」の選択から自動で決めます</div></div><div class="fld"><label for="f_Cb">モーメントの修正係数 C</label><div class="row"><input id="f_Cb" data-k="Cb" type="number" step="0.05" value="${s.Cb}"><span class="u">（C）</span></div><div class="hint">安全側＝1.0。単純梁で両端モーメントが0なら1.75まで</div></div>`:''}${mode==1?`<div class="fld"><label for="f_nc">張り出し部のたわみの制限 1/n</label><div class="row"><input id="f_nc" data-k="nc" type="number" step="50" value="${s.nc}"><span class="u">（n）</span></div><div class="hint">最大張り出し長さの計算に使います（片持ちは 300〜500）</div></div>`:''}</div></details>`;
+   <div class="fld"><label for="f_nd">たわみの制限 1/n</label><div class="row"><input id="f_nd" data-k="nd" type="number" step="50" value="${s.nd}"><span class="u">（n）</span></div><div class="hint">${mode==2?'片持ちは 300〜500':'クレーン用レールは 800'}</div></div>${mode!==2?`<div class="fld"><label for="f_lb">横座屈の長さ lb を直接入れる</label><div class="row"><input id="f_lb" data-k="lb" type="number" step="0.1" value="${s.lb}"><span class="u">m</span></div><div class="hint">0＝上の「つなぎ」の選択から自動で決めます</div></div><div class="fld"><label for="f_Cb">モーメントの修正係数 C</label><div class="row"><input id="f_Cb" data-k="Cb" type="number" step="0.05" value="${s.Cb}"><span class="u">（C）</span></div><div class="hint">安全側＝1.0。単純梁で両端モーメントが0なら1.75まで</div></div>`:''}${mode!=2?`<div class="fld"><label for="f_nc">張り出し先端のたわみの制限 1/n</label><div class="row"><input id="f_nc" data-k="nc" type="number" step="50" value="${s.nc}"><span class="u">（n）</span></div><div class="hint">張り出し先端のたわみの判定と、最大張り出し長さの計算に使います（片持ちは 300〜500）</div></div><div class="fld"><label for="f_tipj">張り出し先端のたわみを判定に入れる</label><select id="f_tipj"><option value="0"${s.tipj!=1?' selected':''}>入れない（参考の数字だけ表示）</option><option value="1"${s.tipj==1?' selected':''}>入れる（上の 1/n 以内）</option></select><div class="hint">提出先や社内基準で、先端のたわみの制限があるときだけ「入れる」</div></div>`:''}</div></details>`;
   h+=`<div class="btnrow"><button class="btn" id="resetBtn">はじめの条件に戻す</button><button class="btn" id="saveFileBtn">条件をファイルに保存</button><button class="btn" id="loadFileBtn">保存したファイルを読み込む</button><input id="loadFile" type="file" accept=".json,application/json" style="display:none"></div>
    <p class="note" style="margin-top:6px">入れた条件は、自動で<b>このパソコンのこのブラウザ</b>に保存され、次に開いたときも残ります。別のパソコンへ移したいときや、案件ごとに残したいときは「条件をファイルに保存」を使います。</p>`;
   $('inputs').innerHTML=h;
@@ -784,6 +843,7 @@ function buildInputs(){
   $('f_mem').addEventListener('change',e=>{ S[mode].mem=e.target.value; draw(); });
   $('f_sw').addEventListener('change',e=>{ S[mode].sw=+e.target.value; draw(); });
   if($('f_ltb')) $('f_ltb').addEventListener('change',e=>{ S[mode].ltb=+e.target.value; buildInputs(); draw(); });
+  if($('f_tipj')) $('f_tipj').addEventListener('change',e=>{ S[mode].tipj=+e.target.value; draw(); });
   if($('f_bm')) $('f_bm').addEventListener('change',e=>{ S[mode].bm=+e.target.value; draw(); });
   if($('f_bt')) $('f_bt').addEventListener('change',e=>{ S[mode].bt=+e.target.value; draw(); });
   $('resetBtn').onclick=()=>{ S[mode]={...DEF[mode]}; buildInputs(); draw(); };
@@ -810,9 +870,32 @@ function bindDynamic(){
     p.x1=clamp(p.x1,lo,hi); draw(true);
   });
 }
+/* 張り出しの限度（実際の計算：ホイストを動かした全位置で 曲げ・せん断・たわみ・先端のたわみ がすべて基準以内となる最大の張り出し） */
+function okAtLa(p,n,La,NN){
+  const q={...p,La}; const s=scan3(q,n,NN); if(!s) return false; const w=s.worst; const nc=q.nc>0?q.nc:400;
+  const tr=(La>0&&p.tipj==1)?Math.max(0,w.tipmax)/(La*1000/nc):0;
+  return w.rb<=1&&w.rs<=1&&w.rd<=1&&tr<=1;
+}
+function exactMaxLa(p,n){
+  /* 張り出しを少し出したほうが中央のたわみが小さくなることがあるため、0 から順に探し、最初にOKとなる所から続く範囲の終わりを採る */
+  let lo=null, hi=null;
+  for(let i=0;i<=160;i++){ const La=i*0.05; const ok=okAtLa(p,n,La,40);
+    if(ok){ lo=La; } else if(lo!=null){ hi=La; break; } }
+  if(lo==null) return 0;
+  if(hi!=null){ let a=lo,b=hi; for(let k=0;k<6;k++){ const mid=(a+b)/2; if(okAtLa(p,n,mid,40)) a=mid; else b=mid; } lo=a; }
+  let v=Math.floor(lo*100)/100;
+  while(v>0 && !okAtLa(p,n,v,120)) v=Math.round((v-0.01)*100)/100;
+  return v;
+}
 function updateLmaxHint(){
   const el=$('lmaxHint'); if(!el) return;
   const p=S[mode], m=MEMBER_MAP[p.mem]; if(!m){ el.textContent=''; return; }
+  if(mode!=2){
+    if(!(p.W>0)){ el.textContent=''; return; }
+    const n=mode==3?2:1; const Lx=exactMaxLa(p,n); const ok=p.La<=Lx+1e-9;
+    el.innerHTML=Lx>0?`この条件でOKとなる<b>最大の張り出し長さ：約 ${fmt(Lx,2)} m</b>（ホイストを動かした全位置で確認）`+(ok?'':'　<span style="color:#B3261E">（今の値は超えています）</span>'):'<span style="color:#B3261E">この部材・荷物では、張り出しなしでも基準を超えます</span>';
+    return;
+  }
   const P=(p.W+p.Hw)*p.phi*9.81/1000, w=selfW(p);
   if(!(P>0)){ el.textContent=''; return; }
   const cm=cantMax(P,w,m,p.fb0, mode==2?p.nd:p.nc), cur=mode==2?p.Lc:p.La;
