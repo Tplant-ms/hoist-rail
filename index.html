@@ -891,8 +891,24 @@ function buildInputs(){
     rd.readAsText(f);
   });
 }
+/* スライダーをドラッグしている最中に、スライダー自身を作り直すと操作が途切れるため、差分だけを書き換える */
+function morph(oldP,newP){
+  const oc=[...oldP.childNodes], nc=[...newP.childNodes];
+  for(let i=0;i<nc.length;i++){
+    const o=oc[i], n=nc[i];
+    if(!o){ oldP.appendChild(n.cloneNode(true)); continue; }
+    if(o.nodeType!==n.nodeType || (o.nodeType===1 && o.tagName!==n.tagName)){ o.replaceWith(n.cloneNode(true)); continue; }
+    if(o.nodeType===3||o.nodeType===8){ if(o.nodeValue!==n.nodeValue) o.nodeValue=n.nodeValue; continue; }
+    if(o.isEqualNode(n)) continue;
+    if(o.id==='x1s'){ for(const a of ['min','max','step']) if(o.getAttribute(a)!==n.getAttribute(a)) o.setAttribute(a,n.getAttribute(a)); continue; }
+    for(const a of [...o.attributes]) if(!n.hasAttribute(a.name)) o.removeAttribute(a.name);
+    for(const a of [...n.attributes]) if(o.getAttribute(a.name)!==a.value) o.setAttribute(a.name,a.value);
+    morph(o,n);
+  }
+  for(let i=oc.length-1;i>=nc.length;i--) oc[i].remove();
+}
 function bindDynamic(){
-  const sl=$('x1s'); if(sl){ sl.addEventListener('input',()=>{ S[mode].x1=parseFloat(sl.value); draw(true); }); }
+  const sl=$('x1s'); if(sl&&!sl.dataset.bound){ sl.dataset.bound='1'; sl.addEventListener('input',()=>{ S[mode].x1=parseFloat(sl.value); draw(true); }); }
   document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
     const p=S[mode]; const n=mode==3?2:1; const dd=n==2?p.d:0; const lo=-Math.max(0,p.La), hi=p.L-dd; const sc=scan3(p,n);
     if(b.dataset.go==='worst' && sc) p.x1=sc.worst.xb;
@@ -937,7 +953,9 @@ function draw(keepScroll){
   const y=window.scrollY; saveState();
   updateHero();
   const out = mode===2?render2():renderBeam(mode);
-  $('story').innerHTML = typeof out==='string'?out:out.html;
+  const newHTML = typeof out==='string'?out:out.html;
+  if(keepScroll && $('x1s')){ const tmp=document.createElement('div'); tmp.innerHTML=newHTML; morph($('story'),tmp); }
+  else $('story').innerHTML = newHTML;
   bindDynamic(); updateLmaxHint(); renderFoot(); guideState();
   if(keepScroll) window.scrollTo(0,y);
 }
