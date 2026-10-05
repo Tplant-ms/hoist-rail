@@ -900,7 +900,7 @@ function morph(oldP,newP){
     if(o.nodeType!==n.nodeType || (o.nodeType===1 && o.tagName!==n.tagName)){ o.replaceWith(n.cloneNode(true)); continue; }
     if(o.nodeType===3||o.nodeType===8){ if(o.nodeValue!==n.nodeValue) o.nodeValue=n.nodeValue; continue; }
     if(o.isEqualNode(n)) continue;
-    if(o.id==='x1s'){ for(const a of ['min','max','step']) if(o.getAttribute(a)!==n.getAttribute(a)) o.setAttribute(a,n.getAttribute(a)); continue; }
+    if(o.id==='x1s'){ for(const a of ['min','max','step']) if(o.getAttribute(a)!==n.getAttribute(a)) o.setAttribute(a,n.getAttribute(a)); const nv=n.getAttribute('value'); if(parseFloat(o.value)!==parseFloat(nv)) o.value=nv; continue; }
     for(const a of [...o.attributes]) if(!n.hasAttribute(a.name)) o.removeAttribute(a.name);
     for(const a of [...n.attributes]) if(o.getAttribute(a.name)!==a.value) o.setAttribute(a.name,a.value);
     morph(o,n);
