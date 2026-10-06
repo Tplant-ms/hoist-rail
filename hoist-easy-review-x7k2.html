@@ -700,7 +700,7 @@ function renderBeam(k){
   const beam0=beamSVG(fr,{loads:loadsN,supports,overhang:La>0,dims,h:296,selfw:selfLabel(w),defl:{pts:dpts0,marks:dmk0,px:24}})+`<p class="note" style="margin:2px 0 0">青い点線は、梁がたわんだようすです（見やすいよう大きく描いています。数字は実際の大きさ）。いまのホイスト位置（x1）での値です。</p>`;
   const slider=`<div class="slider-box"><label class="note" for="x1s"><b>ホイスト位置を動かしてみましょう</b>（${two?'左ホイスト ':'ホイスト '}x1：支点Aから ${fmtN(x1,2)} m）</label>
      <input id="x1s" class="slider" type="range" min="${lo}" max="${hi}" step="0.05" value="${x1}">
-     <div class="btnrow"><button class="btn" data-go="worst">曲げが最大になる位置へ</button><button class="btn" data-go="mid">${two?'2台が真ん中に並ぶ位置へ（たわみ最大）':'ホイストが真ん中にくる位置へ（たわみ最大）'}</button><button class="btn" data-go="reset">はじめの位置へ</button></div></div>`;
+     <div class="btnrow"><button class="btn" data-go="worst">曲げが最大になる位置へ</button><button class="btn" data-go="mid">${two?'2台が真ん中に並ぶ位置へ（たわみ最大）':'ホイストが真ん中にくる位置へ（たわみ最大）'}</button><button class="btn" data-go="tip">${two?'左ホイストが張り出しの先端にくる位置へ':'張り出しの先端へ'}</button></div></div>`;
   // ---- STEP 2 反力
   const lever=two?`${fmt(P,3)}×${fmtP(x1)} ＋ ${fmt(P,3)}×${fmtP(x2)}`:`${fmt(P,3)}×${fmtP(x1)}`;
   const s2=step(2,'2つの支点は、どれくらいの力で梁を支えている？',`
@@ -936,7 +936,7 @@ function bindDynamic(){
     const p=S[mode]; const n=mode==3?2:1; const dd=n==2?p.d:0; const lo=-Math.max(0,p.La), hi=p.L-dd; const sc=scan3(p,n);
     if(b.dataset.go==='worst' && sc) p.x1=sc.worst.xb;
     if(b.dataset.go==='mid') p.x1=(p.L-dd)/2;
-    if(b.dataset.go==='reset') p.x1=DEF[mode].x1;
+    if(b.dataset.go==='tip') p.x1=lo;
     p.x1=clamp(p.x1,lo,hi); draw(true);
   });
 }
