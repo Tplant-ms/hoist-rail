@@ -279,14 +279,12 @@
 <div class="reviewnote"><b>社内での確認用です。</b>提出書類として使う前に、必ず担当者が条件と結果を確認してください。この計算は、入力した条件の範囲での検討です。</div>
 
 <!-- ===== 使い方 ===== -->
-<div class="card">
-  <button class="manual-toggle" id="manual-toggle" onclick="toggleManual()">
-    <span class="arrow">▶</span>📖 使い方ガイド（はじめての方へ）
-  </button>
-  <div class="manual-body" id="manual-body">
+<details class="card fold guide" id="fold0">
+  <summary><h2>📖 使い方ガイド（はじめての方へ）</h2></summary>
+  <div class="manual-body open" id="manual-body">
     <div class="manual-section">
       <h3>🔧 このツールでできること</h3>
-      <p>ホイストレールに使うH形鋼（またはI形鋼）が、吊り荷重に対して安全かを、<strong>曲げ・せん断・たわみ</strong>で判定します。結果は、解説付きの「ホイストレール検討（やさしい解説版）」と同じ計算です。<br>
+      <p>ホイストレールに使うH形鋼（またはI形鋼）が、吊り荷重に対して安全かを、<strong>曲げ・せん断・たわみ</strong>で判定します。<br>
       ホイストを梁の上で端から端まで動かした<strong>すべての位置</strong>で確認し、一番きびしい値を結果にしています。</p>
     </div>
     <hr class="manual-divider">
@@ -307,11 +305,10 @@
         <li>A・Bを選んだときは、「なぜ自重や横座屈を考えなくてよいか」を、提出先に説明できるようにしておいてください。</li>
         <li>柱・ブラケット・ボルト・アンカー・溶接そのものの検討は、含まれません。支点の力は、結果の欄に出ます。</li>
         <li>許容応力度は SS400 の値（fb₀＝15.6 kN/cm²、fs＝fb₀÷√3、E＝21,000 kN/cm²）です。支間のたわみは L/800 です。</li>
-        <li>詳しい理由や途中の計算を知りたいときは、「やさしい解説版」を見てください。</li>
       </ul>
     </div>
   </div>
-</div>
+</details>
 
 <!-- ===== 共通入力 ===== -->
 <details class="card fold" id="fold1" open>
@@ -867,12 +864,16 @@ function drawDiagram(id,p,n,x1){
   const sc=mm>0?44/mm:0;
   let s=`<line x1="${sx(xmin)}" y1="${yb}" x2="${sx(xmax)}" y2="${yb}" stroke="#37474f" stroke-width="7" stroke-linecap="round"/>`;
   [[0,'A'],[L,'B']].forEach(([x,l])=>{ s+=`<polygon points="${sx(x)},${yb+4} ${sx(x)-11},${yb+24} ${sx(x)+11},${yb+24}" fill="#78909c"/><text x="${sx(x)}" y="${yb+42}" text-anchor="middle" font-size="14" font-weight="700" fill="#455a64">${l}</text>`; });
-  loads.forEach((a,i)=>{ const x=sx(a); s+=`<line x1="${x}" y1="14" x2="${x}" y2="${yb-8}" stroke="#c62828" stroke-width="3"/><polygon points="${x},${yb-4} ${x-6},${yb-14} ${x+6},${yb-14}" fill="#c62828"/><text x="${x}" y="11" text-anchor="middle" font-size="13" font-weight="700" fill="#c62828">P＝${P.toFixed(2)}kN</text>`; });
+  loads.forEach((a,i)=>{ const x=sx(a); s+=`<line x1="${x}" y1="14" x2="${x}" y2="${yb-8}" stroke="#c62828" stroke-width="3"/><polygon points="${x},${yb-4} ${x-6},${yb-14} ${x+6},${yb-14}" fill="#c62828"/><text x="${x}" y="11" text-anchor="middle" font-size="13" font-weight="700" fill="#c62828">P＝${Math.round(P*1000).toLocaleString('en-US')} N</text>`; });
   s+=`<line x1="${sx(xmin)}" y1="${y0}" x2="${sx(xmax)}" y2="${y0}" stroke="#90a4ae" stroke-width="1"/>`;
   let run=[],sign=0; const flush=()=>{ if(run.length>1){ const col=sign>=0?'#1565c0':'#e65100'; s+=`<polygon points="${sx(run[0][0])},${y0} ${run.map(q=>sx(q[0])+','+(y0+q[1]*sc)).join(' ')} ${sx(run[run.length-1][0])},${y0}" fill="${col}" fill-opacity="0.22" stroke="${col}" stroke-width="1.8"/>`; } run=[]; };
   pts.forEach(q=>{ const sg=q[1]>=0?1:-1; if(sign!==0&&sg!==sign){ run.push([q[0],0]); flush(); run=[[q[0],0]]; } sign=sg; run.push(q); }); flush();
   const im=pts.reduce((a,q)=>Math.abs(q[1])>Math.abs(a[1])?q:a,[0,0]);
   if(mm>0) s+=`<text x="${sx(im[0])}" y="${y0+im[1]*sc+(im[1]>=0?18:-8)}" text-anchor="middle" font-size="14" font-weight="700" fill="#37474f">${im[1].toFixed(2)} kN・m</text>`;
+  { const dm=Math.max(Math.abs(r.dmax||0),Math.abs(r.tip||0),1e-9), K=18/dm, pl=[]; for(let i=0;i<=120;i++){ const x=xmin+(xmax-xmin)*i/120; pl.push([x,r.dfl(x)]); }
+    s+=`<polyline points="${pl.map(q=>sx(q[0]).toFixed(1)+','+(yb+q[1]*K).toFixed(1)).join(' ')}" fill="none" stroke="#1565C0" stroke-width="2.2" stroke-dasharray="6 4"/>`;
+    const mk=[]; if(r.dmax>0.005) mk.push([r.xd,r.dmax,'たわみ '+r.dmax.toFixed(1)+' mm']); if(La>0&&Math.abs(r.tip)>0.05) mk.push([-La,r.tip,'先端 '+r.tip.toFixed(1)+' mm']);
+    mk.forEach(([x,v,lab])=>{ const X=sx(x),Y=yb+v*K, lf=X<padL+50; s+=`<circle cx="${X}" cy="${Y}" r="4" fill="#fff" stroke="#1565C0" stroke-width="2"/><text x="${lf?X+8:X}" y="${Y+(v>=0?17:-8)}" text-anchor="${lf?'start':'middle'}" font-size="13" font-weight="700" fill="#1565C0" paint-order="stroke" stroke="#fff" stroke-width="4">${lab}</text>`; }); }
   s+=`<text x="${padL}" y="264" font-size="12" fill="#607d8b">曲げモーメント図（青：下側が引っぱられる ／ 橙：上側）。今のホイスト位置での図です。</text>`;
   if(La>0) s+=`<text x="${(sx(xmin)+sx(0))/2}" y="${yb+62}" text-anchor="middle" font-size="13" fill="#607d8b">張り出し ${La.toFixed(2)}m</text>`;
   s+=`<text x="${(sx(0)+sx(L))/2}" y="${yb+62}" text-anchor="middle" font-size="13" fill="#607d8b">スパン ${L.toFixed(2)}m</text>`;
@@ -1037,7 +1038,7 @@ function setTab(t){
   curTab=t; document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.toggle('active',c.id==='tab-'+t)); update();
 }
-function toggleManual(){ $('manual-toggle').classList.toggle('open'); $('manual-body').classList.toggle('open'); }
+function toggleManual(){ const d=$('fold0'); if(d) d.open=!d.open; }
 
 /* ---------- 起動 ---------- */
 (function init(){
@@ -1071,4 +1072,14 @@ function toggleManual(){ $('manual-toggle').classList.toggle('open'); $('manual-
     if(act==='mid') posState[pre]=(lo+hi)/2;
     else if(act==='tip') posState[pre]=lo;
     else { const ev=evalBeam(p,n); if(ev){ let bx=lo,bv=-1; ev.sc.rows.forEach(r=>{ const tv=(p.La>0&&p.tipj==1)?Math.max(0,r.tip)/(p.La*1000/ev.nc):0; const v=Math.max(r.rb,r.rs,r.rd,tv); if(v>bv){bv=v;bx=r.x1;} }); posState[pre]=bx; } }
-    updatePos
+    updatePos(pre,t);
+  });
+  $('list-go').onclick=()=>runList(curTab);
+  $('listok').onchange=()=>renderList(curTab); $('listgrp').onchange=()=>renderList(curTab);
+  $('printBtn').onclick=()=>{ buildPrint(); window.print(); };
+  update();
+})();
+
+</script>
+</body>
+</html>
