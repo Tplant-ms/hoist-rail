@@ -247,6 +247,7 @@
 
   .tab-content .card h2{margin-top:0}
   #printSheet{display:none}
+  .reviewnote{margin:0 0 12px;padding:10px 14px;background:#fff8e1;border:1px solid #f0c040;border-radius:8px;font-size:13px;color:#5d4500;line-height:1.7}
   details.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
   details.fold>summary::-webkit-details-marker{display:none}
   details.fold>summary::before{content:'▼';font-size:12px;color:#1B3A5C;flex:none}
@@ -274,6 +275,8 @@
 </header>
 
 <div class="container">
+
+<div class="reviewnote"><b>社内での確認用です。</b>提出書類として使う前に、必ず担当者が条件と結果を確認してください。この計算は、入力した条件の範囲での検討です。</div>
 
 <!-- ===== 使い方 ===== -->
 <div class="card">
@@ -1068,14 +1071,4 @@ function toggleManual(){ $('manual-toggle').classList.toggle('open'); $('manual-
     if(act==='mid') posState[pre]=(lo+hi)/2;
     else if(act==='tip') posState[pre]=lo;
     else { const ev=evalBeam(p,n); if(ev){ let bx=lo,bv=-1; ev.sc.rows.forEach(r=>{ const tv=(p.La>0&&p.tipj==1)?Math.max(0,r.tip)/(p.La*1000/ev.nc):0; const v=Math.max(r.rb,r.rs,r.rd,tv); if(v>bv){bv=v;bx=r.x1;} }); posState[pre]=bx; } }
-    updatePos(pre,t);
-  });
-  $('list-go').onclick=()=>runList(curTab);
-  $('listok').onchange=()=>renderList(curTab); $('listgrp').onchange=()=>renderList(curTab);
-  $('printBtn').onclick=()=>{ buildPrint(); window.print(); };
-  update();
-})();
-
-</script>
-</body>
-</html>
+    updatePos
