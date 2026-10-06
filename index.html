@@ -551,6 +551,7 @@
             font-size:.85rem;font-weight:700;letter-spacing:.04em;">
     🏠 配管・鋼材計算ツール トップへ
   </a>
+  <div style="margin-top:10px;font-size:11px;color:#90a4ae">版：2026-10-06（部材・折りたたみ対応版）</div>
 </div>
 
 <div id="printSheet"></div>
@@ -1068,4 +1069,15 @@ function toggleManual(){ const d=$('fold0'); if(d) d.open=!d.open; }
     const [lo,hi]=posRange(p,n);
     if(act==='mid') posState[pre]=Math.min(hi,Math.max(lo,(p.L-(n==2?p.d:0))/2));   // 支点間の中央（2点吊りは2台の中心が支間中央）
     else if(act==='tip') posState[pre]=lo;
-    else { const ev=evalBeam(p,n); if(ev){ let bx=lo,bv=-1; ev.sc.rows.forEach(r=>{ const tv=(p.La>0&&p.tipj==1)?Math.max(0,r.tip)/(p.La*1000/ev.nc):0; const v=Math.max(r.rb,r.rs,r.rd,tv); if(v>bv){bv=v;bx=r.x1;} }); posState[pre]=b
+    else { const ev=evalBeam(p,n); if(ev){ let bx=lo,bv=-1; ev.sc.rows.forEach(r=>{ const tv=(p.La>0&&p.tipj==1)?Math.max(0,r.tip)/(p.La*1000/ev.nc):0; const v=Math.max(r.rb,r.rs,r.rd,tv); if(v>bv){bv=v;bx=r.x1;} }); posState[pre]=bx; } }
+    updatePos(pre,t);
+  });
+  $('list-go').onclick=()=>{ $('listbox').open=true; runList(curTab); };
+  $('listok').onchange=()=>renderList(curTab); $('listgrp').onchange=()=>renderList(curTab);
+  $('printBtn').onclick=()=>{ buildPrint(); window.print(); };
+  update();
+})();
+
+</script>
+</body>
+</html>
