@@ -247,6 +247,14 @@
 
   .tab-content .card h2{margin-top:0}
   #printSheet{display:none}
+  details.fold>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  details.fold>summary::-webkit-details-marker{display:none}
+  details.fold>summary::before{content:'▼';font-size:12px;color:#1B3A5C;flex:none}
+  details.fold:not([open])>summary::before{content:'▶'}
+  details.fold>summary h2{margin:0;border:0;padding:0;flex:none}
+  details.fold[open]>summary{margin-bottom:12px}
+  .fsum{font-size:12px;color:#555;font-weight:400}
+  details.fold[open] .fsum{display:none}
   .ptbl th,.ptbl td{border:1px solid #bbb;padding:5px 8px;text-align:left}
   .ptbl th{background:#e8f0fe}
   @media print{
@@ -303,8 +311,8 @@
 </div>
 
 <!-- ===== 共通入力 ===== -->
-<div class="card">
-  <h2>📥 荷重条件・部材（共通）</h2>
+<details class="card fold" id="fold1" open>
+  <summary><h2>📥 荷重条件・部材（共通）</h2><span class="fsum" id="fs1"></span></summary>
   <div class="form-grid">
     <div class="form-group full"><label>表題（印刷の一番上）</label><input type="text" id="docTitle" value="ホイストレール強度検討書"></div>
     <div class="form-group full"><label>件名・工事名など（空欄なら印刷しません）</label><input type="text" id="docProj" placeholder="例：○○工場 ホイストレール設置工事"></div>
@@ -334,11 +342,11 @@
   </div>
   <div class="note" id="list-prog"></div>
   <div id="list-out"></div>
-</div>
+</details>
 
 <!-- ===== 計算のしかた ===== -->
-<div class="card">
-  <h2>⚙ 計算のしかた</h2>
+<details class="card fold" id="fold2" open>
+  <summary><h2>⚙ 計算のしかた</h2><span class="fsum" id="fs2"></span></summary>
   <div style="display:flex;gap:6px;flex-wrap:wrap" id="pat-btns">
     <button class="defl-preset" data-pat="A">A　簡易<span style="font-size:10px;margin-left:4px;opacity:.7">自重なし・横座屈なし</span></button>
     <button class="defl-preset" data-pat="B">B　自重のみ<span style="font-size:10px;margin-left:4px;opacity:.7">横座屈なし</span></button>
@@ -358,7 +366,7 @@
     <span class="note" style="margin:0">先端が下がりすぎて、トロリーが勝手に動き、吊荷が振れるのを防ぐための基準です（単純梁・2点吊り梁）</span></span>
   </label>
   <div id="tip-n-box" style="display:none;margin-top:6px;font-size:13px">自社基準：張り出し長さ ÷ <input type="number" id="tip-n" value="250" step="50" min="100" style="width:90px;padding:4px 6px;border:1px solid #bbb;border-radius:5px;background:#fffde7"> （250 が目安）</div>
-</div>
+</details>
 
 <!-- ===== タブ ===== -->
 <div class="tab-bar">
@@ -1001,7 +1009,21 @@ function updatePatUI(){
   $('tip-n-box').style.display=(cfg.tip&&curTab!=='cant')?'block':'none';
   $('tip-n-lbl').textContent=tipN();
 }
+function foldSummary(){
+  try{
+    const mem=$('member'); const mt=mem&&mem.options[mem.selectedIndex]?mem.options[mem.selectedIndex].text.split(/\s{2,}|（/)[0]:'';
+    $('fs1').textContent='W '+($('W').value||0)+'kg ＋ ホイスト '+($('Hw').value||0)+'kg ／ '+mt;
+    $('fs2').textContent='パターン'+cfg.pat+(cfg.tip&&curTab!=='cant'?' ／ 張り出し 1/'+tipN()+'（自社基準）':'');
+  }catch(e){}
+}
+function initFold(){
+  ['fold1','fold2'].forEach(id=>{
+    const d=$(id); try{ if(localStorage.getItem('hr_'+id)==='0') d.open=false; }catch(e){}
+    d.addEventListener('toggle',()=>{ try{ localStorage.setItem('hr_'+id,d.open?'1':'0'); }catch(e){} });
+  });
+}
 function update(){
+  foldSummary();
   updateMemberProps(); updatePatUI();
   if(curTab==='simple'){ showBeam('s','simple'); updatePos('s','simple'); }
   else if(curTab==='twopoint'){ showBeam('tp','twopoint'); updatePos('tp','twopoint'); }
@@ -1016,6 +1038,7 @@ function toggleManual(){ $('manual-toggle').classList.toggle('open'); $('manual-
 
 /* ---------- 起動 ---------- */
 (function init(){
+  initFold();
   // 部材選択
   const groups={}; MEMBERS.forEach(m=>{ (groups[m.g]=groups[m.g]||[]).push(m); });
   const sel=$('member'); sel.innerHTML=Object.keys(groups).map(g=>`<optgroup label="${g}">${groups[g].map(m=>`<option value="${m.n}">${m.n}　（${m.kg.toFixed(1)} kg/m）</option>`).join('')}</optgroup>`).join('');
