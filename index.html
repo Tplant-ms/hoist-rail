@@ -1016,16 +1016,11 @@ function updatePatUI(){
 function foldSummary(){
   try{
     const mem=$('member'); const mt=mem&&mem.options[mem.selectedIndex]?mem.options[mem.selectedIndex].text.split(/\s{2,}|（/)[0]:'';
-    $('fs1').textContent='W '+($('W').value||0)+'kg ＋ ホイスト '+($('Hw').value||0)+'kg ／ '+mt;
-    $('fs2').textContent='パターン'+cfg.pat+(cfg.tip&&curTab!=='cant'?' ／ 張り出し 1/'+tipN()+'（自社基準）':'');
+    $('fs1').textContent='（押すと開きます）W '+($('W').value||0)+'kg ＋ ホイスト '+($('Hw').value||0)+'kg ／ '+mt;
+    $('fs2').textContent='（押すと開きます）パターン'+cfg.pat+(cfg.tip&&curTab!=='cant'?' ／ 張り出し 1/'+tipN()+'（自社基準）':'');
   }catch(e){}
 }
-function initFold(){
-  ['fold1','fold2'].forEach(id=>{
-    const d=$(id); try{ if(localStorage.getItem('hr_'+id)==='0') d.open=false; }catch(e){}
-    d.addEventListener('toggle',()=>{ try{ localStorage.setItem('hr_'+id,d.open?'1':'0'); }catch(e){} });
-  });
-}
+function initFold(){ /* 開閉は毎回「開いた状態」から始めます（前回の閉じた状態は引き継ぎません） */ }
 function update(){
   foldSummary();
   updateMemberProps(); updatePatUI();
