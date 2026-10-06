@@ -3,170 +3,553 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ホイストレール強度検討書</title>
+<title>ホイストレール検討（統合版）</title>
 <style>
-  :root{
-    --navy:#1F3864; --blue:#2F5597; --bg:#F3F6FB; --card:#FFFFFF; --line:#D8E0EC; --text:#1E2733; --sub:#5A6675;
-    --force:#C62828;   /* 力 P */
-    --react:#2E7D32;   /* 反力 */
-    --bend:#E65100;    /* 曲げ */
-    --shear:#6A1B9A;   /* せん断 */
-    --defl:#1565C0;    /* たわみ */
-    --ok:#1B7F3A; --okbg:#E6F4EA; --ng:#B3261E; --ngbg:#FCE8E6; --tip:#FFF6DC; --tipline:#F0C25A;
+  :root {
+    --primary: #1565c0;
+    --ok:      #2e7d32;
+    --ng:      #c62828;
+    --govern:  #e65100;
+    --bg:      #f5f5f5;
+    --card:    #ffffff;
+    --border:  #ddd;
+    --text:    #212121;
+    --sub:     #555;
   }
-  *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth}
-  body{font-family:"Hiragino Sans","Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo",sans-serif;background:var(--bg);color:var(--text);line-height:1.75;font-size:16px}
-  .wrap{max-width:1000px;margin:0 auto;padding:0 14px 60px}
-  header.hero{background:linear-gradient(135deg,#1F3864,#2F5597);color:#fff;padding:26px 18px 22px;border-radius:0 0 18px 18px}
-  header.hero .in{max-width:1000px;margin:0 auto}
-  header.hero h1{font-size:clamp(20px,4.2vw,30px);line-height:1.4;letter-spacing:.02em}
-  header.hero p{opacity:.92;margin-top:6px;font-size:14px}
-  .modes{display:flex;gap:8px;margin:16px 0 12px;flex-wrap:wrap}
-  .modes button{flex:1 1 200px;border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;font:inherit;font-weight:700;color:var(--sub);cursor:pointer;text-align:left;line-height:1.4}
-  .modes button small{display:block;font-weight:400;font-size:12px;color:var(--sub)}
-  .modes button.on{border-color:var(--blue);background:var(--blue);color:#fff}
-  .modes button.on small{color:#DCE6F5}
-  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px;margin:14px 0}
-  .card h2{font-size:18px;color:var(--navy)}
-  .inputs h2{margin-bottom:10px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
-  .fld label{display:block;font-size:13px;color:var(--sub);margin-bottom:2px}
-  .fld .row{display:flex;align-items:center;gap:6px}
-  .fld input,.fld select{width:100%;font:inherit;font-size:16px;padding:7px 9px;border:1.5px solid #B9C6DA;border-radius:8px;background:#FFFBEA}
-  .fld input:focus,.fld select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,85,151,.18)}
-  .fld .u{font-size:13px;color:var(--sub);white-space:nowrap}
-  .fld .hint{font-size:12px;color:var(--sub);margin-top:2px}
-  details.guide{margin-bottom:12px;padding:12px 16px} details.guide summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:15px} details.guide h3{font-size:14px;margin:12px 0 4px;color:var(--navy)} .gtbl{table-layout:auto} .gtbl th,.gtbl td{vertical-align:top;text-align:left !important;font-size:13px} .gtbl td:nth-child(1){white-space:nowrap;min-width:92px} .gtbl td:nth-child(2),.gtbl td:nth-child(3){white-space:nowrap} .gtbl .btn{margin-top:6px;font-size:12px;padding:4px 12px;white-space:nowrap;border-radius:14px}
-  details.adv{margin-top:12px}
-  details.adv summary{cursor:pointer;color:var(--blue);font-size:14px}
-  .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  .btn{border:1.5px solid #B9C6DA;background:#fff;border-radius:999px;padding:6px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--navy)}
-  .btn:hover{background:#EEF3FA}
-  /* 結論 */
-  .verdict{border-radius:16px;padding:20px 20px 16px;margin:16px 0;border:2px solid}
-  .verdict.ok{background:var(--okbg);border-color:#7BC28F}
-  .verdict.ng{background:var(--ngbg);border-color:#E8A19B}
-  .verdict .big{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .verdict .mark{font-size:22px;font-weight:800;padding:8px 22px;border-radius:999px;color:#fff;letter-spacing:.06em}
-  .verdict.ok .mark{background:var(--ok)} .verdict.ng .mark{background:var(--ng)}
-  .verdict .msg{font-size:clamp(16px,2.6vw,20px);font-weight:700;line-height:1.55;flex:1 1 300px}
-  .gauges{margin-top:14px;display:grid;gap:10px}
-  .gauge .lab{display:flex;justify-content:space-between;gap:10px;font-size:14px;flex-wrap:wrap}
-  .gauge .lab b{font-size:15px}
-  .bar{position:relative;height:18px;background:#fff;border:1px solid #C7D1E0;border-radius:9px;overflow:hidden;margin-top:3px}
-  .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:9px 0 0 9px}
-  .bar .lim{position:absolute;top:-2px;bottom:-2px;width:2px;background:#B3261E}
-  .bar-cap{display:flex;justify-content:space-between;font-size:11px;color:var(--sub)}
-  /* ステップ */
-  .step{background:var(--card);border:1px solid var(--line);border-radius:16px;margin:18px 0;overflow:hidden}
-  .step-head{display:flex;align-items:center;gap:12px;padding:14px 18px;background:#F0F5FC;border-bottom:1px solid var(--line)}
-  .num{flex:none;width:38px;height:38px;border-radius:50%;background:var(--navy);color:#fff;font-weight:800;display:grid;place-items:center;font-size:18px}
-  .step-head h2{font-size:clamp(17px,2.8vw,21px);line-height:1.4;color:var(--navy)}
-  .step-body{padding:16px 18px 18px}
-  .step-body>*+*{margin-top:14px}
-  .lead{font-size:16px}
-  .lead b{color:var(--navy)}
-  .eq{background:#F7F9FC;border:1px solid var(--line);border-radius:10px;padding:10px 14px;overflow-x:auto}
-  .eq .f{font-size:15px;color:var(--sub)}
-  .eq .n{font-size:17px;margin-top:2px}
-  .eq .r{font-size:19px;font-weight:800;margin-top:4px}
-  .tip{background:var(--tip);border:1px solid var(--tipline);border-left:6px solid #E0A526;border-radius:10px;padding:10px 14px;font-size:15px}
-  .tip .tag{display:inline-block;background:#E0A526;color:#fff;font-size:12px;font-weight:700;padding:1px 9px;border-radius:999px;margin-right:6px}
-  .warn{background:var(--ngbg);border:1px solid #E8A19B;border-left:6px solid var(--ng);border-radius:10px;padding:10px 14px;font-size:15px}
-  .okbox{background:var(--okbg);border:1px solid #9BD1AA;border-left:6px solid var(--ok);border-radius:10px;padding:10px 14px;font-size:15px}
-  svg{display:block;width:100%;height:auto}
-  svg.sec{max-width:320px;margin:0 auto}
-  .figwrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-  .figwrap svg{min-width:620px}
-  @media(max-width:720px){.figwrap::before{content:'← 図は左右にスクロールできます →';display:block;text-align:center;font-size:11px;color:#6B7686;position:sticky;left:0}}
-  svg text{font-family:inherit}
-  .flow{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px 4px}
-  .chip{background:#fff;border:2px solid #C7D1E0;border-radius:12px;padding:8px 12px;text-align:center;min-width:112px}
-  .chip .t{font-size:12px;color:var(--sub);line-height:1.3}
-  .chip .v{font-size:20px;font-weight:800;line-height:1.3}
-  .chip .v small{font-size:13px;font-weight:600;margin-left:2px}
-  .chip.key{border-color:var(--force);background:#FFF1F0}
-  .chip.key .v{color:var(--force)}
-  .op{align-self:center;text-align:center;font-size:13px;color:var(--navy);font-weight:700;padding:0 2px;line-height:1.25}
-  .op b{display:block;font-size:20px}
-  table.tbl{width:100%;border-collapse:collapse;font-size:14px}
-  table.tbl th,table.tbl td{border:1px solid var(--line);padding:6px 9px;text-align:right}
-  table.tbl th{background:#F0F5FC;color:var(--navy);text-align:center}
-  table.tbl td:first-child,table.tbl th:first-child{text-align:left}
-  .twocol{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  @media(max-width:720px){.twocol{grid-template-columns:1fr}}
-  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--sub)}
-  .legend i{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:4px}
-  .slider{width:100%;accent-color:var(--blue);height:28px}
-  .note{font-size:13px;color:var(--sub)}
-  ul.plain{padding-left:1.3em}
-  ul.plain li{margin:2px 0}
-  footer{margin-top:26px;font-size:13px;color:var(--sub)}
-  footer ul{padding-left:1.3em}
-  .printbtn{float:right}
-  header.hero .screenonly{opacity:.8;font-size:13px}
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', sans-serif;
+    background: var(--bg); color: var(--text); font-size: 14px; line-height: 1.5;
+  }
+  header {
+    background: #1565c0; color: #fff;
+    padding: 14px 20px; font-size: 17px; font-weight: bold;
+    letter-spacing: 0.05em; border-radius: 0 0 8px 8px; text-align: center;
+  }
+  header small {
+    display: block; font-size: 11px; font-weight: normal;
+    opacity: 0.85; margin-top: 3px;
+  }
+  .page-wrap { max-width: 720px; margin: 0 auto; }
+  .container  { padding: 12px 12px 40px; }
+
+  /* CARD */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px; margin-bottom: 10px;
+  }
+  .card h2 {
+    font-size: 13px; font-weight: bold; color: var(--primary);
+    border-bottom: 1px solid #e0e0e0; padding-bottom: 6px;
+    margin-bottom: 10px; letter-spacing: 0.04em;
+  }
+
+  /* FORM */
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  @media (max-width: 420px) { .form-grid { grid-template-columns: 1fr; } }
+  .form-group label { display: block; font-size: 12px; color: var(--sub); margin-bottom: 3px; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 8px 10px; border: 1px solid #bbb;
+    border-radius: 5px; font-size: 14px; background: #fffde7;
+    transition: border-color .2s, background .2s;
+  }
+  .form-group input:focus, .form-group select:focus {
+    outline: none; border-color: var(--primary);
+    background: #fff9c4; box-shadow: 0 0 0 2px rgba(21,101,192,.15);
+  }
+  .form-group.full { grid-column: 1 / -1; }
+
+  /* MEMBER PROPS */
+  .member-props {
+    display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-top: 8px;
+  }
+  @media (max-width: 420px) { .member-props { grid-template-columns: repeat(2,1fr); } }
+  .prop-box { background: #f0f4ff; border-radius: 5px; padding: 5px 7px; text-align: center; }
+  .prop-box .val { font-size: 13px; font-weight: bold; color: var(--primary); }
+  .prop-box .lbl { font-size: 10px; color: var(--sub); }
+
+  /* TABS */
+  .tab-bar { display: flex; gap: 6px; margin-bottom: 10px; }
+  .tab-btn {
+    flex: 1; padding: 10px 6px; border: 2px solid var(--border);
+    border-radius: 7px; background: #fff; font-size: 13px; font-weight: bold;
+    color: var(--sub); cursor: pointer; transition: all .18s; letter-spacing: 0.01em;
+  }
+  .tab-btn.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+  .tab-btn:not(.active):hover { border-color: #90b0e0; color: var(--primary); background: #f0f4ff; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* RESULT TABLE */
+  .result-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .result-table th, .result-table td {
+    padding: 7px 8px; text-align: left;
+    border-bottom: 1px solid #eee; font-size: 13px;
+  }
+  .result-table th { background: #f0f4ff; font-weight: bold; color: var(--primary); font-size: 12px; }
+  .result-table tr:last-child td { border-bottom: none; }
+  .badge {
+    display: inline-block; padding: 2px 10px; border-radius: 12px;
+    font-weight: bold; font-size: 12px; min-width: 40px; text-align: center;
+  }
+  .badge.ok { background: #e8f5e9; color: var(--ok); }
+  .badge.ng { background: #ffebee; color: var(--ng); }
+  .badge.na { background: #f5f5f5; color: #999; }
+  .ratio-bar-wrap { display: flex; align-items: center; gap: 6px; }
+  .ratio-val { min-width: 44px; text-align: right; font-weight: bold; font-size: 13px; }
+  .ratio-bar  { flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+  .ratio-fill { height: 100%; border-radius: 4px; transition: width .3s, background .3s; }
+  .summary-box {
+    text-align: center; padding: 10px; border-radius: 8px;
+    font-size: 15px; font-weight: bold; margin-top: 6px;
+  }
+  .summary-box.ok { background: #e8f5e9; color: var(--ok); }
+  .summary-box.ng { background: #ffebee; color: var(--ng); }
+  .summary-box.na { background: #f5f5f5; color: #999; }
+
+  /* MAX SPAN (片持ち) */
+  .max-span-box {
+    text-align: center; padding: 14px 12px 10px;
+    border-radius: 8px; margin-bottom: 10px;
+    border: 2px solid var(--govern); background: #fff8f0;
+  }
+  .max-span-box .ms-label { font-size: 11px; color: var(--govern); font-weight: bold; letter-spacing: .05em; }
+  .max-span-box .ms-value { font-size: 50px; font-weight: bold; color: var(--govern); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .max-span-box .ms-unit  { font-size: 18px; font-weight: normal; color: var(--govern); }
+  .max-span-box .ms-gov   { font-size: 12px; color: var(--sub); margin-top: 2px; }
+
+  .limit-table { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .limit-table th, .limit-table td {
+    padding: 7px 8px; text-align: left; border-bottom: 1px solid #eee; font-size: 13px;
+  }
+  .limit-table th { background: #f0f4ff; font-weight: bold; color: var(--primary); font-size: 12px; }
+  .limit-table tr:last-child td { border-bottom: none; }
+  .limit-table td.L-val { font-weight: bold; font-variant-numeric: tabular-nums; }
+  .tag-gov {
+    display: inline-block; padding: 1px 7px; border-radius: 10px;
+    background: var(--govern); color: #fff; font-size: 10px; font-weight: bold;
+  }
+
+  /* SLIDER */
+  .slider-section { margin-top: 10px; }
+  .slider-section h3 { font-size: 12px; font-weight: bold; color: var(--sub); margin-bottom: 6px; }
+  .slider-row { display: flex; align-items: center; gap: 10px; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--primary); }
+  .slider-val { min-width: 64px; text-align: right; font-size: 16px; font-weight: bold; color: var(--primary); font-variant-numeric: tabular-nums; }
+  .sratios { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .sratio-row { display: flex; align-items: center; gap: 8px; font-size: 12px; flex-wrap: wrap; }
+  .sratio-name { width: 80px; flex-shrink: 0; color: var(--sub); }
+  .sratio-bar-wrap { flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px; overflow: hidden; }
+  .sratio-fill { height: 100%; border-radius: 4px; transition: width .2s, background .2s; }
+  .sratio-num  { min-width: 48px; text-align: right; font-weight: bold; font-variant-numeric: tabular-nums; }
+  .sratio-badge {
+    min-width: 32px; text-align: center; font-size: 11px; font-weight: bold;
+    padding: 1px 6px; border-radius: 10px;
+  }
+  .sratio-badge.ok { background: #e8f5e9; color: var(--ok); }
+  .sratio-badge.ng { background: #ffebee; color: var(--ng); }
+  .sratio-sub {
+    width: 100%; font-size: 11px; color: var(--sub);
+    padding: 1px 0 4px 2px; letter-spacing: 0.02em;
+  }
+
+  /* COMMON */
+  .inter-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  @media (max-width: 380px) { .inter-grid { grid-template-columns: 1fr; } }
+  .inter-item { background: #fafafa; border: 1px solid #e8e8e8; border-radius: 5px; padding: 5px 8px; }
+  .inter-item .k { font-size: 11px; color: var(--sub); }
+  .inter-item .v { font-size: 13px; font-weight: bold; }
+  .note { font-size: 11px; color: var(--sub); margin-top: 8px; line-height: 1.6; }
+  .divider { border: none; border-top: 1px solid #e0e0e0; margin: 10px 0; }
+  .form-sub { font-size: 11px; color: var(--sub); margin-top: 2px; }
+  .defl-preset {
+    padding: 4px 10px; border: 1px solid #bbb; border-radius: 14px;
+    background: #f5f5f5; font-size: 12px; font-weight: bold; color: #555;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+  }
+  .defl-preset:hover  { background: #e8f0fe; border-color: var(--primary); color: var(--primary); }
+  .defl-preset.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .action-btn {
+    padding: 5px 12px; border: 1px solid #bbb; border-radius: 14px;
+    background: #f5f5f5; font-size: 12px; font-weight: bold; color: #555;
+    cursor: pointer; transition: all .15s; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 4px; margin-bottom: 8px;
+  }
+  .action-btn:hover { background: #e8f0fe; border-color: var(--primary); color: var(--primary); }
+
+  /* FORM SLIDER */
+  .form-slider {
+    width: 100%; margin-top: 5px;
+    accent-color: var(--primary); cursor: pointer; height: 20px;
+  }
+  .form-slider-labels {
+    display: flex; justify-content: space-between;
+    font-size: 10px; color: var(--sub); margin-top: 1px;
+    user-select: none;
+  }
+
+  /* MANUAL */
+  .manual-toggle {
+    display: flex; align-items: center; gap: 8px;
+    background: none; border: none; cursor: pointer;
+    width: 100%; padding: 0; font-size: 13px;
+    font-weight: bold; color: var(--primary); text-align: left;
+  }
+  .manual-toggle .arrow { font-size: 11px; transition: transform .2s; display: inline-block; }
+  .manual-toggle.open .arrow { transform: rotate(90deg); }
+  .manual-body { display: none; margin-top: 10px; }
+  .manual-body.open { display: block; }
+  .manual-section { margin-bottom: 12px; }
+  .manual-section h3 {
+    font-size: 12px; font-weight: bold; color: var(--primary);
+    margin-bottom: 5px; display: flex; align-items: center; gap: 5px;
+  }
+  .manual-section p, .manual-section li {
+    font-size: 12px; color: var(--sub); line-height: 1.7;
+  }
+  .manual-section ul { padding-left: 16px; }
+  .manual-step { display: flex; gap: 10px; align-items: flex-start; margin-bottom: 6px; }
+  .manual-step .step-num {
+    flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%;
+    background: var(--primary); color: #fff;
+    font-size: 11px; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .manual-step p { margin: 0; font-size: 12px; color: var(--sub); line-height: 1.6; }
+  .manual-tip {
+    background: #fff8e1; border-left: 3px solid #f9a825;
+    padding: 6px 10px; border-radius: 0 5px 5px 0;
+    font-size: 11px; color: #5d4037; line-height: 1.6; margin-top: 8px;
+  }
+  .manual-divider { border: none; border-top: 1px solid #eee; margin: 10px 0; }
+
+  /* 2点吊り梁 SPECIFIC */
+  .tp-diagram-wrap {
+    background: #f8fafc; border: 1px solid var(--border);
+    border-radius: 6px; overflow: hidden; margin-bottom: 10px;
+  }
+  .tp-pos-block {
+    background: #e8f0fe; border-radius: 8px; padding: 10px 12px; margin-bottom: 10px;
+  }
+  .tp-pos-label { font-size: 11px; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+  .tp-pos-val   { font-size: 12px; font-weight: 700; color: var(--primary); text-align: center; margin-top: 4px; }
+  .tp-pos-ends  { display: flex; justify-content: space-between; font-size: 10px; color: var(--sub); }
+  .formula-box {
+    background: #f1f5f9; border-left: 3px solid var(--primary); padding: 8px 10px;
+    border-radius: 0 6px 6px 0; font-size: 11px; color: var(--sub); line-height: 1.9;
+    margin-top: 8px;
+  }
+  .formula-box b { color: var(--primary); }
+  .tp-warn {
+    font-size: 11px; color: var(--ng); font-weight: 700;
+    background: #ffebee; border-radius: 5px; padding: 6px 10px; margin-bottom: 8px;
+  }
+
+  .tab-content .card h2{margin-top:0}
+  #printSheet{display:none}
+  .ptbl th,.ptbl td{border:1px solid #bbb;padding:5px 8px;text-align:left}
+  .ptbl th{background:#e8f0fe}
   @media print{
-    body{background:#fff;font-size:12px}
-    header.hero{background:#1F3864 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-    .modes,.inputs,.btnrow,.slider-box,.printbtn,.screenonly{display:none !important}
-    .step,.card,.verdict{break-inside:avoid;page-break-inside:avoid}
-    .wrap{padding:0}
+    body{background:#fff}
+    .page-wrap,.toplink{display:none !important}
+    #printSheet{display:block !important;padding:0}
+    @page{size:A4;margin:14mm}
     *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   }
-.lmax{color:#1F4E9C;font-size:13px}
 </style>
 </head>
 <body>
-<header class="hero"><div class="in">
-  <h1 id="docTitle">ホイストレール強度検討書</h1>
-  <p id="docSub"></p>
-  <p class="screenonly">H形鋼のレールが「折れない・大きくたわまない」ことを、図と数字で順番に確かめます。下の数字を変えると、図も説明もすべて自動で変わります。</p>
-</div></header>
+<div class="page-wrap">
+<header>
+  🏗 ホイストレール検討（統合版）
+  <small>単純梁（＋張り出し）／ 片持ち梁 ／ 2点吊り梁 — 自重・横座屈・自社基準の切り替え付き · SS400</small>
+</header>
 
-<div class="wrap">
-  <nav class="modes" id="modes"></nav>
-  <details class="card screenonly guide" id="guide">
-    <summary>初めて使う方へ（最初にお読みください）</summary>
-    <p class="note" style="margin:8px 0">この画面は、条件を入れるための部分です。印刷には出ません。印刷すると、選んだ条件が1ページ目の「今回の計算条件」に出ます。</p>
-    <h3>ステップ1　計算のしかたを3通りから選ぶ</h3>
-    <table class="tbl gtbl"><tr><th></th><th>梁の自重</th><th>横座屈</th><th>どんなときに使うか／注意</th></tr>
-      <tr><td><b>A　簡易</b><br><button class="btn gset" data-g="A">Aにする</button></td><td>考慮しない</td><td>しない</td><td>これまでの提出と同じ考え方です。スパンが短く、上フランジがレールとして連続して固定されているなど、前提を説明できるときに使います。<b>計算は一番楽ですが、安全側ではありません。</b></td></tr>
-      <tr><td><b>B　自重のみ</b><br><button class="btn gset" data-g="B">Bにする</button></td><td>考慮する</td><td>しない</td><td>梁自身の重さも見込みます。横座屈は、上フランジが連続して固定されていて、起きないと説明できるときだけ「しない」にします。</td></tr>
-      <tr><td><b>C　両方</b><br><button class="btn gset" data-g="C">Cにする</button></td><td>考慮する</td><td>する</td><td><b>一番安全側です（おすすめ）。</b>上フランジを固定していないときは、これを選びます。つなぎ（横ずれ止め）を入れた場合は、画面の「支間をつなぐ箇所の数」「張り出し先端をつなぐ」で選ぶと、使用率が下がります。</td></tr></table>
-    <p class="note" id="guideNow" style="margin:6px 0 0"></p>
-    <h3>ステップ2　張り出しがあるときは、自社基準（張り出し部のたわみ 1/250）を使うか決める</h3>
-    <ul class="plain">
-      <li><b>使う（チェックを入れる）</b>：先端が下がりすぎて、トロリーが勝手に動いたり、吊荷が振れたりするのを防ぎたいとき。作業者が近くにいる、レールの傾きが気になる、といった場合に向いています。</li>
-      <li><b>使わない（チェックなし）</b>：先端のたわみは参考値になり、判定には使いません。強度は、曲げ・せん断の応力で確認します。先端にはトロリーのストッパーを必ず付けてください。</li>
-      <li>注意：使うと、張り出しを短くするか、部材を大きくする必要が出ることがあります。画面に「OKとなる最大の張り出し長さ」が出るので、それを見て決めてください。</li>
-    </ul>
-    <h3>ステップ3　結果を確認して印刷する</h3>
-    <ul class="plain">
-      <li>上の判定が「OK」で、1ページ目の「今回の計算条件」が、実際に使う条件と合っているか確認してから、印刷してください。</li>
-      <li>AやBを選んだときは、「なぜ自重や横座屈を考えなくてよいか」を、提出先に説明できるようにしておいてください。</li>
-      <li>数字を変えたときは、その都度、結果が変わっていないか確認してください（OKのまま変わらないときは、使う部材が意図したものか、見てください）。</li>
-      <li>柱・ブラケット・ボルト・アンカー・溶接そのものの検討は、この計算には含まれません。</li>
-    </ul>
-  </details>
-  <section class="card inputs" id="inputs"></section>
-  <div id="story"></div>
-  <footer id="foot"></footer>
-  <div class="screenonly" style="text-align:center;margin:18px 0 28px"><a href="https://tplant-ms.github.io/pipe-menkan/index.html" target="_blank" rel="noopener" style="display:inline-block;padding:10px 20px;border:1px solid #9DB2D6;border-radius:999px;background:#fff;color:#1F4E9C;font-weight:700;text-decoration:none">配管・鋼材計算ツールを開く ↗</a></div>
+<div class="container">
+
+<!-- ===== 使い方 ===== -->
+<div class="card">
+  <button class="manual-toggle" id="manual-toggle" onclick="toggleManual()">
+    <span class="arrow">▶</span>📖 使い方ガイド（はじめての方へ）
+  </button>
+  <div class="manual-body" id="manual-body">
+    <div class="manual-section">
+      <h3>🔧 このツールでできること</h3>
+      <p>ホイストレールに使うH形鋼（またはI形鋼）が、吊り荷重に対して安全かを、<strong>曲げ・せん断・たわみ</strong>で判定します。結果は、解説付きの「ホイストレール検討（やさしい解説版）」と同じ計算です。<br>
+      ホイストを梁の上で端から端まで動かした<strong>すべての位置</strong>で確認し、一番きびしい値を結果にしています。</p>
+    </div>
+    <hr class="manual-divider">
+    <div class="manual-section">
+      <h3>📋 使い方</h3>
+      <div class="manual-step"><div class="step-num">1</div><p>吊り荷重・ホイスト自重・部材を入れます。</p></div>
+      <div class="manual-step"><div class="step-num">2</div><p><strong>「計算のしかた」</strong>を A・B・C から選びます。<br>
+        A＝自重も横座屈も考えない（簡易） ／ B＝自重のみ ／ C＝自重も横座屈も考える（一番安全側・おすすめ）。</p></div>
+      <div class="manual-step"><div class="step-num">3</div><p>張り出しがあるときは、<strong>自社基準（張り出し部のたわみ 1/250）</strong>を使うかを、チェックで決めます。先端が下がりすぎて、トロリーが勝手に動き、吊荷が振れるのを防ぐための基準です。</p></div>
+      <div class="manual-step"><div class="step-num">4</div><p>タブで梁の形を選び、スパン・張り出しを入れます。結果と、<strong>OKとなる最大の張り出し長さ</strong>が出ます。</p></div>
+      <div class="manual-step"><div class="step-num">5</div><p>「部材の一覧」で、全部材のOK/NGと、部材ごとの最大張り出しを比べられます。いちばん軽いOKの部材に★が付きます。</p></div>
+      <div class="manual-step"><div class="step-num">6</div><p>「印刷する」で、条件と結果を1ページにまとめて印刷できます。</p></div>
+    </div>
+    <hr class="manual-divider">
+    <div class="manual-section">
+      <h3>📎 注意</h3>
+      <ul>
+        <li>A・Bを選んだときは、「なぜ自重や横座屈を考えなくてよいか」を、提出先に説明できるようにしておいてください。</li>
+        <li>柱・ブラケット・ボルト・アンカー・溶接そのものの検討は、含まれません。支点の力は、結果の欄に出ます。</li>
+        <li>許容応力度は SS400 の値（fb₀＝15.6 kN/cm²、fs＝fb₀÷√3、E＝21,000 kN/cm²）です。支間のたわみは L/800 です。</li>
+        <li>詳しい理由や途中の計算を知りたいときは、「やさしい解説版」を見てください。</li>
+      </ul>
+    </div>
+  </div>
 </div>
 
+<!-- ===== 共通入力 ===== -->
+<div class="card">
+  <h2>📥 荷重条件・部材（共通）</h2>
+  <div class="form-grid">
+    <div class="form-group full"><label>表題（印刷の一番上）</label><input type="text" id="docTitle" value="ホイストレール強度検討書"></div>
+    <div class="form-group full"><label>件名・工事名など（空欄なら印刷しません）</label><input type="text" id="docProj" placeholder="例：○○工場 ホイストレール設置工事"></div>
+    <div class="form-group"><label>吊り荷重 W (kg)</label><input type="number" id="W" value="950" min="0" step="50"></div>
+    <div class="form-group"><label>ホイスト自重 Hw (kg)</label><input type="number" id="Hw" value="60" min="0" step="10"></div>
+    <div class="form-group"><label>衝撃係数 φ</label><input type="number" id="phi" value="1.2" min="1" max="2" step="0.05"></div>
+    <div class="form-group"><label>許容曲げ応力度 fb₀ (kN/cm²)</label><input type="number" id="fb0" value="15.6" min="1" step="0.1"></div>
+    <div class="form-group full"><label>部材選択（H形鋼・I形鋼）</label><select id="member"></select></div>
+  </div>
+  <div class="member-props" id="member-props">
+    <div class="prop-box"><div class="val" id="p-H">—</div><div class="lbl">H (mm)</div></div>
+    <div class="prop-box"><div class="val" id="p-B">—</div><div class="lbl">B (mm)</div></div>
+    <div class="prop-box"><div class="val" id="p-Ix">—</div><div class="lbl">Ix (cm⁴)</div></div>
+    <div class="prop-box"><div class="val" id="p-Zx">—</div><div class="lbl">Zx (cm³)</div></div>
+    <div class="prop-box"><div class="val" id="p-ib">—</div><div class="lbl">A (cm²)</div></div>
+    <div class="prop-box"><div class="val" id="p-tw">—</div><div class="lbl">tw (mm)</div></div>
+    <div class="prop-box"><div class="val" id="p-tf">—</div><div class="lbl">tf (mm)</div></div>
+    <div class="prop-box"><div class="val" id="p-W">—</div><div class="lbl">自重(kg/m)</div></div>
+  </div>
+  <hr class="divider">
+  <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:4px">📋 部材の一覧（今のタブの条件で、全部材を比べる）</div>
+  <p class="note" style="margin:0 0 8px">下のタブで選んでいる梁の形・荷重・スパン・張り出しの条件で、各部材がOKかを一覧にします。「最大張り出し」は、その部材でOKとなる張り出しの上限です。★は、いちばん軽いOKの部材です。行を押すと、その部材を選びます。</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+    <button class="action-btn" id="list-go" style="margin-bottom:0">📋 部材の一覧を計算する</button>
+    <label style="font-size:12px"><input type="checkbox" id="listok"> OKだけ表示</label>
+    <label style="font-size:12px"><input type="checkbox" id="listgrp"> 鋼材の種類ごとに並べる（細幅・中幅・広幅・I形鋼）</label>
+  </div>
+  <div class="note" id="list-prog"></div>
+  <div id="list-out"></div>
+</div>
+
+<!-- ===== 計算のしかた ===== -->
+<div class="card">
+  <h2>⚙ 計算のしかた</h2>
+  <div style="display:flex;gap:6px;flex-wrap:wrap" id="pat-btns">
+    <button class="defl-preset" data-pat="A">A　簡易<span style="font-size:10px;margin-left:4px;opacity:.7">自重なし・横座屈なし</span></button>
+    <button class="defl-preset" data-pat="B">B　自重のみ<span style="font-size:10px;margin-left:4px;opacity:.7">横座屈なし</span></button>
+    <button class="defl-preset" data-pat="C">C　両方<span style="font-size:10px;margin-left:4px;opacity:.7">一番安全側</span></button>
+  </div>
+  <p class="note" id="pat-desc" style="margin-top:6px"></p>
+  <div id="brace-box" class="form-grid" style="margin-top:8px">
+    <div class="form-group"><label>支間をつなぐ箇所の数（横ずれ止め）</label>
+      <select id="bm"><option value="0">しない</option><option value="1">1か所（中央）</option><option value="2">2か所（L÷3）</option><option value="3">3か所（L÷4）</option><option value="4">4か所（L÷5）</option></select></div>
+    <div class="form-group"><label>張り出し先端をつなぐ（横ずれ止め）</label>
+      <select id="bt"><option value="0">しない（止めない）</option><option value="1">する（架台へつなぐ）</option></select></div>
+  </div>
+  <hr class="divider">
+  <label style="display:flex;gap:10px;align-items:center;cursor:pointer;font-size:13px" id="tip-label">
+    <input type="checkbox" id="tipchk" style="width:20px;height:20px;flex:none">
+    <span>張り出し部のたわみを <b>1/<span id="tip-n-lbl">250</span>（自社基準）</b>で制限する<br>
+    <span class="note" style="margin:0">先端が下がりすぎて、トロリーが勝手に動き、吊荷が振れるのを防ぐための基準です（単純梁・2点吊り梁）</span></span>
+  </label>
+  <div id="tip-n-box" style="display:none;margin-top:6px;font-size:13px">自社基準：張り出し長さ ÷ <input type="number" id="tip-n" value="250" step="50" min="100" style="width:90px;padding:4px 6px;border:1px solid #bbb;border-radius:5px;background:#fffde7"> （250 が目安）</div>
+</div>
+
+<!-- ===== タブ ===== -->
+<div class="tab-bar">
+  <button class="tab-btn active" data-tab="simple">⚖ 単純梁</button>
+  <button class="tab-btn"        data-tab="cant">↗ 片持ち梁</button>
+  <button class="tab-btn"        data-tab="twopoint">🔗 2点吊り梁</button>
+</div>
+
+<!-- ===== TAB: 単純梁 ===== -->
+<div id="tab-simple" class="tab-content active">
+  <div class="card">
+    <h2>📐 単純梁（＋張り出し）— スパン入力</h2>
+    <p class="note" style="margin:0 0 8px">荷重：P = (W + Hw) × φ × g　（ホイスト1台。梁の上のどこにでも動かせるとして、全位置を確認）</p>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>支点間スパン L (m)</label>
+        <input type="number" id="L" value="4.3" min="0.5" max="30" step="0.1">
+        <input type="range" class="form-slider" id="L-slider" min="0.5" max="20" step="0.1" value="4.3">
+        <div class="form-slider-labels"><span>0.5 m</span><span>20 m</span></div>
+      </div>
+      <div class="form-group full">
+        <label>↙ 張り出し長さ La (m) <span style="font-weight:normal;font-size:11px;color:#888">0 = なし</span></label>
+        <input type="number" id="Lc" value="1.0" min="0" max="20" step="0.1">
+        <input type="range" class="form-slider" id="Lc-slider" min="0" max="10" step="0.05" value="1.0">
+        <div class="form-slider-labels"><span>0 m</span><span>10 m</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="s-card">
+    <h2 id="s-h2">📊 単純梁（＋張り出し）— 検討結果</h2>
+    <div class="summary-box na" id="s-summary">— 計算中 —</div>
+    <div id="s-maxla"></div>
+    <table class="result-table">
+      <thead><tr><th>検討項目</th><th>計算値</th><th>許容値</th><th>比率</th><th>判定</th></tr></thead>
+      <tbody id="s-tbody"></tbody>
+    </table>
+    <div class="inter-grid" id="s-inter"></div>
+    <p class="note" id="s-note"></p>
+    <hr class="divider">
+    <div class="tp-diagram-wrap"><svg id="s-diagram" viewBox="0 0 700 270" style="display:block;width:100%;height:auto"></svg></div>
+    <div class="slider-section">
+      <h3>🔍 ホイストの位置を動かして確認（支点Aを 0 m とする）</h3>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="action-btn" data-pos="s:worst">⚠ 一番きびしい位置へ</button>
+        <button class="action-btn" data-pos="s:mid">📍 中央へ</button>
+        <button class="action-btn" data-pos="s:tip">↙ 張り出し先端へ</button>
+      </div>
+      <div class="slider-row"><span style="font-size:12px;color:var(--sub)" id="s-pos-min-lbl">0m</span>
+        <input type="range" id="s-pos-slider" min="0" max="5" step="0.05" value="2.5">
+        <span style="font-size:12px;color:var(--sub)" id="s-pos-max-lbl">5m</span></div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px">
+        <label style="font-size:12px;color:var(--sub)">ホイスト位置</label>
+        <input type="number" id="s-pos-input" step="0.05" style="width:80px;padding:3px 6px;font-size:13px;font-weight:700;border:1px solid #bbb;border-radius:4px;text-align:right;color:var(--primary)">
+        <span style="font-size:12px;color:var(--sub)">m</span></div>
+      <div id="s-pos-zone" style="text-align:center;font-size:11px;color:var(--sub);margin:3px 0 5px"></div>
+      <div class="sratios" id="s-pos-ratios"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB: 片持ち梁 ===== -->
+<div id="tab-cant" class="tab-content">
+  <div class="card">
+    <h2>📐 片持ち梁 — 張り出し長さ・たわみ制限</h2>
+    <p class="note" style="margin:0 0 8px">荷重：P = (W + Hw) × φ × g　（先端集中荷重）。根元は固定として計算します。横座屈は考えません（自重だけ、A/B/C の選択に従います）。</p>
+    <div class="form-grid">
+      <div class="form-group full">
+        <label>張り出し長さ Lc (m)（固定した根元から先端まで）</label>
+        <input type="number" id="cLc" value="1.2" min="0.1" max="20" step="0.05">
+        <input type="range" class="form-slider" id="cLc-slider" min="0.1" max="10" step="0.05" value="1.2">
+        <div class="form-slider-labels"><span>0.1 m</span><span>10 m</span></div>
+      </div>
+      <div class="form-group full">
+        <label>たわみ制限 1/n（nを入力）</label>
+        <input type="number" id="deflN" value="400" min="100" step="50">
+        <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+          <button class="defl-preset" data-n="250">L/250<span style="font-size:10px;margin-left:4px;opacity:.7">自社基準</span></button>
+          <button class="defl-preset" data-n="300">L/300<span style="font-size:10px;margin-left:4px;opacity:.7">一般的</span></button>
+          <button class="defl-preset active" data-n="400">L/400<span style="font-size:10px;margin-left:4px;opacity:.7">やや厳しく</span></button>
+          <button class="defl-preset" data-n="500">L/500<span style="font-size:10px;margin-left:4px;opacity:.7">精密作業</span></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="c-card">
+    <h2>📊 片持ち梁 — 検討結果</h2>
+    <div class="summary-box na" id="c-summary">— 計算中 —</div>
+    <div class="max-span-box" style="margin-top:10px">
+      <div class="ms-label">▼ 最大の張り出し長さ（一番短いもの）</div>
+      <div class="ms-value" id="c-maxspan">—<span class="ms-unit"> m</span></div>
+      <div class="ms-gov" id="c-gov">—</div>
+    </div>
+    <table class="limit-table">
+      <thead><tr><th>検討項目</th><th>限界の長さ</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>① 曲げ応力</td><td class="L-val" id="c-lim-b">—</td><td id="c-tag-b"></td></tr>
+        <tr><td>② せん断</td><td class="L-val" id="c-lim-s">—</td><td id="c-tag-s"></td></tr>
+        <tr><td>③ たわみ（Lc/n）</td><td class="L-val" id="c-lim-d">—</td><td id="c-tag-d"></td></tr>
+      </tbody>
+    </table>
+    <hr class="divider">
+    <table class="result-table">
+      <thead><tr><th>検討項目</th><th>計算値</th><th>許容値</th><th>比率</th><th>判定</th></tr></thead>
+      <tbody id="c-tbody"></tbody>
+    </table>
+    <div class="inter-grid" id="c-inter"></div>
+    <p class="note" id="c-note"></p>
+  </div>
+</div>
+
+<!-- ===== TAB: 2点吊り梁 ===== -->
+<div id="tab-twopoint" class="tab-content">
+  <div class="card">
+    <h2>📐 2点吊り梁 — 梁寸法・吊り間隔</h2>
+    <p class="note" style="margin:0 0 8px">各ホイスト荷重：P = (W/2 + Hw) × φ × g　※吊り荷重を2台で均等分担、各ホイストは自重 Hw を加算</p>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>支点間スパン L (m)</label>
+        <input type="number" id="tp-L" value="4.3" min="0.5" max="30" step="0.1">
+        <input type="range" class="form-slider" id="tp-L-slider" min="0.5" max="20" step="0.1" value="4.3">
+        <div class="form-slider-labels"><span>0.5m</span><span>20m</span></div>
+      </div>
+      <div class="form-group">
+        <label>張り出し長さ La (m)</label>
+        <input type="number" id="tp-La" value="1.0" min="0" max="10" step="0.1">
+        <input type="range" class="form-slider" id="tp-La-slider" min="0" max="10" step="0.05" value="1.0">
+        <div class="form-slider-labels"><span>0m</span><span>10m</span></div>
+      </div>
+      <div class="form-group full">
+        <label>吊り間隔 d (m)（2点ホイスト間距離）</label>
+        <input type="number" id="tp-d" value="2.0" min="0.1" max="20" step="0.1">
+        <input type="range" class="form-slider" id="tp-d-slider" min="0.1" max="20" step="0.1" value="2.0">
+        <div class="form-slider-labels"><span>0.1m</span><span>20m</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="card" id="tp-card">
+    <h2 id="tp-h2">📊 2点吊り梁 — 検討結果</h2>
+    <div id="tp-warn-react" class="tp-warn" style="display:none"></div>
+    <div class="summary-box na" id="tp-summary">— 計算中 —</div>
+    <div id="tp-maxla"></div>
+    <table class="result-table">
+      <thead><tr><th>検討項目</th><th>計算値</th><th>許容値</th><th>比率</th><th>判定</th></tr></thead>
+      <tbody id="tp-tbody"></tbody>
+    </table>
+    <div class="inter-grid" id="tp-inter"></div>
+    <p class="note" id="tp-note"></p>
+    <hr class="divider">
+    <div class="tp-diagram-wrap"><svg id="tp-diagram" viewBox="0 0 700 270" style="display:block;width:100%;height:auto"></svg></div>
+    <div class="slider-section">
+      <h3>🔍 ホイストの位置を動かして確認（左ホイスト x₁：支点Aからの距離）</h3>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="action-btn" data-pos="tp:worst">⚠ 一番きびしい位置へ</button>
+        <button class="action-btn" data-pos="tp:mid">📍 中央へ</button>
+        <button class="action-btn" data-pos="tp:tip">↙ 張り出し先端へ</button>
+      </div>
+      <div class="slider-row"><span style="font-size:12px;color:var(--sub)" id="tp-pos-min-lbl">0m</span>
+        <input type="range" id="tp-pos-slider" min="0" max="5" step="0.05" value="1">
+        <span style="font-size:12px;color:var(--sub)" id="tp-pos-max-lbl">5m</span></div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px">
+        <label style="font-size:12px;color:var(--sub)">x₁</label>
+        <input type="number" id="tp-pos-input" step="0.05" style="width:80px;padding:3px 6px;font-size:13px;font-weight:700;border:1px solid #bbb;border-radius:4px;text-align:right;color:var(--primary)">
+        <span style="font-size:12px;color:var(--sub)">m</span></div>
+      <div id="tp-pos-zone" style="text-align:center;font-size:11px;color:var(--sub);margin:3px 0 5px"></div>
+      <div class="sratios" id="tp-pos-ratios"></div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="text-align:center">
+  <button class="action-btn" id="printBtn" style="font-size:14px;padding:8px 20px">🖨 印刷する（条件と結果を1ページに）</button>
+</div>
+
+</div></div>
+
+<div class="toplink" style="text-align:center;padding:24px 16px 40px;">
+  <a href="https://tplant-ms.github.io/pipe-menkan/index.html"
+     style="display:inline-flex;align-items:center;gap:6px;padding:8px 18px;
+            background:#1B3A5C;color:#fff;text-decoration:none;border-radius:6px;
+            font-size:.85rem;font-weight:700;letter-spacing:.04em;">
+    🏠 配管・鋼材計算ツール トップへ
+  </a>
+</div>
+
+<div id="printSheet"></div>
+
 <script>
-/* =====================================================================
-   部材データ（JIS G 3192 断面性能表）
-===================================================================== */
 const MEMBERS = [{"n":"H-100×50×5×7","g":"細幅","H":100.0,"B":50.0,"tw":5.0,"tf":7.0,"A":11.85,"Ix":187.0,"Zx":37.5,"kg":9.3},{"n":"H-125×60×6×8","g":"細幅","H":125.0,"B":60.0,"tw":6.0,"tf":8.0,"A":16.69,"Ix":409.0,"Zx":65.5,"kg":13.1},{"n":"H-150×75×5×7","g":"細幅","H":150.0,"B":75.0,"tw":5.0,"tf":7.0,"A":17.85,"Ix":666.0,"Zx":88.8,"kg":14.0},{"n":"H-175×90×5×8","g":"細幅","H":175.0,"B":90.0,"tw":5.0,"tf":8.0,"A":22.9,"Ix":1210.0,"Zx":138.0,"kg":18.0},{"n":"H-198×99×4.5×7","g":"細幅","H":198.0,"B":99.0,"tw":4.5,"tf":7.0,"A":22.69,"Ix":1540.0,"Zx":156.0,"kg":17.8},{"n":"H-200×100×5.5×8","g":"細幅","H":200.0,"B":100.0,"tw":5.5,"tf":8.0,"A":26.67,"Ix":1810.0,"Zx":181.0,"kg":20.9},{"n":"H-248×124×5×8","g":"細幅","H":248.0,"B":124.0,"tw":5.0,"tf":8.0,"A":31.99,"Ix":3450.0,"Zx":278.0,"kg":25.1},{"n":"H-250×125×6×9","g":"細幅","H":250.0,"B":125.0,"tw":6.0,"tf":9.0,"A":36.97,"Ix":3960.0,"Zx":317.0,"kg":29.0},{"n":"H-298×149×5.5×8","g":"細幅","H":298.0,"B":149.0,"tw":5.5,"tf":8.0,"A":40.8,"Ix":6320.0,"Zx":424.0,"kg":32.0},{"n":"H-300×150×6.5×9","g":"細幅","H":300.0,"B":150.0,"tw":6.5,"tf":9.0,"A":46.78,"Ix":7210.0,"Zx":481.0,"kg":36.7},{"n":"H-346×174×6×9","g":"細幅","H":346.0,"B":174.0,"tw":6.0,"tf":9.0,"A":52.45,"Ix":11000.0,"Zx":638.0,"kg":41.2},{"n":"H-350×175×7×11","g":"細幅","H":350.0,"B":175.0,"tw":7.0,"tf":11.0,"A":62.91,"Ix":13500.0,"Zx":771.0,"kg":49.4},{"n":"H-354×176×8×13","g":"細幅","H":354.0,"B":176.0,"tw":8.0,"tf":13.0,"A":73.45,"Ix":16000.0,"Zx":906.0,"kg":57.7},{"n":"H-396×199×7×11","g":"細幅","H":396.0,"B":199.0,"tw":7.0,"tf":11.0,"A":71.41,"Ix":19800.0,"Zx":999.0,"kg":56.1},{"n":"H-400×200×8×13","g":"細幅","H":400.0,"B":200.0,"tw":8.0,"tf":13.0,"A":83.37,"Ix":23500.0,"Zx":1170.0,"kg":65.4},{"n":"H-404×201×9×15","g":"細幅","H":404.0,"B":201.0,"tw":9.0,"tf":15.0,"A":95.41,"Ix":27200.0,"Zx":1350.0,"kg":74.9},{"n":"H-446×199×8×12","g":"細幅","H":446.0,"B":199.0,"tw":8.0,"tf":12.0,"A":82.97,"Ix":28100.0,"Zx":1260.0,"kg":65.1},{"n":"H-450×200×9×14","g":"細幅","H":450.0,"B":200.0,"tw":9.0,"tf":14.0,"A":95.43,"Ix":32900.0,"Zx":1460.0,"kg":74.9},{"n":"H-456×201×10×17","g":"細幅","H":456.0,"B":201.0,"tw":10.0,"tf":17.0,"A":112.0,"Ix":39800.0,"Zx":1750.0,"kg":87.9},{"n":"H-496×199×9×14","g":"細幅","H":496.0,"B":199.0,"tw":9.0,"tf":14.0,"A":99.29,"Ix":40800.0,"Zx":1650.0,"kg":77.9},{"n":"H-500×200×10×16","g":"細幅","H":500.0,"B":200.0,"tw":10.0,"tf":16.0,"A":112.2,"Ix":46800.0,"Zx":1870.0,"kg":88.1},{"n":"H-506×201×11×19","g":"細幅","H":506.0,"B":201.0,"tw":11.0,"tf":19.0,"A":129.3,"Ix":55500.0,"Zx":2190.0,"kg":101.5},{"n":"H-596×199×10×15","g":"細幅","H":596.0,"B":199.0,"tw":10.0,"tf":15.0,"A":117.8,"Ix":66600.0,"Zx":2240.0,"kg":92.5},{"n":"H-600×200×11×17","g":"細幅","H":600.0,"B":200.0,"tw":11.0,"tf":17.0,"A":131.7,"Ix":75600.0,"Zx":2520.0,"kg":103.4},{"n":"H-606×201×12×20","g":"細幅","H":606.0,"B":201.0,"tw":12.0,"tf":20.0,"A":149.8,"Ix":88300.0,"Zx":2910.0,"kg":117.6},{"n":"H-612×202×13×23","g":"細幅","H":612.0,"B":202.0,"tw":13.0,"tf":23.0,"A":168.0,"Ix":101000.0,"Zx":3310.0,"kg":131.9},{"n":"H-148×100×6×9","g":"中幅","H":148.0,"B":100.0,"tw":6.0,"tf":9.0,"A":26.35,"Ix":1000.0,"Zx":135.0,"kg":20.7},{"n":"H-194×150×6×9","g":"中幅","H":194.0,"B":150.0,"tw":6.0,"tf":9.0,"A":38.11,"Ix":2630.0,"Zx":271.0,"kg":29.9},{"n":"H-244×175×7×11","g":"中幅","H":244.0,"B":175.0,"tw":7.0,"tf":11.0,"A":55.49,"Ix":6040.0,"Zx":495.0,"kg":43.6},{"n":"H-294×200×8×12","g":"中幅","H":294.0,"B":200.0,"tw":8.0,"tf":12.0,"A":71.05,"Ix":11100.0,"Zx":756.0,"kg":55.8},{"n":"H-298×201×9×14","g":"中幅","H":298.0,"B":201.0,"tw":9.0,"tf":14.0,"A":82.03,"Ix":13100.0,"Zx":878.0,"kg":64.4},{"n":"H-336×249×8×12","g":"中幅","H":336.0,"B":249.0,"tw":8.0,"tf":12.0,"A":86.17,"Ix":18100.0,"Zx":1070.0,"kg":67.6},{"n":"H-340×250×9×14","g":"中幅","H":340.0,"B":250.0,"tw":9.0,"tf":14.0,"A":99.53,"Ix":21200.0,"Zx":1250.0,"kg":78.1},{"n":"H-386×299×9×14","g":"中幅","H":386.0,"B":299.0,"tw":9.0,"tf":14.0,"A":117.4,"Ix":32900.0,"Zx":1700.0,"kg":92.2},{"n":"H-390×300×10×16","g":"中幅","H":390.0,"B":300.0,"tw":10.0,"tf":16.0,"A":133.2,"Ix":37900.0,"Zx":1940.0,"kg":104.6},{"n":"H-434×299×10×15","g":"中幅","H":434.0,"B":299.0,"tw":10.0,"tf":15.0,"A":131.6,"Ix":45500.0,"Zx":2090.0,"kg":103.3},{"n":"H-440×300×11×18","g":"中幅","H":440.0,"B":300.0,"tw":11.0,"tf":18.0,"A":153.9,"Ix":54700.0,"Zx":2490.0,"kg":120.8},{"n":"H-446×302×13×21","g":"中幅","H":446.0,"B":302.0,"tw":13.0,"tf":21.0,"A":180.8,"Ix":65000.0,"Zx":2920.0,"kg":141.9},{"n":"H-482×300×11×15","g":"中幅","H":482.0,"B":300.0,"tw":11.0,"tf":15.0,"A":141.2,"Ix":58300.0,"Zx":2420.0,"kg":110.8},{"n":"H-488×300×11×18","g":"中幅","H":488.0,"B":300.0,"tw":11.0,"tf":18.0,"A":159.2,"Ix":68900.0,"Zx":2820.0,"kg":125.0},{"n":"H-494×302×13×21","g":"中幅","H":494.0,"B":302.0,"tw":13.0,"tf":21.0,"A":187.0,"Ix":81700.0,"Zx":3310.0,"kg":146.8},{"n":"H-582×300×12×17","g":"中幅","H":582.0,"B":300.0,"tw":12.0,"tf":17.0,"A":169.2,"Ix":98900.0,"Zx":3400.0,"kg":132.8},{"n":"H-588×300×12×20","g":"中幅","H":588.0,"B":300.0,"tw":12.0,"tf":20.0,"A":187.2,"Ix":114000.0,"Zx":3890.0,"kg":147.0},{"n":"H-594×302×14×23","g":"中幅","H":594.0,"B":302.0,"tw":14.0,"tf":23.0,"A":217.1,"Ix":134000.0,"Zx":4500.0,"kg":170.4},{"n":"H-692×300×13×20","g":"中幅","H":692.0,"B":300.0,"tw":13.0,"tf":20.0,"A":207.5,"Ix":168000.0,"Zx":4870.0,"kg":162.9},{"n":"H-700×300×13×24","g":"中幅","H":700.0,"B":300.0,"tw":13.0,"tf":24.0,"A":231.5,"Ix":197000.0,"Zx":5640.0,"kg":181.7},{"n":"H-708×302×15×28","g":"中幅","H":708.0,"B":302.0,"tw":15.0,"tf":28.0,"A":269.7,"Ix":233000.0,"Zx":6590.0,"kg":211.7},{"n":"H-792×300×14×22","g":"中幅","H":792.0,"B":300.0,"tw":14.0,"tf":22.0,"A":239.5,"Ix":248000.0,"Zx":6270.0,"kg":188.0},{"n":"H-800×300×14×26","g":"中幅","H":800.0,"B":300.0,"tw":14.0,"tf":26.0,"A":263.5,"Ix":286000.0,"Zx":7160.0,"kg":206.8},{"n":"H-808×302×16×30","g":"中幅","H":808.0,"B":302.0,"tw":16.0,"tf":30.0,"A":303.7,"Ix":334000.0,"Zx":8270.0,"kg":238.4},{"n":"H-816×303×17×34","g":"中幅","H":816.0,"B":303.0,"tw":17.0,"tf":34.0,"A":336.0,"Ix":378000.0,"Zx":9270.0,"kg":263.8},{"n":"H-890×299×15×23","g":"中幅","H":890.0,"B":299.0,"tw":15.0,"tf":23.0,"A":266.9,"Ix":339000.0,"Zx":7610.0,"kg":209.5},{"n":"H-900×300×16×28","g":"中幅","H":900.0,"B":300.0,"tw":16.0,"tf":28.0,"A":305.8,"Ix":404000.0,"Zx":8990.0,"kg":240.1},{"n":"H-912×302×18×34","g":"中幅","H":912.0,"B":302.0,"tw":18.0,"tf":34.0,"A":360.1,"Ix":491000.0,"Zx":10800.0,"kg":282.7},{"n":"H-918×303×19×37","g":"中幅","H":918.0,"B":303.0,"tw":19.0,"tf":37.0,"A":387.4,"Ix":535000.0,"Zx":11700.0,"kg":304.1},{"n":"H-100×100×6×8","g":"広幅","H":100.0,"B":100.0,"tw":6.0,"tf":8.0,"A":21.59,"Ix":378.0,"Zx":75.6,"kg":16.9},{"n":"H-125×125×6.5×9","g":"広幅","H":125.0,"B":125.0,"tw":6.5,"tf":9.0,"A":30.0,"Ix":839.0,"Zx":134.0,"kg":23.6},{"n":"H-150×150×7×10","g":"広幅","H":150.0,"B":150.0,"tw":7.0,"tf":10.0,"A":39.65,"Ix":1620.0,"Zx":216.0,"kg":31.1},{"n":"H-175×175×7.5×11","g":"広幅","H":175.0,"B":175.0,"tw":7.5,"tf":11.0,"A":51.42,"Ix":2900.0,"Zx":331.0,"kg":40.4},{"n":"H-200×200×8×12","g":"広幅","H":200.0,"B":200.0,"tw":8.0,"tf":12.0,"A":63.53,"Ix":4720.0,"Zx":472.0,"kg":49.9},{"n":"H-200×204×12×12","g":"広幅","H":200.0,"B":204.0,"tw":12.0,"tf":12.0,"A":71.53,"Ix":4980.0,"Zx":498.0,"kg":56.2},{"n":"H-208×202×10×16","g":"広幅","H":208.0,"B":202.0,"tw":10.0,"tf":16.0,"A":83.69,"Ix":6530.0,"Zx":628.0,"kg":65.7},{"n":"H-244×252×11×11","g":"広幅","H":244.0,"B":252.0,"tw":11.0,"tf":11.0,"A":81.31,"Ix":8700.0,"Zx":713.0,"kg":63.8},{"n":"H-248×249×8×13","g":"広幅","H":248.0,"B":249.0,"tw":8.0,"tf":13.0,"A":83.95,"Ix":9850.0,"Zx":794.0,"kg":65.9},{"n":"H-250×250×9×14","g":"広幅","H":250.0,"B":250.0,"tw":9.0,"tf":14.0,"A":91.43,"Ix":10700.0,"Zx":860.0,"kg":71.8},{"n":"H-250×255×14×14","g":"広幅","H":250.0,"B":255.0,"tw":14.0,"tf":14.0,"A":103.9,"Ix":11400.0,"Zx":912.0,"kg":81.6},{"n":"H-294×302×12×12","g":"広幅","H":294.0,"B":302.0,"tw":12.0,"tf":12.0,"A":106.3,"Ix":16600.0,"Zx":1130.0,"kg":83.4},{"n":"H-298×299×9×14","g":"広幅","H":298.0,"B":299.0,"tw":9.0,"tf":14.0,"A":109.5,"Ix":18600.0,"Zx":1250.0,"kg":86.0},{"n":"H-300×300×10×15","g":"広幅","H":300.0,"B":300.0,"tw":10.0,"tf":15.0,"A":118.4,"Ix":20200.0,"Zx":1350.0,"kg":92.9},{"n":"H-300×305×15×15","g":"広幅","H":300.0,"B":305.0,"tw":15.0,"tf":15.0,"A":133.4,"Ix":21300.0,"Zx":1420.0,"kg":104.7},{"n":"H-304×301×11×17","g":"広幅","H":304.0,"B":301.0,"tw":11.0,"tf":17.0,"A":133.5,"Ix":23200.0,"Zx":1520.0,"kg":104.8},{"n":"H-338×351×13×13","g":"広幅","H":338.0,"B":351.0,"tw":13.0,"tf":13.0,"A":133.3,"Ix":27700.0,"Zx":1640.0,"kg":104.6},{"n":"H-344×348×10×16","g":"広幅","H":344.0,"B":348.0,"tw":10.0,"tf":16.0,"A":144.0,"Ix":32800.0,"Zx":1910.0,"kg":113.0},{"n":"H-344×354×16×16","g":"広幅","H":344.0,"B":354.0,"tw":16.0,"tf":16.0,"A":164.6,"Ix":34900.0,"Zx":2030.0,"kg":129.2},{"n":"H-350×350×12×19","g":"広幅","H":350.0,"B":350.0,"tw":12.0,"tf":19.0,"A":171.9,"Ix":39800.0,"Zx":2280.0,"kg":134.9},{"n":"H-350×357×19×19","g":"広幅","H":350.0,"B":357.0,"tw":19.0,"tf":19.0,"A":196.4,"Ix":42300.0,"Zx":2420.0,"kg":154.2},{"n":"H-356×352×14×22","g":"広幅","H":356.0,"B":352.0,"tw":14.0,"tf":22.0,"A":200.0,"Ix":47100.0,"Zx":2650.0,"kg":157.0},{"n":"H-388×402×15×15","g":"広幅","H":388.0,"B":402.0,"tw":15.0,"tf":15.0,"A":178.5,"Ix":49000.0,"Zx":2520.0,"kg":140.1},{"n":"H-394×398×11×18","g":"広幅","H":394.0,"B":398.0,"tw":11.0,"tf":18.0,"A":186.8,"Ix":56100.0,"Zx":2850.0,"kg":146.6},{"n":"H-394×405×18×18","g":"広幅","H":394.0,"B":405.0,"tw":18.0,"tf":18.0,"A":214.4,"Ix":59700.0,"Zx":3030.0,"kg":168.3},{"n":"H-400×400×13×21","g":"広幅","H":400.0,"B":400.0,"tw":13.0,"tf":21.0,"A":218.7,"Ix":66600.0,"Zx":3330.0,"kg":171.7},{"n":"H-400×408×21×21","g":"広幅","H":400.0,"B":408.0,"tw":21.0,"tf":21.0,"A":250.7,"Ix":70900.0,"Zx":3540.0,"kg":196.8},{"n":"H-406×403×16×24","g":"広幅","H":406.0,"B":403.0,"tw":16.0,"tf":24.0,"A":254.9,"Ix":78000.0,"Zx":3840.0,"kg":200.1},{"n":"H-414×405×18×28","g":"広幅","H":414.0,"B":405.0,"tw":18.0,"tf":28.0,"A":295.4,"Ix":92800.0,"Zx":4480.0,"kg":231.9},{"n":"H-428×407×20×35","g":"広幅","H":428.0,"B":407.0,"tw":20.0,"tf":35.0,"A":360.7,"Ix":119000.0,"Zx":5570.0,"kg":283.1},{"n":"H-458×417×30×50","g":"広幅","H":458.0,"B":417.0,"tw":30.0,"tf":50.0,"A":528.6,"Ix":187000.0,"Zx":8170.0,"kg":415.0},{"n":"H-498×432×45×70","g":"広幅","H":498.0,"B":432.0,"tw":45.0,"tf":70.0,"A":770.1,"Ix":298000.0,"Zx":12000.0,"kg":604.5},{"n":"I-100×75×5×8","g":"I形鋼","H":100.0,"B":75.0,"tw":5.0,"tf":8.0,"A":16.43,"Ix":281.0,"Zx":56.2,"kg":12.9},{"n":"I-125×75×5.5×9.5","g":"I形鋼","H":125.0,"B":75.0,"tw":5.5,"tf":9.5,"A":20.45,"Ix":538.0,"Zx":86.0,"kg":16.1},{"n":"I-150×75×5.5×9.5","g":"I形鋼","H":150.0,"B":75.0,"tw":5.5,"tf":9.5,"A":21.83,"Ix":819.0,"Zx":109.0,"kg":17.1},{"n":"I-150×125×8.5×14","g":"I形鋼","H":150.0,"B":125.0,"tw":8.5,"tf":14.0,"A":46.15,"Ix":1760.0,"Zx":235.0,"kg":36.2},{"n":"I-180×100×6×10","g":"I形鋼","H":180.0,"B":100.0,"tw":6.0,"tf":10.0,"A":30.06,"Ix":1670.0,"Zx":186.0,"kg":23.6},{"n":"I-200×100×7×10","g":"I形鋼","H":200.0,"B":100.0,"tw":7.0,"tf":10.0,"A":33.06,"Ix":2170.0,"Zx":217.0,"kg":26.0},{"n":"I-200×150×9×16","g":"I形鋼","H":200.0,"B":150.0,"tw":9.0,"tf":16.0,"A":64.16,"Ix":4460.0,"Zx":446.0,"kg":50.4},{"n":"I-250×125×7.5×12.5","g":"I形鋼","H":250.0,"B":125.0,"tw":7.5,"tf":12.5,"A":48.79,"Ix":5180.0,"Zx":414.0,"kg":38.3},{"n":"I-250×125×10×19","g":"I形鋼","H":250.0,"B":125.0,"tw":10.0,"tf":19.0,"A":70.73,"Ix":7310.0,"Zx":585.0,"kg":55.5},{"n":"I-300×150×8×13","g":"I形鋼","H":300.0,"B":150.0,"tw":8.0,"tf":13.0,"A":61.58,"Ix":9480.0,"Zx":632.0,"kg":48.3},{"n":"I-300×150×10×18.5","g":"I形鋼","H":300.0,"B":150.0,"tw":10.0,"tf":18.5,"A":83.47,"Ix":12700.0,"Zx":849.0,"kg":65.5},{"n":"I-300×150×11.5×22","g":"I形鋼","H":300.0,"B":150.0,"tw":11.5,"tf":22.0,"A":97.88,"Ix":14700.0,"Zx":978.0,"kg":76.8},{"n":"I-350×150×9×15","g":"I形鋼","H":350.0,"B":150.0,"tw":9.0,"tf":15.0,"A":74.58,"Ix":15200.0,"Zx":870.0,"kg":58.5},{"n":"I-350×150×12×24","g":"I形鋼","H":350.0,"B":150.0,"tw":12.0,"tf":24.0,"A":111.1,"Ix":22400.0,"Zx":1280.0,"kg":87.2},{"n":"I-400×150×10×18","g":"I形鋼","H":400.0,"B":150.0,"tw":10.0,"tf":18.0,"A":91.73,"Ix":24100.0,"Zx":1200.0,"kg":72.0},{"n":"I-400×150×12.5×25","g":"I形鋼","H":400.0,"B":150.0,"tw":12.5,"tf":25.0,"A":122.1,"Ix":31700.0,"Zx":1580.0,"kg":95.8},{"n":"I-450×175×11×20","g":"I形鋼","H":450.0,"B":175.0,"tw":11.0,"tf":20.0,"A":116.8,"Ix":39200.0,"Zx":1740.0,"kg":91.7},{"n":"I-450×175×13×26","g":"I形鋼","H":450.0,"B":175.0,"tw":13.0,"tf":26.0,"A":146.1,"Ix":48800.0,"Zx":2170.0,"kg":114.7},{"n":"I-600×190×13×25","g":"I形鋼","H":600.0,"B":190.0,"tw":13.0,"tf":25.0,"A":169.4,"Ix":98400.0,"Zx":3280.0,"kg":133.0},{"n":"I-600×190×16×35","g":"I形鋼","H":600.0,"B":190.0,"tw":16.0,"tf":35.0,"A":224.5,"Ix":130000.0,"Zx":4330.0,"kg":176.2}];
 const MEMBER_MAP = {}; MEMBERS.forEach(m=>MEMBER_MAP[m.n]=m);
-const E = 21000;           // kN/cm2
+const E = 21000;
 const $ = id => document.getElementById(id);
-
-/* =====================================================================
-   便利関数
-===================================================================== */
 function fmt(v, d=2){
   v = Number(v);
   if(!isFinite(v)) return '―';
@@ -176,12 +559,6 @@ function fmt(v, d=2){
 function fmtN(v,d=2){ return fmt(v,d).replace(/^-/,'−'); }
 function pct(r){ return fmt(r*100,1)+'%'; }
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
-const fmtP=(v,d=2)=> v<0?('('+fmtN(v,d)+')'):fmt(v,d);
-
-/* =====================================================================
-   計算エンジン（Excel と同じ解析解）
-   x は支点Aからの距離[m]。張り出し側は負。
-===================================================================== */
 function deflMM(P, L, EI, loads, x){           // 下向き＋ [mm]
   const Lc=L*100, xc=x*100; let res=0;
   for(const a of loads){
@@ -288,232 +665,6 @@ function scan3(p,n,NN){                          // ホイストを端から端�
   return {rows,worst,P,w,lo,hi};
 }
 
-/* =====================================================================
-   状態・入力定義
-===================================================================== */
-const DEF = {
-  3:{W:2000,Hw:120,phi:1.2,L:4.3,La:1.0,d:2,x1:1.15,mem:'H-250×125×6×9',fb0:15.6,nd:800,nc:250,tipj:0,sw:1,ltb:1,bm:0,bt:0,lb:0,Cb:1},
-  1:{W:950,Hw:60,phi:1.2,L:4.3,La:0.5,x1:2.15,mem:'H-250×125×6×9',fb0:15.6,nd:800,nc:250,tipj:0,sw:1,ltb:1,bm:0,bt:0,lb:0,Cb:1},
-  2:{W:950,Hw:60,phi:1.2,Lc:1.2,mem:'H-200×100×5.5×8',fb0:15.6,nd:400,sw:1},
-};
-const S = {1:{...DEF[1]},2:{...DEF[2]},3:{...DEF[3]}};
-let mode = 1;
-const DOC = {title:'ホイストレール強度検討書', proj:''};
-const SAVE_KEY='hoistRailCalc.v1';
-function snapshot(){ return {ver:1,mode,DOC:{...DOC},S:JSON.parse(JSON.stringify(S))}; }
-function applySnapshot(o){
-  if(!o||typeof o!=='object') return false;
-  if(o.S) for(const k of [1,2,3]){ if(o.S[k]){ for(const f in DEF[k]){ const v=o.S[k][f]; if(v!==undefined && (f==='mem'? !!MEMBER_MAP[v] : isFinite(v))) S[k][f]=(f==='nc'&&+v===400)?250:v; } } }
-  if(o.DOC){ if(typeof o.DOC.title==='string') DOC.title=o.DOC.title; if(typeof o.DOC.proj==='string') DOC.proj=o.DOC.proj; }
-  if([1,2,3].includes(+o.mode)) mode=+o.mode;
-  return true;
-}
-function saveState(){ try{ localStorage.setItem(SAVE_KEY,JSON.stringify(snapshot())); }catch(e){} }
-function loadState(){ try{ const j=localStorage.getItem(SAVE_KEY); if(j) applySnapshot(JSON.parse(j)); }catch(e){} }
-const escH = t => String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
-function updateHero(){
-  const d=new Date(), ds=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
-  $('docTitle').textContent = DOC.title || 'ホイストレール強度検討書';
-  document.title = DOC.title || 'ホイストレール強度検討書';
-  $('docSub').textContent = (DOC.proj?DOC.proj+'　／　':'') + MODE_INFO[mode][0] + '（' + MODE_INFO[mode][1] + '）　作成日：' + ds;
-}
-const FIELDS = {
-  3:[['W','吊り荷重（合計）','kg',50,'荷物全体の重さ。2台で半分ずつ持ちます'],['Hw','ホイスト自重（1台）','kg',10,''],
-     ['L','支点間スパン L','m',0.1,'2つの支点の間の長さ'],['La','張り出し長さ La','m',0.1,'支点Aの外側にはみ出す長さ（なし＝0）'],
-     ['d','吊り間隔 d','m',0.1,'2台のホイストの間の距離']],
-  1:[['W','吊り荷重','kg',50,'吊り上げる荷物の重さ'],['Hw','ホイスト自重','kg',10,''],['L','支点間スパン L','m',0.1,'2つの支点の間の長さ'],['La','張り出し長さ La','m',0.1,'支点Aの外側にはみ出す長さ（なし＝0）']],
-  2:[['W','吊り荷重','kg',50,'吊り上げる荷物の重さ'],['Hw','ホイスト自重','kg',10,''],['Lc','張り出し長さ Lc','m',0.1,'固定した根元から先端まで']],
-};
-const MODE_INFO = {
-  3:['③ 2点吊り（張り出し付き）','ホイスト2台・支点の外側に張り出しあり'],
-  1:['① 単純梁＋張り出し','ホイスト1台・張り出しあり（0なら単純梁）'],
-  2:['② 片持ち梁','ホイスト1台・片側だけを固定して張り出す梁'],
-};
-function memberOptions(sel){
-  const groups=[['細幅','H形鋼（細幅）'],['中幅','H形鋼（中幅）'],['広幅','H形鋼（広幅）'],['I形鋼','I形鋼']];
-  return groups.map(([g,lab])=>`<optgroup label="${lab}">`+MEMBERS.filter(m=>m.g===g).map(m=>`<option value="${m.n}"${m.n===sel?' selected':''}>${m.n}　(${m.kg} kg/m)</option>`).join('')+'</optgroup>').join('');
-}
-
-/* =====================================================================
-   SVG 部品
-===================================================================== */
-const W_SVG=920;
-function frame(xmin,xmax,padL=64,padR=64){ const k=(W_SVG-padL-padR)/(xmax-xmin); return {xmin,xmax,padL,padR,k,sx:x=>padL+(x-xmin)*k}; }
-function arrow(x1,y1,x2,y2,color,w=3,head=9){
-  const a=Math.atan2(y2-y1,x2-x1), hx=x2-head*Math.cos(a), hy=y2-head*Math.sin(a);
-  const px=-Math.sin(a)*head*0.55, py=Math.cos(a)*head*0.55;
-  return `<line x1="${x1}" y1="${y1}" x2="${hx}" y2="${hy}" stroke="${color}" stroke-width="${w}"/><polygon points="${x2},${y2} ${hx+px},${hy+py} ${hx-px},${hy-py}" fill="${color}"/>`;
-}
-function dimLine(x1,x2,y,label,color='#6B7686'){
-  return `<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="${color}" stroke-width="1.4"/>
-  <line x1="${x1}" y1="${y-6}" x2="${x1}" y2="${y+6}" stroke="${color}" stroke-width="1.4"/><line x1="${x2}" y1="${y-6}" x2="${x2}" y2="${y+6}" stroke="${color}" stroke-width="1.4"/>
-  <text x="${(x1+x2)/2}" y="${y-7}" text-anchor="middle" font-size="13" fill="${color}">${label}</text>`;
-}
-/* 梁の図。opts: {loads:[{x,label}], reactions:[{x,label}], dims:[...], fixedWall:bool, labelsAB:bool} */
-function beamSVG(fr,o){
-  const by=118, sx=fr.sx; const x0=sx(fr.xmin), x1=sx(fr.xmax); let s='';
-  const H=o.h||262;
-  s+=`<svg viewBox="0 0 ${W_SVG} ${H}" role="img" aria-label="梁の図">`;
-  if(o.wall){ s+=`<rect x="${x0-22}" y="${by-46}" width="22" height="100" fill="#D9D9D9" stroke="#1F3864" stroke-width="1.6"/>`;
-    for(let i=0;i<6;i++) s+=`<line x1="${x0-22}" y1="${by-40+i*17}" x2="${x0-32}" y2="${by-30+i*17}" stroke="#1F3864" stroke-width="1.2"/>`;
-    s+=`<text x="${x0-11}" y="${by+72}" text-anchor="middle" font-size="13" fill="#1F3864">固定端（根元）</text>`; }
-  s+=`<rect x="${x0}" y="${by-8}" width="${x1-x0}" height="16" fill="#C9D9F2" stroke="#1F3864" stroke-width="1.8" rx="2"/>`;
-  if(o.supports){ for(const [sxv,lab] of o.supports){
-    s+=`<polygon points="${sx(sxv)},${by+8} ${sx(sxv)-16},${by+38} ${sx(sxv)+16},${by+38}" fill="#1F3864"/><text x="${sx(sxv)}" y="${by+56}" text-anchor="middle" font-size="14" font-weight="700" fill="#1F3864">${lab}</text>`; } }
-  if(o.overhang){ s+=`<text x="${(sx(fr.xmin)+sx(0))/2}" y="${by+26}" text-anchor="middle" font-size="12" fill="#8A5A00">張り出し</text>`; }
-  if(o.selfw){ const nA=Math.max(6,Math.round((x1-x0)/46));
-    for(let i=0;i<=nA;i++){ const xx=x0+6+(x1-x0-12)*i/nA; s+=arrow(xx,by-34,xx,by-10,'#8D8D8D',1.6,6); }
-    s+=`<line x1="${x0+6}" y1="${by-34}" x2="${x1-6}" y2="${by-34}" stroke="#8D8D8D" stroke-width="1.6"/>`;
-    s+=`<text x="${x0+8}" y="${by-40}" font-size="12" fill="#666" paint-order="stroke" stroke="#fff" stroke-width="4">梁の自重 w＝${o.selfw}</text>`; }
-  (o.loads||[]).forEach(l=>{ const x=sx(l.x);
-    s+=`<rect x="${x-34}" y="14" width="68" height="22" rx="6" fill="#FFF1F0" stroke="#C62828" stroke-width="1.4"/><text x="${x}" y="30" text-anchor="middle" font-size="13" font-weight="700" fill="#C62828">${l.tag||'ホイスト'}</text>`;
-    s+=arrow(x,38,x,by-10,'#C62828',3.4,11);
-    const rt=x>W_SVG-150; s+=`<text x="${rt?x-8:x+8}" y="68" text-anchor="${rt?'end':'start'}" font-size="13" font-weight="700" fill="#C62828">${l.label}</text>`; });
-  (o.reactions||[]).forEach(r=>{ const x=sx(r.x), up=r.v>=0, right=x>W_SVG-150;
-    s+= up ? arrow(x,by+112,x,by+64,'#2E7D32',3.4,11) : arrow(x,by+66,x,by+114,'#B3261E',3.4,11);
-    s+=`<text x="${right?x-10:x+10}" y="${by+96}" text-anchor="${right?'end':'start'}" font-size="13" font-weight="700" fill="${up?'#2E7D32':'#B3261E'}">${r.label}</text>`; });
-  (o.dims||[]).forEach(d=>{ s+=dimLine(sx(d.a),sx(d.b),d.y,d.label); });
-  s+='</svg>'; return '<div class="figwrap">'+s+'</div>';
-}
-/* 図（曲げモーメント図・せん断力図・たわみ図）。pts:[[x,v],...] */
-function plotSVG(fr,pts,o){
-  const h=o.h||190, top=34, bot=30, ph=h-top-bot, sx=fr.sx;
-  const vs=pts.map(p=>p[1]); const vmax=Math.max(...vs,0), vmin=Math.min(...vs,0), rng=(vmax-vmin)||1;
-  const yy = o.down ? (v=>top+(v-vmin)/rng*ph) : (v=>top+(vmax-v)/rng*ph);
-  const y0=yy(0);
-  let s=`<svg viewBox="0 0 ${W_SVG} ${h}" role="img" aria-label="${o.title}">`;
-  s+=`<text x="10" y="18" font-size="14" font-weight="700" fill="${o.color}">${o.title}</text>`;
-  (o.guides||[]).forEach(g=>{ s+=`<line x1="${sx(g)}" y1="${top-8}" x2="${sx(g)}" y2="${h-bot+6}" stroke="#B9C2D0" stroke-width="1" stroke-dasharray="4 4"/>`; });
-  const path=pts.map(p=>`${sx(p[0]).toFixed(1)},${yy(p[1]).toFixed(1)}`);
-  s+=`<polygon points="${sx(pts[0][0])},${y0} ${path.join(' ')} ${sx(pts[pts.length-1][0])},${y0}" fill="${o.color}" fill-opacity=".16" stroke="none"/>`;
-  s+=`<polyline points="${path.join(' ')}" fill="none" stroke="${o.color}" stroke-width="2.6" stroke-linejoin="round"/>`;
-  s+=`<line x1="${sx(fr.xmin)}" y1="${y0}" x2="${sx(fr.xmax)}" y2="${y0}" stroke="#4A5566" stroke-width="1.4"/>`;
-  (o.marks||[]).forEach(m=>{ const x=sx(m.x), y=yy(m.v); const above=(o.down? m.v<=0 : m.v>=0);
-    s+=`<circle cx="${x}" cy="${y}" r="5" fill="#fff" stroke="${o.color}" stroke-width="2.4"/>`;
-    let ty = above ? y-10 : y+20, tx=x, anc='middle';
-    if(x<fr.padL+70){ tx=x+10; anc='start'; ty=y+(above?-2:16); } else if(x>W_SVG-fr.padR-70){ tx=x-10; anc='end'; }
-    s+=`<text x="${tx}" y="${ty}" text-anchor="${anc}" font-size="13" font-weight="700" fill="${o.color}" paint-order="stroke" stroke="#fff" stroke-width="4">${m.label}</text>`; });
-  s+=`<text x="${W_SVG-10}" y="${h-8}" text-anchor="end" font-size="12" fill="#6B7686">${o.foot||''}</text>`;
-  s+='</svg>'; return '<div class="figwrap">'+s+'</div>';
-}
-/* H形断面の絵 */
-function sectionSVG(m){
-  const Hh=190, sc=Hh/m.H, w=m.B*sc, tf=Math.max(m.tf*sc,5), tw=Math.max(m.tw*sc,4);
-  const cx=140, top=20, x0=cx-w/2;
-  let s=`<svg class="sec" viewBox="0 0 300 250" role="img" aria-label="H形断面"><g>`;
-  s+=`<rect x="${x0}" y="${top}" width="${w}" height="${tf}" fill="#F4B183" stroke="#8A4B00" stroke-width="1.4"/>`;
-  s+=`<rect x="${x0}" y="${top+Hh-tf}" width="${w}" height="${tf}" fill="#F4B183" stroke="#8A4B00" stroke-width="1.4"/>`;
-  s+=`<rect x="${cx-tw/2}" y="${top+tf}" width="${tw}" height="${Hh-2*tf}" fill="#9DC3E6" stroke="#1F4E79" stroke-width="1.4"/>`;
-  s+=`<line x1="${x0-14}" y1="${top}" x2="${x0-14}" y2="${top+Hh}" stroke="#6B7686"/><text x="${x0-20}" y="${top+Hh/2}" font-size="12" fill="#333" text-anchor="end" transform="rotate(-90 ${x0-20} ${top+Hh/2})">高さ H＝${m.H}mm</text>`;
-  s+=`<line x1="${x0}" y1="${top+Hh+14}" x2="${x0+w}" y2="${top+Hh+14}" stroke="#6B7686"/><text x="${cx}" y="${top+Hh+30}" font-size="12" fill="#333" text-anchor="middle">幅 B＝${m.B}mm</text>`;
-  s+=`<text x="${x0+w+8}" y="${top+tf+2}" font-size="12" fill="#8A4B00">フランジ</text><text x="${x0+w+8}" y="${top+tf+16}" font-size="11" fill="#8A4B00">厚さ tf＝${m.tf}</text>`;
-  s+=`<text x="${cx+tw/2+10}" y="${top+Hh/2}" font-size="12" fill="#1F4E79">ウェブ</text><text x="${cx+tw/2+10}" y="${top+Hh/2+15}" font-size="11" fill="#1F4E79">厚さ tw＝${m.tw}</text>`;
-  s+='</g></svg>'; return s;
-}
-/* 使用率ゲージ */
-function gauge(label,detail,ratio,color){
-  const mx=Math.max(1.25,ratio*1.05), w=ratio/mx*100, lim=1/mx*100, ng=ratio>1;
-  return `<div class="gauge"><div class="lab"><span><b>${label}</b>　<span class="note">${detail}</span></span><b style="color:${ng?'var(--ng)':'var(--ok)'}">使用率 ${pct(ratio)}　${ng?'× NG':'○ OK'}</b></div>
-   <div class="bar"><i style="width:${w}%;background:${ng?'#E57373':color}"></i><span class="lim" style="left:${lim}%"></span></div>
-   <div class="bar-cap"><span>0%</span><span style="margin-left:${Math.max(0,lim-8)}%">← 限度 100%</span><span></span></div></div>`;
-}
-function chip(t,v,u,key){ return `<div class="chip${key?' key':''}"><div class="t">${t}</div><div class="v">${v}<small>${u}</small></div></div>`; }
-function op(sym,txt){ return `<div class="op"><b>${sym}</b>${txt}</div>`; }
-const tip=(t)=>`<div class="tip"><span class="tag">たとえば</span>${t}</div>`;
-const step=(n,title,body)=>`<section class="step" id="s${n}"><div class="step-head"><div class="num">${n}</div><h2>${title}</h2></div><div class="step-body">${body}</div></section>`;
-function eq(f,n,r){ return `<div class="eq"><div class="f">${f}</div><div class="n">${n}</div><div class="r">${r}</div></div>`; }
-function cmp(){ return ''; }
-
-/* =====================================================================
-   共通：荷重 P までの流れ / 断面 / 判定
-===================================================================== */
-function stepForce(p, n){
-  const perHoist = p.W/n, wt=perHoist+p.Hw, wd=wt*p.phi, PN=wd*9.81, P=PN/1000;
-  const mm_=MEMBER_MAP[p.mem], w=selfW(p);
-  const label = n==2 ? '<b>1台のホイスト</b>が梁を下に押す力 P' : 'ホイストが梁を下に押す力 P';
-  let flow='<div class="flow">';
-  flow+=chip('吊り荷重 W',fmt(p.W,0),'kg');
-  if(n==2){ flow+=op('÷ 2','2台で半分ずつ')+chip('1台が持つ荷物',fmt(perHoist,0),'kg'); }
-  flow+=op('＋ Hw','ホイスト自重 '+fmt(p.Hw,0)+'kg')+chip('荷物＋ホイスト',fmt(wt,0),'kg');
-  flow+=op('× φ','衝撃 '+fmt(p.phi,2)+'倍')+chip('衝撃を見込む',fmt(wd,0),'kg');
-  flow+=op('× 9.81','重さ→力')+chip('力に直すと',fmt(PN,0),'N');
-  flow+=op('÷ 1000','N→kN')+chip('P',fmt(P,3),'kN',true);
-  flow+='</div>';
-  const f = n==2 ? 'P ＝ ( W÷2 ＋ Hw ) × φ × 9.81 ÷ 1000' : 'P ＝ ( W ＋ Hw ) × φ × 9.81 ÷ 1000';
-  const nn = n==2 ? `P ＝ ( ${fmt(p.W,0)}÷2 ＋ ${fmt(p.Hw,0)} ) × ${fmt(p.phi,2)} × 9.81 ÷ 1000` : `P ＝ ( ${fmt(p.W,0)} ＋ ${fmt(p.Hw,0)} ) × ${fmt(p.phi,2)} × 9.81 ÷ 1000`;
-  const wflow = p.sw!=0
-    ? `<div class="flow">${chip('梁の重さ wk（部材表）',fmt(mm_.kg,1),'kg/m')}${op('× 9.81','重さ→力')}${chip('力に直すと',fmt(mm_.kg*9.81,1),'N/m')}${op('÷ 1000','N→kN')}${chip('梁の自重 w',fmt(w,3),'kN/m',true)}</div>`
-    : `<div class="flow">${chip('梁の自重 w',fmt(0,3),'kN/m',true)}</div>`;
-  const selfBlock = p.sw!=0 ? `<p class="lead" style="margin-top:14px">次に、<b>梁（H形鋼）自身の重さ</b>も力に直します。梁の重さは、長さ1mあたりの重さ wk（部材表の値）から求め、梁の<b>全長に均等にかかる力 w</b>（kN/m）として扱います。梁は動かない重さなので、衝撃の割増し φ は掛けません。</p>
-   ${wflow}
-   ${eq('w ＝ wk × 9.81 ÷ 1000',`w ＝ ${fmt(mm_.kg,1)} × 9.81 ÷ 1000`,`梁の自重 w ＝ ${fmt(w,3)} kN/m`)}` : '';
-  const body=`<p class="lead">まず、${n==2?'荷物とホイスト':'荷物とホイスト'}の<b>「重さ（kg）」を「力（N：ニュートン）」に直します</b>。重さに <b>9.81</b> を掛けると力になります。</p>
-   ${flow}
-   ${eq(f,nn,`${label} ＝ ${fmt(P,3)} kN`)}
-   ${selfBlock}
-   ${tip('kg は「重さ」、N（ニュートン）は「力」の単位です。地球は 1kg のものを約 9.81N の力で引っぱっています。1kN（キロニュートン）＝1000N なので、数字が大きくなりすぎないよう最後に kN にします。<br>「衝撃 φ」は、荷物を持ち上げる・降ろす瞬間は、じっと持つより大きな力がかかるので、その余裕分の倍率です（通常 1.2 倍）。')}`;
-  return {P, w, html:step(1,p.sw!=0?'荷物と梁の重さを「力」に直す':'荷物の重さを「力」に直す',body)};
-}
-function memberBlock(r,startNo){
-  const m=r.mem;
-  return `<div class="twocol"><div>${sectionSVG(m)}<div class="legend"><span><i style="background:#F4B183"></i>フランジ（上下の板）＝曲げを受け持つ</span><span><i style="background:#9DC3E6"></i>ウェブ（縦の板）＝ずらし切る力を受け持つ</span></div></div>
-   <div><table class="tbl"><tr><th>数字</th><th>意味</th><th>値</th></tr>
-   <tr><td>Zx（断面係数）</td><td style="text-align:left">曲げへの強さ</td><td>${fmt(m.Zx,1)} cm³</td></tr>
-   <tr><td>Ix（断面二次モーメント）</td><td style="text-align:left">曲がりにくさ</td><td>${fmt(m.Ix,0)} cm⁴</td></tr>
-   <tr><td>Aw（ウェブの面積）</td><td style="text-align:left">ずらし切りへの強さ</td><td>${fmt(r.Aw,2)} cm²</td></tr>
-   ${r.w>0?`<tr><td>wk（1mあたりの重さ）</td><td style="text-align:left">梁の自重に使う</td><td>${fmt(m.kg,1)} kg/m</td></tr>`:''}</table>
-   <p class="note" style="margin-top:6px">Aw ＝ (H − 2×tf) × tw ÷ 100 ＝ (${m.H} − 2×${m.tf}) × ${m.tw} ÷ 100。この数字は JIS の断面性能表から自動で入ります。</p></div></div>`;
-}
-function ltbBlock(r){
-  const l=r.ltb; if(!l) return '';
-  const rN1=(r.rbW!=null?r.rbW:r.rb), rN0=rN1*l.fb/l.fbNo;
-  if(!l.on) return '';
-  if(false) return `<div class="note" style="margin:10px 0">横座屈（梁が横にねじれて倒れる現象）は検討していません。上フランジを全長にわたって連続して固定している使い方が前提です。</div>`;
-  return `<div class="card" style="margin:12px 0;padding:14px 16px;background:#F7FAFF">
-   <p class="lead" style="margin-top:0"><b>横座屈を考慮した許容曲げ応力度 fb</b>　上フランジ（圧縮される側の板）を固定していない長さがあると、梁が横にねじれて倒れる<b>「横座屈」</b>が先に起こり、曲げに耐えられる限度が下がります。定規を立てて上から押すと、横に倒れて曲がるのと同じです。そこで、固定していない長さ lb に応じて限度を下げます（日本建築学会の式による概算）。</p>
-   <table class="tbl"><tr><th>項目</th><th>数字を入れると</th><th>値</th></tr>
-   <tr><td>横座屈の長さ lb</td><td style="text-align:left">${l.lbIn?'直接入れた長さ':`支間部 ${fmt(l.lbSpan,2)} m（${l.bm>0?`${l.bm}か所をつなぐ → L÷${l.bm+1}`:'つながない → L'}）${l.La>0?`、張り出し部 ${fmt(l.lbOv,2)} m（${l.bt?'先端をつなぐ → La':'先端はつながない → La×2'}）`:''} のうち長いほうを使う → <b>${l.lbOv>l.lbSpan?'張り出し部':'支間部'}の ${fmt(Math.max(l.lbSpan,l.lbOv),2)} m が決め手</b>${(l.lbOv>l.lbSpan&&l.La>0&&!l.bt)?`<br><span class="note">支間をつないでも、張り出しの先端をつながないと、長さは短くなりません。先端もつなぐと、張り出し部は ${fmt(l.La,2)} m になります。</span>`:''}${(l.La>0&&!l.bt)?`<br><span class="note"><b>なぜ La×2 ？</b>　張り出し部は、先端が自由（どこにも止まっていない）な片持ち梁とみなします。先端が自由な片持ちは、両端が止まっている梁より横にねじれて倒れやすいので、横座屈の長さは、張り出し長さ La を<b>2倍</b>にして見るのが標準的な扱いです（支点Aで梁が横ずれしないよう止まっていることが前提です）。</span>`:''}`}</td><td>${fmt(l.lbe,0)} mm</td></tr>
-   <tr><td>回転半径 i（上フランジ＋ウェブの1/6）</td><td style="text-align:left">i ＝ √(Iy ÷ A)　フランジ幅 ${fmt(r.mem.B,0)}mm・厚さ ${fmt(r.mem.tf,1)}mm</td><td>${fmt(l.i,1)} mm</td></tr>
-   <tr><td>細長さ λ</td><td style="text-align:left">λ ＝ lb ÷ i ＝ ${fmt(l.lbe,0)} ÷ ${fmt(l.i,1)}</td><td>${fmt(l.lam,1)}</td></tr>
-   <tr><td>限界の細長さ Λ</td><td style="text-align:left">Λ ＝ √(π²E ÷ 0.6F)　（F ＝ fb0 の1.5倍 ＝ ${fmt(l.F,0)} N/mm²、E ＝ 205,000）</td><td>${fmt(l.Lam,1)}</td></tr>
-   <tr><td>安全率 ν</td><td style="text-align:left">ν ＝ 3/2 ＋ 2/3 × (λ÷Λ)²</td><td>${fmt(l.nu,3)}</td></tr>
-   <tr><td>式①　fb①</td><td style="text-align:left">{1 − 0.4λ² ÷ (C・Λ²)} × F ÷ ν　（C ＝ ${fmt(l.C,2)}）</td><td>${fmt(l.fb1,2)} kN/cm²</td></tr>
-   <tr><td>式②　fb②</td><td style="text-align:left">0.433・E ÷ (lb・H ÷ Af) × C　（Af ＝ ${fmt(l.Af,0)} mm²）</td><td>${fmt(l.fb2,2)} kN/cm²</td></tr></table>
-   ${eq('使う許容曲げ応力度：fb ＝ 式①と式②の大きいほう（fb0 以下）',`fb ＝ max(${fmt(l.fb1,2)}, ${fmt(l.fb2,2)}) → fb0（${fmt(l.fb0,1)}）以下`,`fb ＝ ${fmt(l.fb,2)} kN/cm²`)}
-   ${(l.lbe<l.lbNo-0.5)?`<h4 style="margin:14px 0 6px">つなぎ（横ずれ止め）の効果　～ つなぎがなかったら？</h4>
-   <table class="tbl"><tr><th>場合</th><th>横座屈の長さ lb</th><th>許容曲げ応力度 fb</th><th>曲げの使用率<br><span class="note">（ホイストを動かした全位置のうち最大）</span></th><th>判定</th></tr>
-   <tr><td>つなぎがない場合</td><td>${fmt(l.lbNo,0)} mm</td><td>${fmt(l.fbNo,2)} kN/cm²</td><td>${pct(rN0)}</td><td><b style="color:${rN0>1?'#C0392B':'#2E7D32'}">${rN0>1?'NG':'OK'}</b></td></tr>
-   <tr><td><b>つなぎがある場合（今の設定）</b></td><td>${fmt(l.lbe,0)} mm</td><td>${fmt(l.fb,2)} kN/cm²</td><td>${pct(rN1)}</td><td><b style="color:${rN1>1?'#C0392B':'#2E7D32'}">${rN1>1?'NG':'OK'}</b></td></tr></table>
-   <p class="note">つなぎで梁の横ずれ（横座屈）を止めたため、曲げの限度 fb が大きくなり、曲げの使用率が下がっています。このつなぎは、梁のフランジにボルト等でしっかり固定し、鋼材の両端も動かない場所に止めていることが前提です。施工図・写真などで、つなぎの位置と固定方法を示してください。</p>`:''}
-   <p class="note">この fb を、曲げの使用率（実際の曲げ応力度 ÷ 限度）の「限度」に使います。係数 C は「くわしい設定」で変えられます（安全側は 1.0）。上フランジを途中で固定して lb を短くすると、fb は大きくなります。</p></div>`;
-}
-function stepJudge(no,r,extraNote){
-  const m=r.mem;
-  const lim_t=r.fb0/9.81*1/1; // t/cm2 ≒ トン
-  const body=`<p class="lead">ここまでで「梁にかかる力」が分かりました。最後に、<b>梁の断面（H形鋼の切り口）がその力に耐えられるか</b>を確かめます。断面は、形と大きさで「強さ」が決まります。</p>
-   ${memberBlock(r)}
-   ${ltbBlock(r)}
-   <p class="lead"><b>力 ÷ 断面の強さ ＝ 鋼材 1cm² あたりにかかる力（応力度）</b>。これが、国の基準で決まった限度（許容応力度）より小さければ安全です。</p>
-   <div class="twocol">
-     <div>${eq('曲げ応力度 σb ＝ M × 100 ÷ Zx',`σb ＝ ${fmt(r.M,3)} × 100 ÷ ${fmt(m.Zx,1)}`,`σb ＝ ${fmt(r.sb,3)} kN/cm²`)}<p class="note">M が kN・m なので ×100 で kN・cm に直します。限度 fb ＝ ${fmt(r.fb0,2)} kN/cm²${r.ltb&&r.ltb.on?'（横座屈を考慮）':''}</p></div>
-     <div>${eq('せん断応力度 τ ＝ Qmax ÷ Aw',`τ ＝ ${fmt(r.Q,3)} ÷ ${fmt(r.Aw,2)}`,`τ ＝ ${fmt(r.tau,3)} kN/cm²`)}<p class="note">限度 fs ＝ fb0（${fmt(r.fbBase||r.fb0,1)}）÷ √3 ＝ ${fmt(r.fs,3)} kN/cm²</p></div>
-   </div>
-   ${tip(`限度の ${fmt(r.fbBase||r.fb0,1)} kN/cm² は、「爪ほどの面積（1cm²）で約 ${fmt((r.fbBase||r.fb0)/9.81,1)} トン（${fmt((r.fbBase||r.fb0)*1000/9.81,0)}kgf）を支えられる」大きさです（SS400 鋼の基準強度 235N/mm² の 1/1.5）。今回、実際にかかっているのは約 ${fmt(r.sb/9.81,2)} トン分。<b>使用率</b>は「実際 ÷ 限度」で、エレベーターの定員に対する乗車人数のようなものです。100%を超えなければ安全です。`)}
-   <div class="gauges">
-     ${gauge('① 曲げ',`σb ${fmt(r.sb,2)} ÷ 限度 ${fmt(r.fb0,2)} kN/cm²`,r.rb,'#EF8A45')}
-     ${gauge('② せん断',`τ ${fmt(r.tau,2)} ÷ 限度 ${fmt(r.fs,2)} kN/cm²`,r.rs,'#A66BC0')}
-     ${gauge('③ たわみ',`δ ${fmt(r.dmax,2)} ÷ 限度 ${fmt(r.da,2)} mm`,r.rd,'#4F8FD9')}
-   </div>${extraNote||''}`;
-  return step(no,'梁の強さと比べて、安全かどうかを判定する',body);
-}
-function braceAdvice(r){
-  const l=r.ltb; if(!l||!l.on||!(r.rb>1)) return '';
-  const lbN=Math.max(l.bm>0?l.lbSpan:r.L/2, l.La>0?l.La:0)*1000;   // 中央1か所＋先端をつないだ場合
-  const lbCur=l.lbe; if(!(lbN<lbCur-0.5)) return '';
-  const lam=lbN/l.i, f1=Math.max(0,1-0.4*lam*lam/(l.C*l.Lam*l.Lam))*l.F/(1.5+2/3*(lam/l.Lam)**2)/10, f2=0.433*205000/(lbN*r.mem.H/l.Af)*l.C/10;
-  const fbN=Math.min(Math.max(f1,f2),l.fb0), rN=r.rb*l.fb/fbN;
-  return `<div class="braceadv" style="margin-top:8px;font-size:0.95em"><b>振れ止めを入れた場合：</b>${l.La>0?'梁の中央をつなぎ、張り出し先端にも振れ止めを付ける':'梁の中央をつなぐ'}と、横座屈の長さが ${fmt(lbCur/1000,2)} m から ${fmt(lbN/1000,2)} m になり、曲げの使用率は <b>${pct(r.rb)}</b> から <b>${pct(rN)}</b> になります${rN<=1?'（曲げは基準以内）':'（それでも基準を超えるため、部材を大きくするか、スパンを短くしてください）'}。入力欄の「つなぎ」で選ぶと、この効果が計算に入ります。</div>`;
-}
 function okBS(p,n,La){   // 曲げ・せん断だけで見た合否（ホイストを動かした全位置）
   const q={...p,La}; const s=scan3(q,n,40); if(!s) return false; return s.worst.rb<=1&&s.worst.rs<=1;
 }
@@ -527,128 +678,6 @@ function exactMaxLaBS(p,n){
   while(v>0&&!f(v)) v=Math.round((v-0.01)*100)/100;
   return v;
 }
-function sumBox(mode,p,rv,sc,r){
-  const m=MEMBER_MAP[p.mem]; const L=[]; const ok=x=>x?'<b style="color:#2E7D32">OK</b>':'<b style="color:#C0392B">NG</b>';
-  if(mode==2){
-    const P=(p.W+p.Hw)*p.phi*9.81/1000, w=selfW(p); const cm=cantMax(P,w,m,p.fb0,p.nd);
-    L.push(`<b>曲げ・せん断：</b>曲げの使用率 ${pct(r.rb)}、せん断の使用率 ${pct(r.rs)}　→ ${ok(r.rb<=1&&r.rs<=1)}`);
-    L.push(`<b>たわみ：</b>先端のたわみ ${fmt(r.dmax,2)} mm ≦ 制限 ${fmt(r.da,2)} mm（張り出し長さの 1/${fmt(p.nd,0)}）　→ ${ok(r.rd<=1)}`);
-    L.push(`<b>どこまで張り出せるか：</b>片持ち梁として、曲げ・せん断・たわみから求めた最大の張り出し長さは <b>${fmt(cm.Lmax,2)} m</b>。今の張り出し ${fmt(p.Lc,2)} m は、これ以内です。`.replace('これ以内です。',p.Lc<=cm.Lmax?'これ以内です。':'<b style="color:#C0392B">これを超えています。</b>'));
-  }else{
-    const n=mode==3?2:1; const La=Math.max(0,p.La);
-    const dA=rv.rd*rv.da, dlim=rv.da;
-    L.push(`<b>① 支点間（単純梁の部分）のたわみ：</b>ホイストを動かした全位置での最大 ${fmt(dA,2)} mm ≦ 制限 ${fmt(dlim,2)} mm（スパンの 1/${fmt(p.nd,0)}）　→ ${ok(rv.rd<=1)}`);
-    L.push(`<b>② 曲げ・せん断（梁全体）：</b>曲げの使用率 ${pct(rv.rb)}、せん断の使用率 ${pct(rv.rs)}　→ ${ok(rv.rb<=1&&rv.rs<=1)}`);
-    if(La>0){
-      const Lx=exactMaxLaBS(p,n);
-      L.push(`<b>③ 張り出し部分：</b>先端に荷重をかけたとき、根元（支点A）の曲げ・せん断が許容以内となる最大の張り出し長さは <b>約 ${fmt(Lx,2)} m</b>（ホイストを動かした全位置で確認）。今の張り出し ${fmt(La,2)} m は、${La<=Lx+1e-9?'これ以内です（余裕 '+fmt(Lx-La,2)+' m）。':'<b style="color:#C0392B">これを超えています。</b>'}`);
-      const tp=Math.max(0,sc.worst.tipmax);
-      if(p.tipj==1){ const nn=(p.nc>0?p.nc:250); L.push(`<b>④ 張り出し部のたわみ（自社基準）：</b>ホイストを動かした全位置での先端の最大 ${fmt(tp,1)} mm ≦ 制限 ${fmt(La*1000/nn,1)} mm（張り出し長さの 1/${fmt(nn,0)}）　→ ${ok(tp<=La*1000/nn+1e-9)}`); }
-      else L.push(`<b>④ 張り出し先端のたわみ（参考）：</b>最大 ${fmt(tp,1)} mm（張り出し長さの 1/${fmt(La*1000/Math.max(tp,1e-9),0)}）。弾性変形であり、応力が許容以内なら強度には影響しません。先端にはトロリーのストッパーを設けます。`);
-      const rmin=sc.worst.RBmin;
-      if(rmin<0) L.push(`<b>⑤ 支点の浮き上がり：</b>先端に吊ったとき、反対側の支点に最大 ${fmt(-rmin,2)} kN の引き抜き力がはたらきます。ボルト・アンカーで固定します（耐力は、後ろの「アンカー・支点の検討」の欄）。`);
-    }
-  }
-  return `<section class="card sumbox" style="margin:10px 0;padding:10px 14px"><h3 style="margin:0 0 4px;font-size:1em">計算の結論（なぜ大丈夫と言えるか）</h3><ul style="margin:0;padding-left:1.3em;line-height:1.6;font-size:0.95em">${L.map(t=>`<li style="margin-bottom:3px">${t}</li>`).join('')}</ul></section>`;
-}
-function condBox(mode,p,lt){
-  const m=MEMBER_MAP[p.mem]; const li=[];
-  li.push(['使用する部材',`${m.n}（${fmt(m.kg,1)} kg/m）`]);
-  if(mode==2){
-    li.push(['張り出し長さ（固定した根元から先端まで）',`${fmt(p.Lc,2)} m`]);
-  }else{
-    li.push(['支点間スパン L',`${fmt(p.L,2)} m`]);
-    li.push(['張り出し長さ La',p.La>0?`${fmt(p.La,2)} m`:'なし（0 m）']);
-    if(mode==3) li.push(['ホイストの吊り間隔 d',`${fmt(p.d,2)} m（2台）`]);
-  }
-  li.push(['吊り荷重',`${fmt(p.W,0)} kg`]);
-  li.push(['ホイスト自重',`${fmt(p.Hw,0)} kg${mode==3?'（1台）':''}`]);
-  if(p.sw!=0) li.push(['梁の自重','考慮する']);
-  if(mode!=2){
-    if(lt&&lt.on){
-      let t='';
-      t='考慮する（横座屈の長さ lb ＝ '+fmt(lt.lbe/1000,2)+' m）';
-      const c=[]; if(lt.bm>0) c.push(`支間を${lt.bm}か所つなぐ`); if(lt.La>0) c.push(lt.bt?'張り出し先端をつなぐ':'張り出し先端はつながない'); if(!lt.bm&&!(lt.La>0&&lt.bt)) c.push('つなぎなし');
-      t+='　［'+c.join('、')+'］';
-      li.push(['横座屈',t]);
-    }
-  }
-  li.push(['衝撃係数 φ',`${fmt(p.phi,2)}`]);
-  li.push(['許容曲げ応力度 fb0',`${fmt(p.fb0,1)} kN/cm²`]);
-  li.push([mode==2?(p.nd==250?'たわみの制限（自社基準）':'たわみの制限'):'たわみの制限',mode==2?`1/${fmt(p.nd,0)}`:`支間 1/${fmt(p.nd,0)}`]);
-  if(mode!=2&&p.tipj==1&&p.La>0) li.push(['張り出し部のたわみの制限',`1/${fmt(p.nc>0?p.nc:250,0)}（自社基準）`]);
-  return `<section class="card condbox" style="margin:10px 0;padding:10px 14px"><h3 style="margin:0 0 4px;font-size:1em">今回の計算条件</h3><ul style="margin:0;padding-left:1.3em;line-height:1.5;columns:2;column-gap:24px;font-size:0.95em">${li.map(([a,b])=>`<li style="break-inside:avoid">${a}：<b>${b}</b></li>`).join('')}</ul>${(mode!=2&&p.tipj==1&&p.La>0)?`<p style="margin:6px 0 0;font-size:0.9em;line-height:1.5">※ 張り出し部のたわみの制限 1/${fmt(p.nc>0?p.nc:250,0)} は自社基準です。張り出しの先端が下がりすぎると、トロリーが勝手に動いて吊荷が振れるおそれがあるため、自主的に設けています。</p>`:''}</section>`;
-}
-function braceSentence(r){
-  const l=r.ltb; if(!l||!l.on) return '';
-  if(!(l.lbe<l.lbNo-0.5)){
-    const sel=l.bm>0||(l.La>0&&l.bt); if(!sel||l.lbIn) return '';
-    const why=(l.lbOv>l.lbSpan)?`張り出し部（${fmt(l.lbOv,2)} m）が決め手になっているため、先端もつながないと長さが短くなりません。`:`支間部（${fmt(l.lbSpan,2)} m）が決め手になっているため、支間もつながないと長さが短くなりません。`;
-    return `<div class="bracenote" style="margin-top:8px;font-size:0.95em">選んだつなぎでは、横座屈の長さが ${fmt(l.lbe/1000,2)} m のまま変わらないため、判定は「つなぎなし」と同じです。${why}</div>`;
-  }
-  const a=[]; if(l.bm>0) a.push([`梁を${l.bm}か所つなぎ`,`梁を${l.bm}か所つないだ`]); if(l.La>0&&l.bt) a.push(['先端に振れ止めを付け','先端に振れ止めを付けた']);
-  const how=a.length?a.slice(0,-1).map(x=>x[0]).concat(a[a.length-1][1]).join('、'):'つなぎ（横ずれ止め）を入れた';
-  const r0=r.rb*l.fb/l.fbNo;
-  return `<div class="bracenote" style="margin-top:8px;font-size:0.95em">${how}ため、曲げの使用率は <b>${pct(r.rb)}</b> になりました。何もしない場合は <b>${pct(r0)}</b>${r0>1?'で<b style="color:#C0392B">NG</b>':'（OK）'}です。（詳細は「横座屈を考慮した許容曲げ応力度」の欄）</div>`;
-}
-function verdictHTML(r,spec,load,moved){
-  const hasT=(r.rt!=null);
-  const ok=r.rb<=1&&r.rs<=1&&r.rd<=1&&(!hasT||r.rt<=1);
-  const ngs=[r.rb>1?'曲げ':'',r.rs>1?'せん断':'',r.rd>1?'たわみ':'',(hasT&&r.rt>1)?'張り出し先端のたわみ':''].filter(Boolean).join('・');
-  return `<section class="verdict ${ok?'ok':'ng'}"><div class="big"><div class="mark">${ok?'OK':'NG'}</div>
-   <div class="msg">${ok?`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げても、曲げ・せん断・たわみ${hasT?'（張り出し先端を含む）':''}のすべてが基準以内${moved?'（ホイストを梁の上で動かした場合の一番きびしい位置を含む）':''}なので、<u>安全です</u>。`:`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げるとき、<b>${ngs}</b>が基準を超えています。<u>安全とは言えません</u>。より大きな部材にするか、スパン（張り出し）を短くしてください。`}${braceSentence(r)}${ok?'':braceAdvice(r)}${(ok||r.laMax==null)?'':`<div class="lamaxadv" style="margin-top:8px;font-size:0.95em"><b>張り出しを短くする場合：</b>${r.laMax>0?`今の部材・荷物のまま、張り出しを <b>約 ${fmt(r.laMax,2)} m 以下</b> にすると、すべて基準以内になります（今は ${fmt(r.La,2)} m）。`:'この部材・荷物では、張り出しをどの長さにしても、すべての基準を同時には満たせません。部材か荷物を見直してください。'}</div>`}</div></div>
-   <div class="gauges">
-    ${gauge('曲げ','梁が折れないか',r.rb,'#EF8A45')}
-    ${gauge('せん断','梁がずれ切られないか',r.rs,'#A66BC0')}
-    ${gauge('たわみ','梁が下がりすぎないか',r.rd,'#4F8FD9')}
-    ${hasT?gauge('張り出し部のたわみ（自社基準）','張り出し先端が下がりすぎないか',r.rt,'#2E9E9E'):''}
-   </div><p class="note" style="margin-top:8px">使用率＝「実際にかかる値 ÷ 基準で決まった限度」。100%以下なら基準を満たしています。${moved?'この判定は、今の位置とホイストを動かした全位置のうち、きびしいほうの値を使っています。':''}理由は、下の STEP 1 から順に説明します。</p></section>`;
-}
-const swTxt=p=>p.sw!=0?'梁の自重を含む':'';
-
-const selfLabel=(w)=> w>0 ? `${fmt(w,2)}kN/m` : null;
-function anchorCap(shear,up){
-  const fsb=90;
-  const rows=[['M12',84.3,'R-12N',100,11.3],['M16',157,'R-16N',130,18.9],['M20',245,'R-19N',200,38.3]].map(([nm,a,prod,le,ta])=>({nm,a,prod,le,ta,sh:fsb*a/1000}));
-  const body=rows.map(q=>`<tr><td>${q.nm}<br><span class="note">有効断面積 ${q.a} mm²</span></td>
-    <td>${fsb} × ${q.a} ＝ <b>${fmt(q.sh,1)} kN</b></td>
-    <td><b>${fmt(q.ta,1)} kN</b><br><span class="note">${q.prod}　埋め込み ${q.le} mm</span></td>
-    ${shear!=null?`<td>せん断 ${fmt(Math.max(1,Math.ceil(shear/q.sh-1e-9)),0)} 本${up>0?`<br>引抜き ${fmt(Math.max(1,Math.ceil(up/q.ta-1e-9)),0)} 本`:''}</td>`:''}</tr>`).join('');
-  return `<h4 style="margin:14px 0 6px">アンカー・ボルト 1本あたりの耐力の目安（M12・M16・M20）</h4>
-  <p class="lead">上の力を1本あたりの耐力で割ると、必要な本数の目安が分かります。<b>SS400ボルトのせん断</b>は、許容せん断応力度 ${fsb} N/mm²（F＝235 を 1.5×√3 で割った長期の値）× 有効断面積です。<b>ケミカルアンカーの引き抜き</b>は、日本デコラックス ケミカルアンカー Rタイプ（回転・回転打撃式）のカタログ値（標準サイズの長期許容引張強度）です。</p>
-  <table class="tbl"><tr><th>呼び径</th><th>1本の せん断耐力</th><th>1本の 引き抜き耐力<br>（カタログ・長期）</th>${shear!=null?'<th>必要本数の目安</th>':''}</tr>${body}</table>
-  <p class="note">引き抜きの値は、コンクリート Fc＝21 N/mm² の条件で、ボルト自体とコンクリート側の小さいほうを考えた値です（カタログの注記による）。短期の力に対しては長期値の1.5倍が使えます。コンクリートの強度・縁端距離・間隔が違うときは、カタログの設計指針で確認してください。必要本数は、力を全部のアンカーで均等に受けた場合の最低本数で、曲げで生じる力・縁端距離や間隔による低下・せん断と引張の組合せは含みません。</p>`;
-}
-function anchorStep(no,inner,cap){
-  return step(no,'アンカー・支点の検討に使う力（参考）',`<p class="lead">梁を支える場所（コンクリート梁へのケミカルアンカーなど）には、ここで求めた力がかかります。<b>アンカー1本あたりの引き抜き力・せん断力は、この力を、アンカーの本数と配置に応じて割り振って</b>求めます。</p>${inner}
-   <p class="note">走行やブレーキで生じる横向きの力（水平力）は、この計算に含まれません。</p>${cap||''}`);
-}
-/* 曲げモーメント図の点列（山の位置も含める） */
-function mPtsOf(r,La,L,extra){
-  const xs=new Set(); const N=200;
-  for(let i=0;i<=N;i++) xs.add(+(-La+(L+La)*i/N).toFixed(6));
-  [-La,0,L,...r.loads,...(r.peaks||[]).map(q=>q.x),...(extra||[])].forEach(v=>xs.add(+(+v).toFixed(6)));
-  return [...xs].filter(x=>x>=-La-1e-9&&x<=L+1e-9).sort((a,b)=>a-b).map(x=>[x,r.Mat(x)]);
-}
-/* せん断力図の点列 */
-function qPtsOf(r,La,L){
-  const bp=[...new Set([-La,0,L,...r.loads].map(v=>+(+v).toFixed(6)))].sort((a,b)=>a-b);
-  const pts=[], marks=[];
-  for(let i=0;i<bp.length-1;i++){
-    const a=bp[i], b=bp[i+1];
-    if(b-a<1e-9) continue;
-    const va=r.Vr(a), vb=r.Vl(b);
-    pts.push([a,va],[b,vb]);
-    const vm=(va+vb)/2;
-    if(Math.max(Math.abs(va),Math.abs(vb))>1e-6) marks.push({x:(a+b)/2,v:vm,label:fmtN(vm,2)});
-  }
-  return {pts,marks,bp};
-}
-
-/* =====================================================================
-   ①③ 単純梁＋張り出し（① ホイスト1台／③ ホイスト2台）
-===================================================================== */
-/* 張り出し部分を「根元(支点A)で固定した片持ち梁」とみなしたときの、最大の張り出し長さ */
 function cantMax(P,w,m,fb0,nc){
   const EI=E*m.Ix, Aw=(m.H-2*m.tf)*m.tw/100, fs=fb0/Math.sqrt(3), Mall=fb0*m.Zx/100;
   const Lb = w>0 ? (-P+Math.sqrt(P*P+2*w*Mall))/w : Mall/P;
@@ -658,266 +687,6 @@ function cantMax(P,w,m,fb0,nc){
   const Ld=xL/100;
   return {EI,Aw,fs,Mall,Lb,Ls,Ld,L0,Lmax:Math.floor(Math.min(Lb,Ld,Ls)*100)/100};
 }
-function renderBeam(k){
-  const two=(k==3), n=two?2:1; const p=S[k]; const m=MEMBER_MAP[p.mem]; const La=Math.max(0,p.La), L=p.L;
-  const sf=stepForce(p,n); const P=sf.P, w=sf.w;
-  const dd=two?p.d:0; const lo=-La, hi=L-dd;
-  if(!(L>0)||(two&&!(p.d>0))||hi<lo){ return `<div class="warn">数字を見直してください（スパン・ホイストの間隔 d が正しくありません）。</div>`; }
-  p.x1=clamp(p.x1,lo,hi);
-  const x1=p.x1, x2=x1+dd; const xsL=two?[x1,x2]:[x1];
-  const lt=ltbFb(p,m,L); const r=analyze({P,w,L,La,loads:xsL,mem:m,fb0:lt.fb,fbBase:p.fb0,nd:p.nd}); r.M=r.Mmax; r.Q=r.Qmax; r.ltb=lt; r.rbW=Math.max(r.rb,scan3(p,n).worst.rb);
-  const fr=frame(-La,L);
-  const supports=[[0,'支点A'],[L,'支点B']];
-  const dims=[]; if(La>0) dims.push({a:-La,b:0,y:by(),label:`張り出し La＝${fmt(La,2)}m`});
-  function by(){return 118+92;}
-  dims.push({a:0,b:L,y:by(),label:`支点間スパン L＝${fmt(L,2)}m`});
-  dims.push({a:Math.min(0,x1),b:Math.max(0,x1),y:by()+34,label:`x1＝${fmtN(x1,2)}m`});
-  if(two) dims.push({a:x1,b:x2,y:by()+64,label:`吊り間隔 d＝${fmt(p.d,2)}m`});
-  const loads=two?[{x:x1,label:`P＝${fmt(P,2)}kN`,tag:'左ホイスト'},{x:x2,label:`P＝${fmt(P,2)}kN`,tag:'右ホイスト'}]:[{x:x1,label:`P＝${fmt(P,2)}kN`,tag:'ホイスト'}];
-  const beam0=beamSVG(fr,{loads,supports,overhang:La>0,dims,h:296,selfw:selfLabel(w)});
-  const slider=`<div class="slider-box"><label class="note" for="x1s"><b>ホイスト位置を動かしてみましょう</b>（${two?'左ホイスト ':'ホイスト '}x1：支点Aから ${fmtN(x1,2)} m）</label>
-     <input id="x1s" class="slider" type="range" min="${lo}" max="${hi}" step="0.05" value="${x1}">
-     <div class="btnrow"><button class="btn" data-go="worst">曲げが最大になる位置へ</button><button class="btn" data-go="mid">${two?'2台が真ん中に並ぶ位置へ（たわみ最大）':'ホイストが真ん中にくる位置へ（たわみ最大）'}</button><button class="btn" data-go="reset">はじめの位置へ</button></div></div>`;
-  // ---- STEP 2 反力
-  const lever=two?`${fmt(P,3)}×${fmtP(x1)} ＋ ${fmt(P,3)}×${fmtP(x2)}`:`${fmt(P,3)}×${fmtP(x1)}`;
-  const s2=step(2,'2つの支点は、どれくらいの力で梁を支えている？',`
-    <p class="lead">ホイストと梁自身の重さが梁を押し下げる力を、支点AとBが<b>下から押し返して支えています</b>。この「支える力」を<b>反力（はんりょく）</b>といいます。</p>
-    ${beamSVG(fr,{loads,supports,overhang:La>0,dims:[],reactions:[{x:0,v:r.RA,label:`RA＝${fmtN(r.RA,2)}kN`},{x:L,v:r.RB,label:`RB＝${fmtN(r.RB,2)}kN`}],h:262,selfw:selfLabel(w)})}
-    <p class="lead"><b>「てこ（シーソー）のつり合い」</b>で求めます。支点Aを回転の中心と考えると、${two?'2台のホイスト':'ホイスト'}が梁を回そうとする力（力×Aからの距離）と、支点Bが押し返す力（RB×L）がつり合います。</p>
-    ${eq(two?'ホイスト分：RBp ＝ ( P×x1 ＋ P×x2 ) ÷ L':'ホイスト分：RBp ＝ P × x1 ÷ L',two?`RBp ＝ ( ${lever} ) ÷ ${fmt(L,2)}`:`RBp ＝ ${lever} ÷ ${fmt(L,2)}`,`RBp ＝ ${fmtN(r.RBp,3)} kN`)}
-    ${w>0?`<p class="lead">梁自身の重さは、張り出し部分を含む全長（L＋La）に均等にかかります。その合計 w×(L＋La) が全長の真ん中にかかっていると考えて、同じ「てこ」で求めます。</p>
-    ${eq('自重分：RBw ＝ w × ( L² − La² ) ÷ ( 2 × L )',`RBw ＝ ${fmt(w,3)} × ( ${fmt(L,2)}² − ${fmt(La,2)}² ) ÷ ( 2 × ${fmt(L,2)} )`,`RBw ＝ ${fmt(r.RBw,3)} kN`)}`:''}
-    ${eq('支点B：RB ＝ RBp ＋ RBw',`RB ＝ ${fmtN(r.RBp,3)} ＋ ${fmt(r.RBw,3)}`,`支点B：RB ＝ ${fmtN(r.RB,3)} kN`)}
-    ${eq(two?'ホイスト分：RAp ＝ 2×P − RBp（全部の力から、Bの分を引いた残り）':'ホイスト分：RAp ＝ P − RBp（全部の力から、Bの分を引いた残り）',two?`RAp ＝ 2 × ${fmt(P,3)} − ${fmtN(r.RBp,3)}`:`RAp ＝ ${fmt(P,3)} − ${fmtN(r.RBp,3)}`,`RAp ＝ ${fmtN(r.RAp,3)} kN`)}
-    ${w>0?eq('自重分：RAw ＝ w × ( L ＋ La ) − RBw',`RAw ＝ ${fmt(w,3)} × ( ${fmt(L,2)} ＋ ${fmt(La,2)} ) − ${fmt(r.RBw,3)}`,`RAw ＝ ${fmt(r.RAw,3)} kN`):''}
-    ${eq('支点A：RA ＝ RAp ＋ RAw',`RA ＝ ${fmtN(r.RAp,3)} ＋ ${fmt(r.RAw,3)}`,`支点A：RA ＝ ${fmtN(r.RA,3)} kN`)}
-    <p class="note">検算：RA ＋ RB ＝ ${fmtN(r.RA,3)} ＋ ${fmtN(r.RB,3)} ＝ ${fmtN(r.RA+r.RB,3)} kN ＝ ${two?'2P':'P'} ＋ w×(L＋La)（${fmt(n*P+w*(L+La),3)} kN）で一致。</p>
-    ${tip('シーソーで、支点から遠いところに座るほど大きく回すのと同じです。ホイストが支点Bに近いほど、Bが受け持つ力は大きくなります。')}
-    ${Math.min(r.RA,r.RB)<0?`<div class="warn"><b>この位置では、片方の支点の反力がマイナスです。</b>梁がその支点から<b>浮き上がろうとします</b>（引き抜き力 ${fmt(-Math.min(r.RA,r.RB),2)} kN）。その支点をボルトなどで固定する必要があります。</div>`:`<div class="okbox">反力は2つとも「押す力」（プラス）なので、梁が支点から浮き上がることはありません。</div>`}`);
-  // ---- STEP 3 曲げ
-  const gd=[0,L,x1,x2];
-  const ptsM=mPtsOf(r,La,L);
-  const markPts=[]; r.MptsAll.forEach(q=>{ if(w<=0&&q.name.includes('山')) return; if(!markPts.some(z=>Math.abs(z.x-q.x)<1e-6)) markPts.push(q); });
-  const marks=markPts.map(q=>({x:q.x,v:q.v,label:fmtN(q.v,2)}));
-  const mmaxAt=r.MptsAll.reduce((a,b)=>Math.abs(b.v)>Math.abs(a.v)?b:a);
-  const mtxt=x=>{ let t=(x>=0)?`${fmt(r.RA,3)}×${fmtP(x)}`:'0'; r.loads.forEach(a=>{ if(x>a) t+=` − ${fmt(P,3)}×(${fmtP(x)} − ${fmtP(a)})`; }); if(w>0) t+=` − ${fmt(w,3)}×(${fmtP(x)} ＋ ${fmt(La,2)})²÷2`; return t; };
-  const mrows=(w>0?r.MptsAll:r.Mpts);
-  const s3=step(3,'梁は、どれくらいの力で曲げられている？（曲げモーメント）',`
-    <p class="lead">荷物を吊ると梁は曲げられます。曲げる力の大きさを<b>曲げモーメント M</b>といい、<b>「力 × 距離」</b>で表します（単位：kN・m）。梁の場所ごとに大きさが違うので、図にして「一番大きいところ」を探します。</p>
-    ${plotSVG(fr,ptsM,{title:'曲げモーメント図（山が高いほど、強く曲げられている）',color:'#E65100',guides:gd,marks,foot:'kN・m　上向き＝梁の下側が引っぱられる（プラス）／下向き＝上側が引っぱられる（マイナス）'})}
-    <p class="lead">ある場所 x の曲げモーメントは、「その場所より左側にある力」に「その場所までの距離」を掛けて足し引きします。<b>M(x) ＝ RA×x − P×(x−x1)${two?' − P×(x−x2)':''}${w>0?' − w×(x＋La)²÷2':''}</b>（ホイストが x より左にあるものだけ引く）。${w>0?'最後の項が梁の自重の分です。x より左にある梁の重さ w×(x＋La) が、その真ん中にかかるので、距離は (x＋La)÷2 になります。':''}</p>
-    ${w>0?'<p class="lead">梁の自重があると、ホイストの真下でなくても、<b>せん断力が0になる場所で曲げモーメントが山になる</b>ことがあります（次のSTEPのせん断力図で、0を横切る場所です）。表の「山」の行はその場所です。</p>':''}
-    <table class="tbl"><tr><th>調べる場所</th><th>Aからの距離</th><th>数字を入れると</th><th>M（kN・m）</th></tr>
-    ${mrows.map(pt=>`<tr><td>${pt.name}</td><td>${fmtN(pt.x,2)} m</td><td style="text-align:left">${mtxt(pt.x)}</td><td><b>${fmtN(pt.v,3)}</b></td></tr>`).join('')}
-    </table>
-    ${eq('最大の曲げモーメント（大きさ＝絶対値の最大）',`Mmax ＝ ${mmaxAt.name}の ${fmtN(mmaxAt.v,3)} の大きさ`,`Mmax ＝ ${fmt(r.Mmax,3)} kN・m`)}
-    ${tip('ドアノブに近いところを押すより、ちょうつがいに近いところを押すほうが重いのは「力×距離」だからです。定規の両端を支えて真ん中を押すと、真ん中が一番曲がるのも同じ理由です。')}`);
-  // ---- STEP 4 せん断
-  const qp=qPtsOf(r,La,L);
-  const s4=step(4,'梁は、どれくらいの力でずらし切られそうになっている？（せん断力）',`
-    <p class="lead">ハサミで紙を切るときは、2枚の刃が紙を上下にずらして切ります。梁にもこれと同じ<b>「ずらし切る力」（せん断力 Q）</b>がかかります。ある場所のせん断力は、<b>「左側にある上向きの力（反力）」−「下向きの力（ホイスト${w>0?'と梁の自重':''}）」</b>の残りです。${w>0?'梁の自重があるので、ホイストの間でも、せん断力は右へ行くほど少しずつ小さくなります（斜めの線）。':''}</p>
-    ${plotSVG(fr,qp.pts,{title:'せん断力図',color:'#6A1B9A',guides:gd,marks:qp.marks,h:170,foot:'kN'})}
-    <table class="tbl"><tr><th>調べる場所</th><th>Aからの距離</th><th>数字を入れると</th><th>Q（kN）</th></tr>
-    ${r.Qpts.map(pt=>`<tr><td>${pt.name}</td><td>${fmtN(pt.x,2)} m</td><td style="text-align:left">上向き ${fmt(pt.up,3)} − 下向き ${fmt(P*pt.cnt,3)}${w>0?` − 自重 ${fmt(pt.selfq,3)}`:''}</td><td><b>${fmtN(pt.v,3)}</b></td></tr>`).join('')}
-    </table>
-    ${eq('最大のせん断力（大きさ＝絶対値の最大）',`Qmax ＝ 上の表の大きさが最大のもの`,`Qmax ＝ ${fmt(r.Qmax,3)} kN`)}`);
-  // ---- STEP 5 たわみ
-  const dpts=[]; const NS=160; for(let i=0;i<=NS;i++){ const x=-La+(L+La)*i/NS; dpts.push([x,r.dfl(x)]); }
-  const dm=[{x:r.xd,v:r.dmax,label:`${fmt(r.dmax,2)} mm`}]; if(La>0&&Math.abs(r.tip)>0.05) dm.push({x:-La,v:r.tip,label:`${fmtN(r.tip,2)} mm`});
-  const noSag=(r.dmax<0.05);
-  const s5=step(5,'梁は、どれくらい下がる？（たわみ）',`
-    <p class="lead">荷物を吊ると、梁は少したわんで下がります。下がりすぎるとホイストが動きにくくなるので、<b>「スパンの ${fmt(p.nd,0)} 分の 1 以下」</b>に抑えます（クレーン用レールの目安）。</p>
-    ${plotSVG(fr,dpts,{title:'たわみ図（下向きが「下がる」向き／数字は実際の大きさ）',color:'#1565C0',down:true,guides:gd,marks:dm,h:190,foot:'mm　※図は見やすいよう縦方向を大きく描いています'})}
-    <p class="lead">${two?'左のホイストだけが作るたわみ、右のホイストだけが作るたわみ':'ホイストだけが作るたわみ'}${w>0?'、梁の自重だけが作るたわみ':''}を、それぞれ材料力学の公式で求めて<b>足し合わせます</b>（重ね合わせ）。${noSag?`今のホイストの位置（張り出し側）では、支間（支点Aと支点Bの間）は<b>下がらず、むしろ持ち上がります</b>（張り出しの先に荷物がかかると、てこの原理で支間側が上へ反るため）。そのため、支間のたわみは <b>0</b> です。ホイストが支間の中ほどにあるときに支間が一番下がるので、<b>実際の判定は、ホイストを動かした全位置で行っています</b>（STEP 7）。`:`梁を細かく区切って一番下がる場所を探すと、支点Aから <b>${fmt(r.xd,2)} m</b> の位置でした。`}</p>
-    ${eq('たわみの限度 δa ＝ L ÷ n',`δa ＝ ${fmt(L,2)} m × 1000 ÷ ${fmt(p.nd,0)}`,`限度 δa ＝ ${fmt(r.da,3)} mm　／　実際 δ ＝ ${fmt(r.dmax,3)} mm`)}
-    ${noSag?'':tip(`${fmt(r.dmax,1)}mm は、1円玉（厚さ1.5mm）を約 ${fmt(r.dmax/1.5,1)} 枚重ねた高さ。これが限度の ${fmt(r.da,1)}mm（1円玉 約 ${fmt(r.da/1.5,1)} 枚）より小さければOKです。`)}
-    ${La>0?`<p class="lead" style="margin-top:10px"><b>張り出し先端の下がりは、別にして見ます。</b>上の「限度 δa ＝ L÷${fmt(p.nd,0)}」は<b>支間（支点Aと支点Bの間）</b>のたわみの目安で、張り出しの先端は含みません。今のホイストの位置での値を並べると、次のとおりです。</p>
-    <table class="tbl"><tr><th>場所</th><th>限度</th><th>今の位置での実際の値</th><th>扱い</th></tr>
-     <tr><td>支間のたわみ</td><td>${fmt(r.da,3)} mm（L÷${fmt(p.nd,0)}）</td><td><b>${fmt(r.dmax,3)} mm</b>${noSag?'<br><span class="note">（この位置では下がらない）</span>':''}</td><td>判定に使う（ホイストを動かした全位置で確認）</td></tr>
-     <tr><td>張り出し先端の下がり</td><td>${p.tipj==1?fmt(La*1000/(p.nc>0?p.nc:250),2)+' mm（La÷'+fmt(p.nc>0?p.nc:250,0)+'）':'定めていない'}</td><td><b>${r.tip>=0?'下に ':'上に '}${fmt(Math.abs(r.tip),2)} mm</b></td><td>${p.tipj==1?'判定に使う':'参考値（判定には使っていない）'}</td></tr></table>
-    <p class="note">${p.tipj==1?'':'張り出しの先端は、ホイストが先端にあるときに大きく下がり（支間のたわみとは別の動きです）、支間の中ほどにあるときは逆に跳ね上がります。この値は、ホイストが走る床面の傾きの目安として、参考に示しています。梁が壊れないことは、STEP 6 の曲げ・せん断の判定（応力が基準以内）で確認しています。'}</p>`:''}`);
-  // ---- STEP 6
-  const s6=stepJudge(6,r);
-  // ---- 位置を動かす
-  const sc=scan3(p,n);
-  let s7='', s8='', sC='';
-  if(sc){
-    const wv=sc.worst;
-    const W2=920,Hc=210,padL=56,padR=20,top=20,bot=34; const ymax=Math.max(1.15,wv.rb*1.1,wv.rs*1.1,wv.rd*1.1);
-    const X=x=>padL+(x-sc.lo)/((sc.hi-sc.lo)||1)*(W2-padL-padR), Y=v=>top+(ymax-v)/ymax*(Hc-top-bot);
-    const line=(key,col)=>'<polyline fill="none" stroke="'+col+'" stroke-width="2.6" points="'+sc.rows.map(q=>X(q.x1).toFixed(1)+','+Y(q[key]).toFixed(1)).join(' ')+'"/>';
-    let ch=`<svg viewBox="0 0 ${W2} ${Hc}" role="img" aria-label="ホイスト位置と使用率">`;
-    for(let g=0;g<=ymax;g+=0.25){ ch+=`<line x1="${padL}" x2="${W2-padR}" y1="${Y(g)}" y2="${Y(g)}" stroke="#E3E8F0"/><text x="${padL-6}" y="${Y(g)+4}" font-size="11" text-anchor="end" fill="#6B7686">${Math.round(g*100)}%</text>`; }
-    ch+=`<line x1="${padL}" x2="${W2-padR}" y1="${Y(1)}" y2="${Y(1)}" stroke="#B3261E" stroke-width="2" stroke-dasharray="7 5"/><text x="${W2-padR}" y="${Y(1)-5}" font-size="12" text-anchor="end" fill="#B3261E" font-weight="700">限度 100%</text>`;
-    ch+=line('rb','#E65100')+line('rs','#6A1B9A')+line('rd','#1565C0');
-    ch+=`<line x1="${X(x1)}" x2="${X(x1)}" y1="${top-6}" y2="${Hc-bot}" stroke="#333" stroke-dasharray="3 3"/><text x="${X(x1)}" y="${top-8}" font-size="11" text-anchor="middle" fill="#333">今の位置</text>`;
-    ch+=`<text x="${padL}" y="${Hc-10}" font-size="12" fill="#6B7686">← ${two?'左ホイスト':'ホイスト'}が張り出し先端にある（x1＝${fmtN(sc.lo,2)}m）</text><text x="${W2-padR}" y="${Hc-10}" font-size="12" text-anchor="end" fill="#6B7686">${two?'右ホイスト':'ホイスト'}が支点Bの真上にある（x1＝${fmtN(sc.hi,2)}m） →</text></svg>`;
-    const allok=wv.rb<=1&&wv.rs<=1&&wv.rd<=1;
-    s7=step(7,'ホイストを梁の上で動かしたら？（一番きびしい位置の確認）',`
-      <p class="lead">実際の作業では、ホイストは梁の上を動きます。そこで、${two?'2台のホイスト（間隔 d のまま）':'ホイスト'}を<b>張り出し先端から支点Bまで少しずつずらして</b>、位置ごとの使用率を調べました。</p>
-      ${ch}<div class="legend"><span><i style="background:#E65100"></i>曲げ</span><span><i style="background:#6A1B9A"></i>せん断</span><span><i style="background:#1565C0"></i>たわみ</span></div>
-      <table class="tbl"><tr><th>項目</th><th>一番きびしい使用率</th><th>そのときの位置 x1</th></tr>
-        <tr><td>曲げ</td><td><b>${pct(wv.rb)}</b></td><td>${fmtN(wv.xb,2)} m</td></tr>
-        <tr><td>せん断</td><td><b>${pct(wv.rs)}</b></td><td>${fmtN(wv.xs,2)} m</td></tr>
-        <tr><td>たわみ（支点間）</td><td><b>${pct(wv.rd)}</b></td><td>${fmtN(wv.xd,2)} m</td></tr></table>
-      ${allok?`<div class="okbox"><b>どの位置にホイストがきても、3項目とも 100% 以下です。</b>ホイストが梁の上のどこにあっても安全です。</div>`:`<div class="warn"><b>位置によっては 100% を超えます。</b>ホイストを動かす範囲を制限するか、部材を大きくしてください。</div>`}
-      ${wv.RBmin<0?`<div class="warn"><b>浮き上がりに注意：</b>ホイストが張り出し先端に近い位置では、反力がマイナス（最大 ${fmt(-wv.RBmin,2)} kN の引き抜き力）になります。支点をボルトなどで固定してください。</div>`:''}
-      ${La>0?`<p class="note">参考：張り出し先端は、ホイストが先端にあるとき最大 ${fmt(wv.tipmax,2)} mm 下がります（張り出し長さ ${fmt(La,2)}m の 1/${fmt(La*1000/Math.max(wv.tipmax,1e-9),0)}）。</p>`:''}`);
-    const minRB=Math.min(...sc.rows.map(q=>q.RB)), minRA=Math.min(...sc.rows.map(q=>q.RA));
-    s8=anchorStep(two?8:9,`<table class="tbl"><tr><th>項目</th><th>支点A</th><th>支点B</th></tr>
-      <tr><td>今の位置での力（＋は下向きに押す力）</td><td>${fmtN(r.RA,2)} kN</td><td>${fmtN(r.RB,2)} kN</td></tr>
-      <tr><td>どの位置でも最大の力（押す向き）</td><td><b>${fmt(wv.RAmax,2)} kN</b><br><span class="note">x1＝${fmtN(wv.xRAmax,2)} m のとき</span></td><td><b>${fmt(wv.RBmax,2)} kN</b><br><span class="note">x1＝${fmtN(wv.xRBmax,2)} m のとき</span></td></tr>
-      <tr><td>どの位置でも最小の力（マイナス＝引き抜く向き）</td><td><b>${fmtN(minRA,2)} kN</b></td><td><b>${fmtN(minRB,2)} kN</b></td></tr></table>
-      ${(minRA<0||minRB<0)?`<div class="warn"><b>引き抜き力がはたらきます。</b>ホイストが張り出しに出る位置では、${minRB<0?'支点B':'支点A'}が浮き上がろうとし、最大 ${fmt(-Math.min(minRA,minRB),2)} kN の引き抜き力になります。固定部（アンカー等）は、この力に耐える必要があります。</div>`:`<div class="okbox">どの位置でも支点は「押す向き」だけで、引き抜く向きの力ははたらきません。</div>`}
-      <p class="note">押す向きの最大の力は、アンカーのせん断力・コンクリートの支圧の検討に、引き抜き力は、アンカーの引き抜きの検討に使います。</p>`,anchorCap(Math.max(wv.RAmax,wv.RBmax),Math.max(0,-Math.min(minRA,minRB))));
-  }
-  const ncT=(p.nc>0?p.nc:250);
-  const rtip=(La>0&&sc&&p.tipj==1)?Math.max(0,sc.worst.tipmax)/(La*1000/ncT):null;
-  const rv0=null;
-  const rv=sc?{...r,rb:Math.max(r.rb,sc.worst.rb),rs:Math.max(r.rs,sc.worst.rs),rd:Math.max(r.rd,sc.worst.rd),rt:rtip}:r;
-  if(sc&&!(rv.rb<=1&&rv.rs<=1&&rv.rd<=1&&(rv.rt==null||rv.rt<=1))) rv.laMax=exactMaxLa(p,n);
-  return {html: verdictHTML(rv,`スパン ${fmt(L,2)}m・張り出し ${fmt(La,2)}m${two?`・吊り間隔 ${fmt(p.d,2)}m`:''}${lt.on?`・横座屈の長さ ${fmt(lt.lbe/1000,2)}m`:''}`,`荷物 ${fmt(p.W,0)}kg ＋ ホイスト自重 ${fmt(p.Hw,0)}kg${two?'×2台':''}${p.sw!=0?' ＋ 梁の自重':''}`,!!sc)
-    + condBox(k,p,lt)
-    + sumBox(k==3?3:1,p,rv,sc,r)
-    + `<section class="card"><h2>今回の条件</h2><p class="note" style="margin:4px 0 8px">梁は2つの支点（A・B）で支えられ、支点Aの外側に張り出し${two?'があります。2台のホイストで、長い荷物を吊ります。':'（なしの場合は 0）があります。ホイストは1台で、梁の上（張り出し先端〜支点B）のどこにでも動かせます。'}</p>${beam0}${slider}</section>`
-    + `<p class="note" style="margin:14px 4px 0"><b>どうして安全と言えるの？</b>　次の順番で、ひとつずつ確かめます。</p>`
-    + sf.html + s2 + s3 + s4 + s5 + s6 + s7 + sC + s8};
-}
-
-/* =====================================================================
-   ② 片持ち梁
-===================================================================== */
-function render2(){
-  const p=S[2]; const m=MEMBER_MAP[p.mem]; const Lc=p.Lc;
-  const sf=stepForce(p,1); const P=sf.P, w=sf.w;
-  const EI=E*m.Ix, Aw=(m.H-2*m.tf)*m.tw/100, fs=p.fb0/Math.sqrt(3);
-  const Mp=P*Lc, Mw=w*Lc*Lc/2, M=Mp+Mw, Qp=P, Qw=w*Lc, Q=Qp+Qw, sb=M*100/m.Zx, tau=Q/Aw;
-  const dP=P*Math.pow(Lc*100,3)/(3*EI)*10, dW=(w/100)*Math.pow(Lc*100,4)/(8*EI)*10, dmax=dP+dW, da=Lc*1000/p.nd;
-  const r={mem:m,Aw,fs,fb0:p.fb0,M,Q,sb,tau,dmax,da,rb:sb/p.fb0,rs:tau/fs,rd:dmax/da};
-  const Mall=p.fb0*m.Zx/100;
-  const Lb = w>0 ? (-P+Math.sqrt(P*P+2*w*Mall))/w : Mall/P;
-  const Ls = w>0 ? Math.max(0,(fs*Aw-P)/w) : (P<=fs*Aw?Infinity:0);
-  let xL=Math.sqrt(3*EI/(P*p.nd)); const L0=xL;
-  for(let k=0;k<6;k++){ const f=P*xL*xL/(3*EI)+(w/100)*xL**3/(8*EI)-1/p.nd, df=2*P*xL/(3*EI)+3*(w/100)*xL*xL/(8*EI); xL-=f/df; }
-  const Ld=xL/100;
-  const Lmax=Math.floor(Math.min(Lb,Ld,Ls)*100)/100;
-  const fr=frame(0,Lc,90,70);
-  const loads=[{x:Lc,label:`P＝${fmt(P,2)}kN`,tag:'ホイスト'}];
-  const dims=[{a:0,b:Lc,y:210,label:`張り出し長さ Lc＝${fmt(Lc,2)}m`}];
-  const s0=`<section class="card"><h2>今回の条件</h2><p class="note" style="margin:4px 0 8px">壁や鉄骨から梁を片側だけ固定して横へ張り出し、その先端にホイストを載せる場合です。</p>${beamSVG(fr,{loads,dims,wall:true,h:250,selfw:selfLabel(w)})}</section>`;
-  const NM=100; const ptsM=[]; for(let i=0;i<=NM;i++){ const x=Lc*i/NM; ptsM.push([x,P*(Lc-x)+w*(Lc-x)*(Lc-x)/2]); }
-  const s2=step(2,'梁の根元は、どれくらいの力で曲げられている？（曲げモーメント）',`
-    <p class="lead">片側だけ固定した梁の先にものをぶら下げると、<b>根元が一番強く曲げられます</b>。曲げる力の大きさを<b>曲げモーメント M</b>といい、<b>「力 × 距離」</b>で表します。先端の力 P が、根元から Lc の距離にあります。${w>0?'梁自身の重さ（w×Lc）は梁全体に均等にかかり、その中心（根元から Lc÷2）にあると考えるので、Mw ＝ (w×Lc) × (Lc÷2) ＝ w×Lc²÷2 です。':''}</p>
-    ${plotSVG(fr,ptsM,{title:'曲げモーメント図（山が高いほど、強く曲げられている）',color:'#E65100',guides:[0,Lc],marks:[{x:0,v:M,label:fmt(M,2)+' kN・m'}],h:170,foot:'kN・m　※根元では上側が引っぱられる向き（大きさで表示）'})}
-    ${eq('ホイスト分：Mp ＝ P × Lc',`Mp ＝ ${fmt(P,3)} × ${fmt(Lc,2)}`,`Mp ＝ ${fmt(Mp,3)} kN・m`)}
-    ${w>0?eq('梁の自重分：Mw ＝ w × Lc² ÷ 2',`Mw ＝ ${fmt(w,3)} × ${fmt(Lc,2)}² ÷ 2`,`Mw ＝ ${fmt(Mw,3)} kN・m`):''}
-    ${eq('M ＝ Mp ＋ Mw',`M ＝ ${fmt(Mp,3)} ＋ ${fmt(Mw,3)}`,`M ＝ ${fmt(M,3)} kN・m`)}
-    ${tip('定規の端を机に押さえて、先におもりを吊るすと、机のふち（根元）で一番曲がります。張り出しが長いほど、距離が伸びるので、曲げモーメントも大きくなります。')}`);
-  const s3=step(3,'梁は、どれくらいの力でずらし切られそうになっている？（せん断力）',`
-    <p class="lead">ハサミで紙を切るときの、2枚の刃がずれる力が<b>せん断力 Q</b>です。片持ち梁では、先端の力 P${w>0?'と、梁自身の重さ（w×Lc）':''}が<b>そのまま根元まで</b>伝わります。根元が一番大きくなります。</p>
-    ${plotSVG(fr,[[0,Q],[Lc,P]],{title:'せん断力図',color:'#6A1B9A',guides:[0,Lc],marks:[{x:0,v:Q,label:fmt(Q,2)+' kN'}],h:150,foot:'kN'})}
-    ${eq('ホイスト分：Qp ＝ P',`Qp ＝ ${fmt(P,3)}`,`Qp ＝ ${fmt(Qp,3)} kN`)}
-    ${w>0?eq('梁の自重分：Qw ＝ w × Lc',`Qw ＝ ${fmt(w,3)} × ${fmt(Lc,2)}`,`Qw ＝ ${fmt(Qw,3)} kN`):''}
-    ${eq('Q ＝ Qp ＋ Qw',`Q ＝ ${fmt(Qp,3)} ＋ ${fmt(Qw,3)}`,`Q ＝ ${fmt(Q,3)} kN`)}`);
-  const NS=120; const dpp=[]; for(let i=0;i<=NS;i++){ const x=Lc*i/NS, xc=x*100; dpp.push([x,(P*xc*xc*(3*Lc*100-xc)/(6*EI)+(w/100)*xc*xc*(6*(Lc*100)**2-4*Lc*100*xc+xc*xc)/(24*EI))*10]); }
-  const s4=step(4,'梁の先端は、どれくらい下がる？（たわみ）',`
-    <p class="lead">先端にホイストが載ると、梁の先が下がります。下がりすぎないよう、<b>「張り出し長さの ${fmt(p.nd,0)} 分の 1 以下」</b>に抑えます。</p>
-    ${plotSVG(fr,dpp,{title:'たわみ図（下向きが「下がる」向き／数字は実際の大きさ）',color:'#1565C0',down:true,guides:[0,Lc],marks:[{x:Lc,v:dmax,label:fmt(dmax,2)+' mm'}],h:170,foot:'mm　※図は見やすいよう縦方向を大きく描いています'})}
-    ${eq('ホイスト分：δp ＝ P × Lc³ ÷ ( 3 × E × Ix )（材料力学の公式）',`δp ＝ ${fmt(P,3)} × (${fmt(Lc*100,0)}cm)³ ÷ ( 3 × ${fmt(E,0)} × ${fmt(m.Ix,0)} ) × 10`,`δp ＝ ${fmt(dP,3)} mm`)}
-    ${w>0?eq('梁の自重分：δw ＝ w × Lc⁴ ÷ ( 8 × E × Ix )（w は kN/cm に直す）',`δw ＝ ${fmt(w/100,5)} × (${fmt(Lc*100,0)}cm)⁴ ÷ ( 8 × ${fmt(E,0)} × ${fmt(m.Ix,0)} ) × 10`,`δw ＝ ${fmt(dW,3)} mm`):''}
-    ${eq('δ ＝ δp ＋ δw　／　限度 δa ＝ Lc ÷ n',`δ ＝ ${fmt(dP,3)} ＋ ${fmt(dW,3)}　／　δa ＝ ${fmt(Lc,2)} m × 1000 ÷ ${fmt(p.nd,0)}`,`実際 δ ＝ ${fmt(dmax,3)} mm　／　限度 δa ＝ ${fmt(da,3)} mm`)}`);
-  const s5=stepJudge(5,r);
-  const s6=step(6,'おまけ：この梁は、何メートルまで張り出せる？',`
-    <p class="lead">同じ部材・同じ荷物のまま、張り出しをどこまで長くできるかを逆算します。曲げ・せん断・たわみのそれぞれで限界の長さを求め、<b>一番短いもの</b>が「最大の張り出し長さ」です。${w>0?'梁の自重は張り出しが長いほど重くなるので、曲げとたわみの限界の長さは少し短くなります。':''}</p>
-    <table class="tbl"><tr><th>検討項目</th><th>数字を入れると</th><th>限界の長さ</th></tr>
-     <tr><td>曲げから</td><td style="text-align:left">${w>0?`Lb ＝ (−P ＋ √(P² ＋ 2×w×Mall)) ÷ w　（Mall ＝ fb0×Zx÷100 ＝ ${fmt(Mall,3)} kN・m）`:`Lb ＝ Mall ÷ P ＝ ${fmt(p.fb0,1)} × ${fmt(m.Zx,1)} ÷ 100 ÷ ${fmt(P,3)}`}</td><td><b>${fmt(Lb,3)} m</b></td></tr>
-     <tr><td>せん断から</td><td style="text-align:left">${w>0?`Ls ＝ (fs×Aw − P) ÷ w ＝ (${fmt(fs,3)}×${fmt(Aw,2)} − ${fmt(P,3)}) ÷ ${fmt(w,3)}`:`張り出し長さに関係しない（${Ls>0?'OK':'NG'}）`}</td><td><b>${Ls===Infinity?'制限なし':fmt(Ls,3)+' m'}</b></td></tr>
-     <tr><td>たわみから</td><td style="text-align:left">${w>0?`P×L²÷(3EI) ＋ w×L³÷(8EI) ＝ 1÷n となる L を、くり返し計算（ニュートン法）で求める。出発点 L0 ＝ √(3×E×Ix÷(P×n)) ＝ ${fmt(L0,1)} cm`:`Ld ＝ √(3×E×Ix ÷ (P×n)) ÷ 100 ＝ √(3×${fmt(E,0)}×${fmt(m.Ix,0)} ÷ (${fmt(P,3)}×${fmt(p.nd,0)})) ÷ 100`}</td><td><b>${fmt(Ld,3)} m</b></td></tr></table>
-    ${eq('最大の張り出し長さ（小数第2位で切り捨て）',`Lmax ＝ 一番短いもの`,`Lmax ＝ ${fmt(Lmax,2)} m`)}
-    <div class="${Lc<=Lmax?'okbox':'warn'}">今の張り出し ${fmt(Lc,2)} m は、限界の ${fmt(Lmax,2)} m ${Lc<=Lmax?`以内です（余裕 ${fmt(Lmax-Lc,2)} m）。`:'を超えています。'}</div>`);
-  const s7=anchorStep(7,`<table class="tbl"><tr><th>項目</th><th>値</th></tr>
-      <tr><td>根元にかかる下向きの力 V ＝ Q<br><span class="note">アンカーのせん断力の検討に使います</span></td><td><b>${fmt(Q,2)} kN</b></td></tr>
-      <tr><td>根元にかかる曲げモーメント M<br><span class="note">上側のアンカーを引き抜く力と、下側を押しつける力の組み合わせで受けます</span></td><td><b>${fmt(M,2)} kN・m</b></td></tr></table>
-      <div class="tip"><span class="tag">目安</span>上下のアンカー（または固定部）の間隔を z (m) とすると、上側を引き抜く力は T ≒ M ÷ z (kN) で、大まかな値が分かります。実際の分担は、アンカーの配置や梁の剛性で変わるため、固定部の設計基準で確認してください。</div>`,anchorCap(null,0));
-  return {html: verdictHTML(r,`張り出し ${fmt(Lc,2)}m・先端に吊る`,`荷物 ${fmt(p.W,0)}kg ＋ ホイスト自重 ${fmt(p.Hw,0)}kg${p.sw!=0?' ＋ 梁の自重':''}`)+condBox(2,p,null)+sumBox(2,p,null,null,r)+s0+`<p class="note" style="margin:14px 4px 0"><b>どうして安全と言えるの？</b>　次の順番で、ひとつずつ確かめます。</p>`+sf.html+s2+s3+s4+s5+s6+s7};
-}
-
-/* =====================================================================
-   画面の組み立て
-===================================================================== */
-function buildModes(){
-  $('modes').innerHTML=[1,2,3].map(k=>`<button data-m="${k}" class="${k===mode?'on':''}">${MODE_INFO[k][0]}<small>${MODE_INFO[k][1]}</small></button>`).join('');
-  $('modes').querySelectorAll('button').forEach(b=>b.onclick=()=>{ mode=+b.dataset.m; buildModes(); buildInputs(); draw(); });
-}
-function buildInputs(){
-  const s=S[mode]; const flds=FIELDS[mode];
-  let h=`<h2>条件を入れる <button class="btn printbtn" onclick="window.print()">印刷する</button></h2><div class="grid">
-   <div class="fld" style="grid-column:span 2"><label for="f_title">表題（印刷の一番上に出ます）</label><input id="f_title" type="text" value="${escH(DOC.title)}"></div>
-   <div class="fld" style="grid-column:span 2"><label for="f_proj">件名・工事名など（空欄なら表示しません）</label><input id="f_proj" type="text" value="${escH(DOC.proj)}" placeholder="例：○○工場 ホイストレール設置工事"></div>`;
-  flds.forEach(([k,lab,u,st,hint])=>{ h+=`<div class="fld"><label for="f_${k}">${lab}</label><div class="row"><input id="f_${k}" data-k="${k}" type="number" inputmode="decimal" step="${st}" value="${s[k]}"><span class="u">${u}</span></div><div class="hint">${hint||''}${((mode!=2&&k==='La')||(mode==2&&k==='Lc'))?`${hint?'<br>':''}<span id="lmaxHint" class="lmax"></span>`:''}</div></div>`; });
-  h+=`
-   <div class="fld" style="grid-column:1/-1"><label for="f_mem">使用する部材（H形鋼・I形鋼）</label><select id="f_mem">${memberOptions(s.mem)}</select></div>
-   <div class="fld" style="grid-column:1/-1"><label for="f_sw">梁の自重（梁自身の重さ）</label><select id="f_sw"><option value="1"${s.sw!=0?' selected':''}>考慮する（安全側・おすすめ）</option><option value="0"${s.sw==0?' selected':''}>考慮しない</option></select><div class="hint">梁(H形鋼)自身の重さも計算に入れるかどうかを選びます</div></div>
-   ${mode!==2?`<div class="fld" style="grid-column:1/-1"><label for="f_ltb">横座屈の検討（梁が横にねじれて倒れるのを見込む）</label><select id="f_ltb"><option value="1"${s.ltb!=0?' selected':''}>する（上フランジを固定していない場合・おすすめ）</option><option value="0"${s.ltb==0?' selected':''}>しない（上フランジを全長にわたって連続して固定している）</option></select><div class="hint">「する」のときは、下の「つなぎ（横ずれ止め）」を選んでください</div></div>
-   ${s.ltb!=0?`<div class="fld" style="grid-column:1/-1"><label for="f_bm">支間をつなぐ箇所の数（横ずれ止め）</label><select id="f_bm">${[0,1,2,3,4].map(k=>`<option value="${k}"${(+s.bm||0)==k?' selected':''}>${k==0?'しない':k+'か所（等間隔・'+(k==1?'中央':'L÷'+(k+1))+'）'}</option>`).join('')}</select><div class="hint">等間隔につなぐ場合の数です。梁のフランジにボルト等で固定し、鋼材の両端も動かない場所に止めた場合だけ選んでください</div></div>
-   <div class="fld" style="grid-column:1/-1"><label for="f_bt">張り出し先端をつなぐ（横ずれ止め）</label><select id="f_bt"><option value="0"${s.bt!=1?' selected':''}>しない（止めない）</option><option value="1"${s.bt==1?' selected':''}>する（架台へつなぐ）</option></select><div class="hint">張り出しがあるときに効きます（なし＝0 のときは関係しません）</div></div>`:''}`:''}${mode!==2?`<div class="fld" style="grid-column:1/-1"><label style="display:flex;gap:10px;align-items:center;cursor:pointer;justify-content:flex-start;text-align:left"><input type="checkbox" id="f_tipj"${s.tipj==1?' checked':''} style="width:20px;height:20px;flex:none;margin:0"><span style="flex:1">張り出し部のたわみを <b>1/${fmt(s.nc>0?s.nc:250,0)}（自社基準）</b>で制限する<br><span class="note">先端が下がりすぎて、トロリーが勝手に動き、吊荷が振れるのを防ぐための基準です</span></span></label>${s.tipj==1?`<div class="row" style="margin-top:8px;gap:8px;align-items:center;justify-content:flex-start"><span style="white-space:nowrap">自社基準：張り出し長さ ÷</span><input id="f_nc" data-k="nc" type="number" step="50" value="${s.nc}" style="width:90px;flex:none"><span class="u">（n）　自社基準は 250</span></div>`:''}<div class="hint">チェックを入れると、判定に加え、OKとなる最大の張り出し長さも出します（張り出しがあるときに効きます）</div></div>`:''}</div>`;
-  h+=`<details class="adv"><summary>くわしい設定（ふだんは変えなくてOK）</summary><div class="grid" style="margin-top:10px">
-   <div class="fld"><label for="f_phi">衝撃係数 φ</label><div class="row"><input id="f_phi" data-k="phi" type="number" step="0.05" value="${s.phi}"><span class="u">倍</span></div><div class="hint">通常 1.2</div></div>
-   <div class="fld"><label for="f_fb0">許容曲げ応力度 fb0</label><div class="row"><input id="f_fb0" data-k="fb0" type="number" step="0.1" value="${s.fb0}"><span class="u">kN/cm²</span></div><div class="hint">SS400（板厚40mm以下）は 15.6</div></div>
-   <div class="fld"><label for="f_nd">たわみの制限 1/n</label><div class="row"><input id="f_nd" data-k="nd" type="number" step="50" value="${s.nd}"><span class="u">（n）</span></div><div class="hint">${mode==2?'片持ちは 300〜500（自社基準で 250 にしてもよい）':'クレーン用レールは 800'}</div></div>${mode!==2?`<div class="fld"><label for="f_lb">横座屈の長さ lb を直接入れる</label><div class="row"><input id="f_lb" data-k="lb" type="number" step="0.1" value="${s.lb}"><span class="u">m</span></div><div class="hint">0＝上の「つなぎ」の選択から自動で決めます</div></div><div class="fld"><label for="f_Cb">モーメントの修正係数 C</label><div class="row"><input id="f_Cb" data-k="Cb" type="number" step="0.05" value="${s.Cb}"><span class="u">（C）</span></div><div class="hint">安全側＝1.0。単純梁で両端モーメントが0なら1.75まで</div></div>`:''}</div></details>`;
-  h+=`<div class="btnrow"><button class="btn" id="resetBtn">はじめの条件に戻す</button><button class="btn" id="saveFileBtn">条件をファイルに保存</button><button class="btn" id="loadFileBtn">保存したファイルを読み込む</button><input id="loadFile" type="file" accept=".json,application/json" style="display:none"></div>
-   <p class="note" style="margin-top:6px">入れた条件は、自動で<b>このパソコンのこのブラウザ</b>に保存され、次に開いたときも残ります。別のパソコンへ移したいときや、案件ごとに残したいときは「条件をファイルに保存」を使います。</p>`;
-  $('inputs').innerHTML=h;
-  $('inputs').querySelectorAll('input[data-k]').forEach(inp=>inp.addEventListener('input',()=>{ const v=parseFloat(inp.value); if(isFinite(v)){ S[mode][inp.dataset.k]=v; draw(); } }));
-  $('f_title').addEventListener('input',e=>{ DOC.title=e.target.value; updateHero(); saveState(); });
-  $('f_proj').addEventListener('input',e=>{ DOC.proj=e.target.value; updateHero(); saveState(); });
-  $('f_mem').addEventListener('change',e=>{ S[mode].mem=e.target.value; draw(); });
-  $('f_sw').addEventListener('change',e=>{ S[mode].sw=+e.target.value; draw(); });
-  if($('f_ltb')) $('f_ltb').addEventListener('change',e=>{ S[mode].ltb=+e.target.value; buildInputs(); draw(); });
-  if($('f_tipj')) $('f_tipj').addEventListener('change',e=>{ S[mode].tipj=e.target.checked?1:0; if(e.target.checked&&!(S[mode].nc>0)) S[mode].nc=250; buildInputs(); draw(); });
-  if($('f_bm')) $('f_bm').addEventListener('change',e=>{ S[mode].bm=+e.target.value; draw(); });
-  if($('f_bt')) $('f_bt').addEventListener('change',e=>{ S[mode].bt=+e.target.value; draw(); });
-  $('resetBtn').onclick=()=>{ S[mode]={...DEF[mode]}; buildInputs(); draw(); };
-  $('saveFileBtn').onclick=()=>{
-    const blob=new Blob([JSON.stringify(snapshot(),null,1)],{type:'application/json'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    const nm=(DOC.proj||'ホイストレール条件').replace(/[\\/:*?"<>|]/g,'_'); a.download=nm+'.json';
-    document.body.appendChild(a); a.click(); setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);
-  };
-  $('loadFileBtn').onclick=()=>$('loadFile').click();
-  $('loadFile').addEventListener('change',e=>{
-    const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
-    rd.onload=()=>{ try{ if(applySnapshot(JSON.parse(rd.result))){ buildModes(); buildInputs(); draw(); } else alert('読み込めませんでした'); }catch(err){ alert('このファイルは読み込めません'); } };
-    rd.readAsText(f);
-  });
-}
-/* スライダーをドラッグしている最中に、スライダー自身を作り直すと操作が途切れるため、差分だけを書き換える */
-function morph(oldP,newP){
-  const oc=[...oldP.childNodes], nc=[...newP.childNodes];
-  for(let i=0;i<nc.length;i++){
-    const o=oc[i], n=nc[i];
-    if(!o){ oldP.appendChild(n.cloneNode(true)); continue; }
-    if(o.nodeType!==n.nodeType || (o.nodeType===1 && o.tagName!==n.tagName)){ o.replaceWith(n.cloneNode(true)); continue; }
-    if(o.nodeType===3||o.nodeType===8){ if(o.nodeValue!==n.nodeValue) o.nodeValue=n.nodeValue; continue; }
-    if(o.isEqualNode(n)) continue;
-    if(o.id==='x1s'){ for(const a of ['min','max','step']) if(o.getAttribute(a)!==n.getAttribute(a)) o.setAttribute(a,n.getAttribute(a)); const nv=n.getAttribute('value'); if(parseFloat(o.value)!==parseFloat(nv)) o.value=nv; continue; }
-    for(const a of [...o.attributes]) if(!n.hasAttribute(a.name)) o.removeAttribute(a.name);
-    for(const a of [...n.attributes]) if(o.getAttribute(a.name)!==a.value) o.setAttribute(a.name,a.value);
-    morph(o,n);
-  }
-  for(let i=oc.length-1;i>=nc.length;i--) oc[i].remove();
-}
-function bindDynamic(){
-  const sl=$('x1s'); if(sl&&!sl.dataset.bound){ sl.dataset.bound='1'; sl.addEventListener('input',()=>{ S[mode].x1=parseFloat(sl.value); draw(true); }); }
-  document.querySelectorAll('[data-go]').forEach(b=>b.onclick=()=>{
-    const p=S[mode]; const n=mode==3?2:1; const dd=n==2?p.d:0; const lo=-Math.max(0,p.La), hi=p.L-dd; const sc=scan3(p,n);
-    if(b.dataset.go==='worst' && sc) p.x1=sc.worst.xb;
-    if(b.dataset.go==='mid') p.x1=(p.L-dd)/2;
-    if(b.dataset.go==='reset') p.x1=DEF[mode].x1;
-    p.x1=clamp(p.x1,lo,hi); draw(true);
-  });
-}
-/* 張り出しの限度（実際の計算：ホイストを動かした全位置で 曲げ・せん断・たわみ・先端のたわみ がすべて基準以内となる最大の張り出し） */
 function okAtLa(p,n,La,NN){
   const q={...p,La}; const s=scan3(q,n,NN); if(!s) return false; const w=s.worst; const nc=q.nc>0?q.nc:250;
   const tr=(La>0&&p.tipj==1)?Math.max(0,w.tipmax)/(La*1000/nc):0;
@@ -934,55 +703,356 @@ function exactMaxLa(p,n){
   while(v>0 && !okAtLa(p,n,v,120)) v=Math.round((v-0.01)*100)/100;
   return v;
 }
-function updateLmaxHint(){
-  const el=$('lmaxHint'); if(!el) return;
-  const p=S[mode], m=MEMBER_MAP[p.mem]; if(!m){ el.textContent=''; return; }
-  if(mode!=2){
-    if(!(p.W>0)){ el.textContent=''; return; }
-    const n=mode==3?2:1; const Lx=exactMaxLa(p,n); const ok=p.La<=Lx+1e-9;
-    el.innerHTML=Lx>0?`この条件でOKとなる<b>最大の張り出し長さ：約 ${fmt(Lx,2)} m</b>（ホイストを動かした全位置で確認）`+(ok?'':'　<span style="color:#B3261E">（今の値は超えています）</span>'):'<span style="color:#B3261E">この部材・荷物では、張り出しをどの長さにしても、すべての基準を同時には満たせません</span>';
-    return;
-  }
-  const P=(p.W+p.Hw)*p.phi*9.81/1000, w=selfW(p);
-  if(!(P>0)){ el.textContent=''; return; }
-  const cm=cantMax(P,w,m,p.fb0, mode==2?p.nd:p.nc), cur=mode==2?p.Lc:p.La;
-  const ok=cur<=cm.Lmax;
-  el.innerHTML=`この条件での<b>最大の張り出し長さ：${fmt(cm.Lmax,2)} m</b>` + (ok?'':'　<span style="color:#B3261E">（今の値は超えています）</span>');
+
+function exactMinLa(p,n){
+  /* 張り出しが短すぎると、支間のたわみが基準を超えることがある（張り出しの自重が支間を持ち上げるため）。OKとなる範囲の下限 */
+  if(okAtLa(p,n,0,40)) return 0;
+  let prev=0, found=null;
+  for(let i=1;i<=160;i++){ const La=i*0.05; if(okAtLa(p,n,La,40)){ found=La; break; } prev=La; }
+  if(found==null) return 0;
+  let a=prev,b=found; for(let k=0;k<6;k++){ const mid=(a+b)/2; if(okAtLa(p,n,mid,40)) b=mid; else a=mid; }
+  let v=Math.ceil(b*100)/100; let g=0; while(!okAtLa(p,n,v,120)&&g++<30) v=Math.round((v+0.01)*100)/100;
+  return v;
 }
-function draw(keepScroll){
-  const y=window.scrollY; saveState();
-  updateHero();
-  const out = mode===2?render2():renderBeam(mode);
-  const newHTML = typeof out==='string'?out:out.html;
-  if(keepScroll && $('x1s')){ const tmp=document.createElement('div'); tmp.innerHTML=newHTML; morph($('story'),tmp); }
-  else $('story').innerHTML = newHTML;
-  bindDynamic(); updateLmaxHint(); renderFoot(); guideState();
-  if(keepScroll) window.scrollTo(0,y);
+/* =====================================================================
+   画面（統合版）— 計算はすべて「やさしい解説版」と同じエンジンです
+===================================================================== */
+const num=(id,d=0)=>{ const e=$(id); const v=e?parseFloat(e.value):NaN; return isFinite(v)?v:d; };
+const cfg={pat:'C',tip:false,bm:0,bt:0};
+let curTab='simple';
+const posState={s:null,tp:null};
+const G=9.81;
+const PAT_TXT={
+  A:'A（簡易）：梁の自重を考えず、横座屈も考えません。これまでの提出と同じ考え方です。前提（上フランジが連続して固定されている等）を説明できるときに使います。安全側ではありません。',
+  B:'B（自重のみ）：梁自身の重さを見込みます。横座屈は考えません（上フランジが連続して固定されていて、起きないと説明できるとき）。',
+  C:'C（両方）：梁の自重も、横座屈も考えます。一番安全側です（おすすめ）。つなぎ（横ずれ止め）を入れた場合は、下で選ぶと、使用率が下がります。'
+};
+function patFlags(){ return {sw:cfg.pat==='A'?0:1, ltb:cfg.pat==='C'?1:0}; }
+function tipN(){ const v=num('tip-n',250); return v>0?v:250; }
+
+/* ---------- 条件の取り出し ---------- */
+function sharedP(){ return {W:num('W'),Hw:num('Hw'),phi:num('phi',1.2)||1.2,fb0:num('fb0',15.6)||15.6,mem:$('member').value}; }
+function mkP(t){
+  const s=sharedP(), f=patFlags();
+  const p={...s,sw:f.sw,ltb:f.ltb,bm:cfg.bm,bt:cfg.bt,lb:0,Cb:1,nd:800,nc:tipN(),tipj:(cfg.tip&&t!=='cant')?1:0,x1:0};
+  if(t==='simple'){ p.L=num('L',4.3); p.La=Math.max(0,num('Lc',0)); }
+  if(t==='twopoint'){ p.L=num('tp-L',4.3); p.La=Math.max(0,num('tp-La',0)); p.d=num('tp-d',2); }
+  return p;
 }
-function renderFoot(){
-  const s=S[mode], ltbOn = mode!==2 && s.ltb!=0, swOn = s.sw!=0;
-  $('foot').innerHTML=`<h2 style="font-size:16px;color:var(--navy);margin-bottom:6px">前提条件・注意</h2><ul>
- <li>SS400のH形鋼（またはI形鋼）で、<b>下のフランジにトロリー（ホイスト）を載せる</b>使い方を前提としています。${ltbOn?'上フランジを固定していない長さ lb に応じた横座屈（梁が横にねじれて倒れる現象）を見込み、許容曲げ応力度 fb を下げて検討しています（日本建築学会の式による概算）。':''}</li>
- ${swOn?'<li>梁自身の重さを考慮しています。梁は全長（張り出し部分を含む）に均等な重さがかかるものとして計算します。</li>':''}
- <li>許容応力度：fb0 ＝ 15.6 kN/cm²（SS400）、せん断 fs ＝ fb0 ÷ √3 ≒ 9.0 kN/cm²。ヤング係数 E ＝ 21,000 kN/cm²。</li>
- <li>断面の数値は JIS G 3192（H形鋼・I形鋼）の断面性能表によります。</li>
- <li>梁を支える柱・ブラケット・ボルト・アンカー（支点まわり・固定部）そのものの検討は、この計算には含まれません。それらの検討に使う支点の力は、各画面の最後にある「アンカー・支点の検討に使う力」に示しています。走行やブレーキで生じる水平力は含みません。</li></ul>`;
+function valid(p,n){ if(!(p.W>=0)||!(p.L>0)||!MEMBER_MAP[p.mem]) return false; if(n==2&&!(p.d>0&&p.L-p.d>=-p.La)) return false; return (p.W+p.Hw)>0; }
+
+/* ---------- 判定 ---------- */
+function evalBeam(p,n){
+  const m=MEMBER_MAP[p.mem]; const sc=scan3(p,n); if(!sc) return null;
+  const lt=ltbFb(p,m,p.L), w=sc.worst, nc=p.nc>0?p.nc:250;
+  const useTip=(p.La>0&&p.tipj==1);
+  const rt=useTip?Math.max(0,w.tipmax)/(p.La*1000/nc):null;
+  const rv={rb:w.rb,rs:w.rs,rd:w.rd,rt};
+  const ok=rv.rb<=1&&rv.rs<=1&&rv.rd<=1&&(rt==null||rt<=1);
+  return {m,sc,lt,w,rv,ok,nc,useTip,max:Math.max(rv.rb,rv.rs,rv.rd,rt||0)};
+}
+function fastMaxLa(p,n){
+  const nc=p.nc>0?p.nc:250;
+  const f=La=>{ const s=scan3({...p,La},n,24); if(!s) return false; const w=s.worst; const tr=(La>0&&p.tipj==1)?Math.max(0,w.tipmax)/(La*1000/nc):0; return w.rb<=1&&w.rs<=1&&w.rd<=1&&tr<=1; };
+  let lo=null,hi=null,first=null;
+  for(let i=0;i<=80;i++){ const La=i*0.1; if(f(La)){ if(first==null) first=i; lo=La; } else if(lo!=null){ hi=La; break; } }
+  if(lo==null) return {lo:0,hi:0};
+  let low=0;
+  if(first>0){ let a=(first-1)*0.1,b=first*0.1; for(let k=0;k<7;k++){ const mid=(a+b)/2; if(f(mid)) b=mid; else a=mid; } low=Math.ceil(b*100)/100; let g=0; while(!okAtLa(p,n,low,120)&&g++<40) low=Math.round((low+0.01)*100)/100; }
+  if(hi!=null){ let a=lo,b=hi; for(let k=0;k<7;k++){ const mid=(a+b)/2; if(f(mid)) a=mid; else b=mid; } lo=a; }
+  let v=Math.floor(lo*100)/100;
+  while(v>0&&!okAtLa(p,n,v,120)) v=Math.round((v-0.01)*100)/100;
+  return {lo:low,hi:v};
+}
+const colorOf=r=>!isFinite(r)||r>1?'#c62828':(r>0.85?'#e65100':'#2e7d32');
+function barRow(rvId,rfId,badgeId,r){
+  $(rvId).textContent=isFinite(r)?(r*100).toFixed(1)+'%':'—';
+  const f=$(rfId); f.style.width=Math.min(100,(isFinite(r)?r:1)*100)+'%'; f.style.background=colorOf(r);
+  const b=$(badgeId); const ok=isFinite(r)&&r<=1; b.textContent=ok?'OK':'NG'; b.className='badge '+(ok?'ok':'ng');
+}
+function rowHTML(id,name,calc,allow,r){
+  return `<tr><td>${name}</td><td>${calc}</td><td>${allow}</td><td><div class="ratio-bar-wrap"><span class="ratio-val" id="${id}-v"></span><div class="ratio-bar"><div class="ratio-fill" id="${id}-f" style="width:0%"></div></div></div></td><td><span class="badge na" id="${id}-b">—</span></td></tr>`;
 }
 
-function guideState(){
-  const el=$('guideNow'); if(!el) return; const p=S[mode];
-  const sw=p.sw!=0, lt=(mode!==2)&&p.ltb!=0;
-  let nm = !sw&&!lt?'A（簡易）': sw&&!lt?'B（自重のみ）': sw&&lt?'C（両方）':'自重なし・横座屈あり（A〜Cのどれでもない組み合わせ）';
-  el.innerHTML='今の設定：<b>'+nm+'</b>'+(mode===2?'（②の片持ち梁では、自重だけを選べます）':'');
+/* ---------- 単純梁・2点吊り梁の結果 ---------- */
+const maxLaTimer={};
+function showBeam(pre,t){
+  const n=t==='twopoint'?2:1; const p=mkP(t);
+  const sum=$(pre+'-summary'), tb=$(pre+'-tbody'), card=$(pre+'-card'), h2=$(pre+'-h2');
+  const title=t==='twopoint'?'2点吊り梁':'単純梁（＋張り出し）';
+  if(!valid(p,n)){ sum.className='summary-box na'; sum.textContent='— 条件を入れてください —'; tb.innerHTML=''; $(pre+'-maxla').innerHTML=''; $(pre+'-inter').innerHTML=''; return null; }
+  const ev=evalBeam(p,n);
+  if(!ev){ sum.className='summary-box na'; sum.textContent='— この寸法では、ホイストを置けません —'; tb.innerHTML=''; return null; }
+  const {m,lt,w,rv,sc}=ev; const fsA=p.fb0/Math.sqrt(3), da=p.L*1000/p.nd, tipLim=p.La*1000/ev.nc;
+  const rows=[
+    ['b','① 曲げ応力'+(lt.on?'<br><span class="note" style="margin:0">横座屈を考慮</span>':''),(rv.rb*lt.fb).toFixed(2)+' kN/cm²',lt.fb.toFixed(2)+' kN/cm²',rv.rb],
+    ['s','② せん断',(rv.rs*fsA).toFixed(2)+' kN/cm²',fsA.toFixed(2)+' kN/cm²',rv.rs],
+    ['d','③ たわみ（支間内）',(rv.rd*da).toFixed(2)+' mm',da.toFixed(2)+' mm (L/800)',rv.rd]];
+  if(ev.useTip) rows.push(['t','④ 張り出し部のたわみ（自社基準）',Math.max(0,w.tipmax).toFixed(2)+' mm',tipLim.toFixed(2)+' mm (La/'+ev.nc+')',rv.rt]);
+  tb.innerHTML=rows.map(r=>rowHTML(pre+'-r'+r[0],r[1],r[2],r[3],r[4])).join('');
+  rows.forEach(r=>barRow(pre+'-r'+r[0]+'-v',pre+'-r'+r[0]+'-f',pre+'-r'+r[0]+'-b',r[4]));
+  // 概要
+  const names=[]; if(rv.rb>1) names.push('曲げ'); if(rv.rs>1) names.push('せん断'); if(rv.rd>1) names.push('たわみ'); if(rv.rt!=null&&rv.rt>1) names.push('張り出し部のたわみ');
+  sum.className='summary-box '+(ev.ok?'ok':'ng');
+  sum.textContent=ev.ok?'✅ 全項目 OK（ホイストを梁の上で動かした全位置で確認）':'❌ NG — '+names.join('・')+'が基準を超えています（最大 '+(ev.max*100).toFixed(1)+'%）';
+  card.style.border=ev.ok?'1px solid #ddd':'2px solid #c62828'; card.style.backgroundColor=ev.ok?'#ffffff':'#fff5f5';
+  h2.style.color=ev.ok?'var(--primary)':'#c62828'; h2.textContent=(ev.ok?'📊 ':'⚠️ ')+title+' — 検討結果'+(ev.ok?'':' — NG あり');
+  // 中間値
+  const items=[['P'+(n==2?'（1台）':''),sc.P.toFixed(2)+' kN'],['梁の自重 w',sc.w>0?sc.w.toFixed(3)+' kN/m':'考慮しない'],
+    ['支点Aの最大反力',w.RAmax.toFixed(2)+' kN'],['支点Bの最大反力',w.RBmax.toFixed(2)+' kN']];
+  if(lt.on) items.push(['横座屈の長さ lb',(lt.lbe/1000).toFixed(2)+' m'],['許容曲げ応力度 fb',lt.fb.toFixed(2)+' kN/cm²']);
+  $(pre+'-inter').innerHTML=items.map(([k,v])=>`<div class="inter-item"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+  const up=-Math.min(0,w.RBmin);
+  const warn=$('tp-warn-react');
+  const upTxt=up>0.005?`引き抜き力がはたらきます：ホイストが張り出しに出る位置で、支点が浮き上がろうとし、最大 ${up.toFixed(2)} kN の引き抜き力になります（ボルト・アンカーで固定してください）。`:'';
+  if(t==='twopoint'){ warn.style.display=upTxt?'block':'none'; warn.textContent=upTxt; }
+  $(pre+'-note').textContent=(cfg.pat==='A'?'A（自重なし・横座屈なし）':cfg.pat==='B'?'B（自重のみ・横座屈なし）':'C（自重あり・横座屈あり）')+'で計算。P=(W'+(n==2?'/2':'')+'+Hw)×φ×g。SS400。'+(t==='simple'&&upTxt?' '+upTxt:'');
+  // 最大張り出し長さ（少し遅らせて計算）
+  const box=$(pre+'-maxla'); box.innerHTML='<div class="note">最大の張り出し長さを計算中…</div>';
+  clearTimeout(maxLaTimer[pre]);
+  maxLaTimer[pre]=setTimeout(()=>{
+    const Lx=exactMaxLa(p,n); const Ln=Lx>0?exactMinLa(p,n):0; const cur=p.La;
+    let h;
+    if(Lx>0){ const inn=cur<=Lx+1e-9&&cur>=Ln-1e-9;
+      h=`<div class="max-span-box" style="margin-top:10px"><div class="ms-label">▼ この条件でOKとなる最大の張り出し長さ</div><div class="ms-value">${Lx.toFixed(2)}<span class="ms-unit"> m</span></div><div class="ms-gov">ホイストを動かした全位置で、曲げ・せん断・たわみ${ev.useTip?'・張り出し部のたわみ':''}がすべて基準以内となる長さ<br>${Ln>0?'<br>※ 張り出しが '+Ln.toFixed(2)+' m より短いと、支間のたわみが基準を超えます（OKの範囲：'+Ln.toFixed(2)+'〜'+Lx.toFixed(2)+' m）':''}<br>今の張り出し ${cur.toFixed(2)} m は、${inn?'これ以内です（余裕 '+(Lx-cur).toFixed(2)+' m）':(cur<Ln?'<b style="color:#c62828">範囲より短い</b>':'<b style="color:#c62828">これを超えています</b>')}</div></div>`;
+    } else h=`<div class="tp-warn" style="margin-top:10px">この部材・荷物では、張り出しをどの長さにしても、すべての基準を同時には満たせません。部材か荷物を見直してください。</div>`;
+    box.innerHTML=h; const tp=$(pre+'-maxla'); tp.dataset.lx=Lx;
+  },200);
+  return {p,n,ev};
 }
-document.addEventListener('click',e=>{
-  const b=e.target.closest&&e.target.closest('.gset'); if(!b) return;
-  const g=b.dataset.g, p=S[mode];
-  p.sw = g==='A'?0:1;
-  if(mode!==2) p.ltb = g==='C'?1:0;
-  buildInputs(); draw();
-});
-loadState(); buildModes(); buildInputs(); draw();
+
+/* ---------- ホイスト位置の確認と図 ---------- */
+function posRange(p,n){ const lo=-p.La, hi=p.L-(n==2?p.d:0); return [lo,hi]; }
+function rowsAt(p,n,x1){
+  const m=MEMBER_MAP[p.mem], lt=ltbFb(p,m,p.L), P=(p.W/n+p.Hw)*p.phi*G/1000, w=selfW(p);
+  const loads=n==2?[x1,x1+p.d]:[x1];
+  const r=analyze({P,w,L:p.L,La:p.La,loads,mem:m,fb0:lt.fb,fbBase:p.fb0,nd:p.nd});
+  return {r,lt,P,w,loads,m};
+}
+function updatePos(pre,t,redrawRange){
+  const n=t==='twopoint'?2:1; const p=mkP(t);
+  const sl=$(pre+'-pos-slider'), inp=$(pre+'-pos-input');
+  if(!valid(p,n)) return;
+  const [lo,hi]=posRange(p,n); if(hi<lo) return;
+  if(redrawRange||sl.dataset.lo!==String(lo)||sl.dataset.hi!==String(hi)){
+    sl.min=lo.toFixed(2); sl.max=hi.toFixed(2); sl.dataset.lo=String(lo); sl.dataset.hi=String(hi); inp.min=sl.min; inp.max=sl.max;
+    $(pre+'-pos-min-lbl').textContent=lo.toFixed(2)+'m'; $(pre+'-pos-max-lbl').textContent=hi.toFixed(2)+'m';
+    if(posState[pre]==null||posState[pre]<lo||posState[pre]>hi) posState[pre]=(p.La>0?-p.La/2:(lo+hi)/2);
+  }
+  const x1=clamp(posState[pre]==null?(lo+hi)/2:posState[pre],lo,hi); posState[pre]=x1;
+  sl.value=x1; if(document.activeElement!==inp) inp.value=x1.toFixed(2);
+  const {r,lt}=rowsAt(p,n,x1); const nc=p.nc>0?p.nc:250;
+  const rtip=(p.La>0&&p.tipj==1)?Math.max(0,r.tip)/(p.La*1000/nc):null;
+  const zone=(x)=>x<-1e-9?'張り出し部':(x>p.L+1e-9?'—':'支間内');
+  $(pre+'-pos-zone').textContent=(n==2?'左ホイスト x₁ ＝ ':'ホイスト ＝ ')+x1.toFixed(2)+' m（'+zone(x1)+'）'+(n==2?'　右ホイスト x₂ ＝ '+(x1+p.d).toFixed(2)+' m':'');
+  const mk=(nm,v,sub)=>`<div class="sratio-row"><span class="sratio-name">${nm}</span><div class="sratio-bar-wrap"><div class="sratio-fill" style="width:${Math.min(100,v*100)}%;background:${colorOf(v)}"></div></div><span class="sratio-num" style="color:${colorOf(v)}">${(v*100).toFixed(1)}%</span><span class="sratio-badge ${v<=1?'ok':'ng'}">${v<=1?'OK':'NG'}</span><span class="sratio-sub">${sub}</span></div>`;
+  $(pre+'-pos-ratios').innerHTML=mk('曲げ',r.rb,'σb＝'+r.sb.toFixed(2)+' ／ fb＝'+lt.fb.toFixed(2)+' kN/cm²')+mk('せん断',r.rs,'τ＝'+r.tau.toFixed(2)+' ／ fs＝'+r.fs.toFixed(2)+' kN/cm²')+mk('たわみ',r.rd,'δ＝'+r.dmax.toFixed(2)+' ／ 限度 '+r.da.toFixed(2)+' mm')+(rtip!=null?mk('張り出し部',rtip,'先端 '+Math.max(0,r.tip).toFixed(2)+' mm ／ 限度 '+(p.La*1000/nc).toFixed(2)+' mm'):'');
+  drawDiagram(pre+'-diagram',p,n,x1);
+}
+function drawDiagram(id,p,n,x1){
+  const svg=$(id); const {r,P,w,loads}=rowsAt(p,n,x1); const L=p.L, La=p.La;
+  const W=700, padL=60, padR=50, xmin=-La, xmax=L, sx=x=>padL+(x-xmin)/((xmax-xmin)||1)*(W-padL-padR);
+  const yb=70, y0=178; let mm=0; const pts=[]; for(let i=0;i<=160;i++){ const x=xmin+(xmax-xmin)*i/160; const M=r.Mat(x); pts.push([x,M]); mm=Math.max(mm,Math.abs(M)); }
+  const sc=mm>0?44/mm:0;
+  let s=`<line x1="${sx(xmin)}" y1="${yb}" x2="${sx(xmax)}" y2="${yb}" stroke="#37474f" stroke-width="7" stroke-linecap="round"/>`;
+  [[0,'A'],[L,'B']].forEach(([x,l])=>{ s+=`<polygon points="${sx(x)},${yb+4} ${sx(x)-11},${yb+24} ${sx(x)+11},${yb+24}" fill="#78909c"/><text x="${sx(x)}" y="${yb+42}" text-anchor="middle" font-size="14" font-weight="700" fill="#455a64">${l}</text>`; });
+  loads.forEach((a,i)=>{ const x=sx(a); s+=`<line x1="${x}" y1="14" x2="${x}" y2="${yb-8}" stroke="#c62828" stroke-width="3"/><polygon points="${x},${yb-4} ${x-6},${yb-14} ${x+6},${yb-14}" fill="#c62828"/><text x="${x}" y="11" text-anchor="middle" font-size="13" font-weight="700" fill="#c62828">P＝${P.toFixed(2)}kN</text>`; });
+  s+=`<line x1="${sx(xmin)}" y1="${y0}" x2="${sx(xmax)}" y2="${y0}" stroke="#90a4ae" stroke-width="1"/>`;
+  let run=[],sign=0; const flush=()=>{ if(run.length>1){ const col=sign>=0?'#1565c0':'#e65100'; s+=`<polygon points="${sx(run[0][0])},${y0} ${run.map(q=>sx(q[0])+','+(y0+q[1]*sc)).join(' ')} ${sx(run[run.length-1][0])},${y0}" fill="${col}" fill-opacity="0.22" stroke="${col}" stroke-width="1.8"/>`; } run=[]; };
+  pts.forEach(q=>{ const sg=q[1]>=0?1:-1; if(sign!==0&&sg!==sign){ run.push([q[0],0]); flush(); run=[[q[0],0]]; } sign=sg; run.push(q); }); flush();
+  const im=pts.reduce((a,q)=>Math.abs(q[1])>Math.abs(a[1])?q:a,[0,0]);
+  if(mm>0) s+=`<text x="${sx(im[0])}" y="${y0+im[1]*sc+(im[1]>=0?18:-8)}" text-anchor="middle" font-size="14" font-weight="700" fill="#37474f">${im[1].toFixed(2)} kN・m</text>`;
+  s+=`<text x="${padL}" y="264" font-size="12" fill="#607d8b">曲げモーメント図（青：下側が引っぱられる ／ 橙：上側）。今のホイスト位置での図です。</text>`;
+  if(La>0) s+=`<text x="${(sx(xmin)+sx(0))/2}" y="${yb+62}" text-anchor="middle" font-size="13" fill="#607d8b">張り出し ${La.toFixed(2)}m</text>`;
+  s+=`<text x="${(sx(0)+sx(L))/2}" y="${yb+62}" text-anchor="middle" font-size="13" fill="#607d8b">スパン ${L.toFixed(2)}m</text>`;
+  svg.innerHTML=s;
+}
+
+/* ---------- 片持ち梁 ---------- */
+function cantEval(name,Lc,nd){
+  const s=sharedP(); const m=MEMBER_MAP[name]; const f=patFlags();
+  const P=(s.W+s.Hw)*s.phi*G/1000, w=f.sw?m.kg*G/1000:0;
+  const EI=E*m.Ix, Aw=(m.H-2*m.tf)*m.tw/100, fs=s.fb0/Math.sqrt(3);
+  const M=P*Lc+w*Lc*Lc/2, Q=P+w*Lc, sb=M*100/m.Zx, tau=Q/Aw;
+  const dP=P*Math.pow(Lc*100,3)/(3*EI)*10, dW=(w/100)*Math.pow(Lc*100,4)/(8*EI)*10, dmax=dP+dW, da=Lc*1000/nd;
+  const cm=cantMax(P,w,m,s.fb0,nd);
+  return {m,P,w,Aw,fs,M,Q,sb,tau,dmax,da,rb:sb/s.fb0,rs:tau/fs,rd:dmax/da,cm,fb0:s.fb0,Lc,nd};
+}
+function showCant(){
+  const Lc=num('cLc',1.2), nd=num('deflN',400), s=sharedP();
+  const sum=$('c-summary'), tb=$('c-tbody');
+  if(!(Lc>0)||!(s.W+s.Hw>0)||!MEMBER_MAP[s.mem]){ sum.className='summary-box na'; sum.textContent='— 条件を入れてください —'; tb.innerHTML=''; return; }
+  const r=cantEval(s.mem,Lc,nd), cm=r.cm;
+  const rows=[['b','① 曲げ応力',r.sb.toFixed(2)+' kN/cm²',s.fb0.toFixed(2)+' kN/cm²',r.rb],['s','② せん断',r.tau.toFixed(2)+' kN/cm²',r.fs.toFixed(2)+' kN/cm²',r.rs],['d','③ たわみ（先端）',r.dmax.toFixed(2)+' mm',r.da.toFixed(2)+' mm (Lc/'+nd+')',r.rd]];
+  tb.innerHTML=rows.map(x=>rowHTML('c-r'+x[0],x[1],x[2],x[3],x[4])).join('');
+  rows.forEach(x=>barRow('c-r'+x[0]+'-v','c-r'+x[0]+'-f','c-r'+x[0]+'-b',x[4]));
+  const ok=r.rb<=1&&r.rs<=1&&r.rd<=1;
+  sum.className='summary-box '+(ok?'ok':'ng'); sum.textContent=ok?'✅ 全項目 OK':'❌ NG — 最大比率 '+(Math.max(r.rb,r.rs,r.rd)*100).toFixed(1)+'%';
+  const card=$('c-card'); card.style.border=ok?'1px solid #ddd':'2px solid #c62828'; card.style.backgroundColor=ok?'#ffffff':'#fff5f5';
+  const Lmax=cm.Lmax; $('c-maxspan').innerHTML=Lmax.toFixed(2)+'<span class="ms-unit"> m</span>';
+  const lims={b:cm.Lb,s:cm.Ls,d:cm.Ld}; const gov=Math.min(cm.Lb,cm.Ls,cm.Ld);
+  const fl=v=>(!isFinite(v)||v>99)?'制限なし':(Math.floor(v*100)/100).toFixed(2)+' m';
+  $('c-lim-b').textContent=fl(cm.Lb); $('c-lim-s').textContent=fl(cm.Ls); $('c-lim-d').textContent=fl(cm.Ld);
+  ['b','s','d'].forEach(k=>{ $('c-tag-'+k).innerHTML=(lims[k]===gov)?'<span class="tag-gov">支配</span>':''; });
+  const gn=cm.Lb<=Math.min(cm.Ls,cm.Ld)?'曲げ':(cm.Ls<=cm.Ld?'せん断':'たわみ');
+  $('c-gov').innerHTML='支配：'+gn+'　／　今の張り出し '+Lc.toFixed(2)+' m は、'+(Lc<=Lmax?'これ以内です（余裕 '+(Lmax-Lc).toFixed(2)+' m）':'<b style="color:#c62828">これを超えています</b>');
+  $('c-inter').innerHTML=[['P',r.P.toFixed(2)+' kN'],['梁の自重 w',r.w>0?r.w.toFixed(3)+' kN/m':'考慮しない'],['根元の曲げ M',r.M.toFixed(2)+' kN・m'],['根元のせん断 Q',r.Q.toFixed(2)+' kN']].map(([k,v])=>`<div class="inter-item"><div class="k">${k}</div><div class="v">${v}</div></div>`).join('');
+  $('c-note').textContent='P=(W+Hw)×φ×g。根元は固定、先端にホイストを載せた場合。'+(cfg.pat==='A'?'梁の自重は考慮しません（A）。':'梁の自重を含みます。')+'片持ち梁では、横座屈は考えません。';
+}
+
+/* ---------- 部材の一覧 ---------- */
+const listData={}; let listRun=0;
+function runList(t){
+  const my=++listRun; const sorted=[...MEMBERS].sort((a,b)=>a.kg-b.kg||a.n.localeCompare(b.n));
+  const out=[]; const prog=$('list-prog'); let i=0;
+  const base=t==='cant'?null:mkP(t); const n=t==='twopoint'?2:1;
+  if(t!=='cant'&&!valid({...base,mem:sorted[0].n},n)){ prog.textContent='条件を入れてください。'; return; }
+  const curName=$('member').value; let curLx=null;
+  const step=()=>{
+    if(my!==listRun) return;
+    const end=Math.min(sorted.length,i+4);
+    for(;i<end;i++){
+      const m=sorted[i]; let row;
+      if(t==='cant'){ const Lc=num('cLc',1.2), nd=num('deflN',400); const r=cantEval(m.n,Lc,nd); row={n:m.n,g:m.g,kg:m.kg,util:Math.max(r.rb,r.rs,r.rd),ok:r.rb<=1&&r.rs<=1&&r.rd<=1,lx:r.cm.Lmax,lmin:0}; }
+      else { const p={...base,mem:m.n}; const ev=evalBeam(p,n); const lr=fastMaxLa(p,n); row={n:m.n,g:m.g,kg:m.kg,util:ev?ev.max:Infinity,ok:!!(ev&&ev.ok),lx:lr.hi,lmin:lr.lo}; }
+      out.push(row);
+    }
+    prog.textContent='計算中… '+i+' / '+sorted.length;
+    if(i<sorted.length) setTimeout(step,0);
+    else { listData[t]=out; listData[t+'_sig']=sig(t); prog.textContent=''; renderList(t); }
+  };
+  prog.textContent='計算中…'; setTimeout(step,0);
+}
+function sig(t){ const q=t==='cant'?sharedP():mkP(t); delete q.mem; delete q.x1; return JSON.stringify(t==='cant'?[q,num('cLc'),num('deflN'),cfg.pat]:[q,cfg.pat,cfg.tip,cfg.bm,cfg.bt]); }
+function renderList(t){
+  const rows=listData[t]; if(!rows){ $('list-out').innerHTML=''; return; } const only=$('listok').checked, grp=$('listgrp').checked;
+  const first=rows.find(r=>r.ok); const cur=$('member').value;
+  const stale=listData[t+'_sig']!==sig(t);
+  const rowH=r=>{ const isCur=r.n===cur; const star=(first&&r.n===first.n)?' ★':'';
+    return `<tr data-mem="${r.n}" style="cursor:pointer;${isCur?'background:#fff8e1;':''}"><td>${isCur?'<b>':''}${r.n}${star}${isCur?'</b>':''}</td><td>${r.kg.toFixed(1)}</td><td style="color:${colorOf(r.util)};font-weight:700">${isFinite(r.util)?(r.util*100).toFixed(1)+'%':'—'}</td><td><span class="badge ${r.ok?'ok':'ng'}">${r.ok?'OK':'NG'}</span></td><td>${r.lx>0?((r.lmin>0?r.lmin.toFixed(2)+'〜':'')+r.lx.toFixed(2)+' m'):'—'}</td></tr>`; };
+  const list=rows.filter(r=>!only||r.ok); let body='';
+  if(grp){ ['細幅','中幅','広幅','I形鋼'].forEach(g=>{ const rs=list.filter(r=>r.g===g); if(rs.length) body+=`<tr><td colspan="5" style="background:#e8f0fe;font-weight:700;color:var(--primary)">${g}</td></tr>`+rs.map(rowH).join(''); }); }
+  else body=list.map(rowH).join('');
+  let h=(stale?'<div class="tp-warn">※ 条件を変えたので、一覧は古い結果です。もう一度ボタンを押してください。</div>':'');
+  h+=`<table class="result-table"><thead><tr><th>部材</th><th>kg/m</th><th>最大の使用率</th><th>判定</th><th>${t==='cant'?'最大の張り出し':'最大張り出し'}</th></tr></thead><tbody>${body}</tbody></table>`;
+  h+='<p class="note">★＝いちばん軽いOKの部材。黄色の行＝今、選んでいる部材。行を押すと、その部材に切り替わります。最大張り出しの「—」は、どの長さでも基準を満たせないことを表し、「〇〜〇 m」は、短すぎると支間のたわみが超えるため、OKとなる範囲を表します。</p>';
+  $('list-out').innerHTML=h;
+  $('list-out').querySelectorAll('tr[data-mem]').forEach(tr=>tr.onclick=()=>{ $('member').value=tr.dataset.mem; update(); });
+}
+function markListStale(){ renderList(curTab); }
+
+/* ---------- 印刷 ---------- */
+function buildPrint(){
+  const t=curTab; const s=sharedP(); const m=MEMBER_MAP[s.mem]; const f=patFlags();
+  const title=$('docTitle').value||'ホイストレール強度検討書', proj=$('docProj').value.trim();
+  const d=new Date(); const dt=d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';
+  const li=[]; li.push(['使用する部材',`${m.n}（${m.kg.toFixed(1)} kg/m）`]);
+  let verdict='', rowsH='', extra='';
+  const tr=(a,b,c,r)=>`<tr><td>${a}</td><td>${b}</td><td>${c}</td><td style="font-weight:700;color:${colorOf(r)}">${(r*100).toFixed(1)}%</td><td style="font-weight:700;color:${r<=1?'#2e7d32':'#c62828'}">${r<=1?'OK':'NG'}</td></tr>`;
+  if(t==='cant'){
+    const Lc=num('cLc',1.2), nd=num('deflN',400); const r=cantEval(s.mem,Lc,nd);
+    li.push(['張り出し長さ（根元から先端）',Lc.toFixed(2)+' m']);
+    const ok=r.rb<=1&&r.rs<=1&&r.rd<=1;
+    verdict=`<b>${m.n}</b>（張り出し ${Lc.toFixed(2)}m）のレールは、荷物 ${s.W}kg ＋ ホイスト自重 ${s.Hw}kg${f.sw?' ＋ 梁の自重':''}を先端に吊り上げても、曲げ・せん断・たわみの${ok?'すべてが基準以内なので、<u>安全です</u>。':'うち基準を超えるものがあり、<u>安全とは言えません</u>。'}`;
+    rowsH=tr('曲げ応力',r.sb.toFixed(2)+' kN/cm²',s.fb0.toFixed(2)+' kN/cm²',r.rb)+tr('せん断',r.tau.toFixed(2)+' kN/cm²',r.fs.toFixed(2)+' kN/cm²',r.rs)+tr('たわみ（先端）',r.dmax.toFixed(2)+' mm',r.da.toFixed(2)+' mm (Lc/'+nd+')',r.rd);
+    extra=`<p>この条件でOKとなる最大の張り出し長さ：<b>${r.cm.Lmax.toFixed(2)} m</b>（曲げ ${(Math.floor(r.cm.Lb*100)/100).toFixed(2)} m／せん断 ${(r.cm.Ls>99?'制限なし':(Math.floor(r.cm.Ls*100)/100).toFixed(2)+' m')}／たわみ ${(Math.floor(r.cm.Ld*100)/100).toFixed(2)} m のうち一番短いもの）</p>`;
+    li.push(['吊り荷重',s.W+' kg'],['ホイスト自重',s.Hw+' kg']);
+    li.push(['梁の自重',f.sw?'考慮する':'考慮しない'],['衝撃係数 φ',s.phi.toFixed(2)],['許容曲げ応力度 fb0',s.fb0.toFixed(1)+' kN/cm²'],['たわみの制限','1/'+nd+(nd===250?'（自社基準）':'')]);
+  } else {
+    const n=t==='twopoint'?2:1; const p=mkP(t);
+    if(!valid(p,n)){ $('printSheet').innerHTML='<p>条件を入れてください。</p>'; return; }
+    const ev=evalBeam(p,n); const {lt,w,rv}=ev; const fsA=p.fb0/Math.sqrt(3), da=p.L*1000/p.nd, tipLim=p.La*1000/ev.nc;
+    li.push(['支点間スパン L',p.L.toFixed(2)+' m'],['張り出し長さ La',p.La>0?p.La.toFixed(2)+' m':'なし（0 m）']);
+    if(n==2) li.push(['ホイストの吊り間隔 d',p.d.toFixed(2)+' m（2台）']);
+    li.push(['吊り荷重',s.W+' kg'],['ホイスト自重',s.Hw+' kg'+(n==2?'（1台）':'')],['梁の自重',f.sw?'考慮する':'考慮しない']);
+    li.push(['横座屈',lt.on?`考慮する（横座屈の長さ lb ＝ ${(lt.lbe/1000).toFixed(2)} m${(lt.bm>0||(p.La>0&&lt.bt))?'・つなぎあり':'・つなぎなし'}）`:'考慮しない']);
+    li.push(['衝撃係数 φ',s.phi.toFixed(2)],['許容曲げ応力度 fb0',s.fb0.toFixed(1)+' kN/cm²'],['たわみの制限','支間 1/800']);
+    if(ev.useTip) li.push(['張り出し部のたわみの制限','1/'+ev.nc+'（自社基準）']);
+    verdict=`<b>${m.n}</b>（スパン ${p.L.toFixed(2)}m・張り出し ${p.La.toFixed(2)}m${n==2?'・吊り間隔 '+p.d.toFixed(2)+'m':''}）のレールは、荷物 ${s.W}kg ＋ ホイスト自重 ${s.Hw}kg${f.sw?' ＋ 梁の自重':''}を吊り上げても、曲げ・せん断・たわみ${ev.useTip?'（張り出し部を含む）':''}の${ev.ok?'すべてが基準以内（ホイストを梁の上で動かした全位置で確認）なので、<u>安全です</u>。':'うち基準を超えるものがあり、<u>安全とは言えません</u>。'}`;
+    rowsH=tr('曲げ応力'+(lt.on?'（横座屈を考慮）':''),(rv.rb*lt.fb).toFixed(2)+' kN/cm²',lt.fb.toFixed(2)+' kN/cm²',rv.rb)+tr('せん断',(rv.rs*fsA).toFixed(2)+' kN/cm²',fsA.toFixed(2)+' kN/cm²',rv.rs)+tr('たわみ（支間内）',(rv.rd*da).toFixed(2)+' mm',da.toFixed(2)+' mm (L/800)',rv.rd)+(ev.useTip?tr('張り出し部のたわみ（自社基準）',Math.max(0,w.tipmax).toFixed(2)+' mm',tipLim.toFixed(2)+' mm (La/'+ev.nc+')',rv.rt):'');
+    const Lx=exactMaxLa(p,n);
+    extra=`<p>この条件でOKとなる最大の張り出し長さ：<b>${Lx>0?Lx.toFixed(2)+' m':'（どの長さでも、すべての基準を同時には満たせません）'}</b>${Lx>0?'（今の張り出し '+p.La.toFixed(2)+' m は、'+(p.La<=Lx+1e-9?'これ以内です':'これを超えています')+'）':''}</p>`;
+    const up=-Math.min(0,w.RBmin);
+    extra+=`<p>支点の力：支点Aの最大反力 ${w.RAmax.toFixed(2)} kN、支点Bの最大反力 ${w.RBmax.toFixed(2)} kN${up>0.005?'、引き抜き力 最大 '+up.toFixed(2)+' kN（ボルト・アンカーで固定）':'（引き抜き力なし）'}。</p>`;
+    if(ev.useTip) extra+=`<p style="font-size:11px">※ 張り出し部のたわみの制限 1/${ev.nc} は自社基準です。張り出しの先端が下がりすぎると、トロリーが勝手に動いて吊荷が振れるおそれがあるため、自主的に設けています。</p>`;
+  }
+  $('printSheet').innerHTML=`<h1 style="font-size:20px;margin:0 0 4px;border-bottom:3px solid #1565c0;padding-bottom:6px">${escH(title)}</h1>
+   <div style="font-size:12px;color:#555;margin-bottom:10px">${proj?escH(proj)+'　／　':''}${t==='cant'?'片持ち梁':t==='twopoint'?'2点吊り梁':'単純梁（＋張り出し）'}　／　作成日：${dt}</div>
+   <div style="border:2px solid #1565c0;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:14px;line-height:1.7">${verdict}</div>
+   <h2 style="font-size:14px;margin:10px 0 4px">今回の計算条件</h2>
+   <ul style="columns:2;font-size:12.5px;line-height:1.6;margin:0 0 8px 18px;padding:0">${li.map(([a,b])=>`<li style="break-inside:avoid">${a}：<b>${b}</b></li>`).join('')}</ul>
+   <h2 style="font-size:14px;margin:10px 0 4px">検討結果</h2>
+   <table style="width:100%;border-collapse:collapse;font-size:12.5px" class="ptbl"><thead><tr><th>検討項目</th><th>計算値</th><th>許容値</th><th>使用率</th><th>判定</th></tr></thead><tbody>${rowsH}</tbody></table>
+   <div style="font-size:12.5px;line-height:1.7;margin-top:8px">${extra}</div>
+   <p style="font-size:11px;color:#666;margin-top:10px">SS400、E＝21,000 kN/cm²、fs＝fb0÷√3。柱・ブラケット・ボルト・アンカー・溶接そのものの検討は含みません。</p>`;
+}
+const escH=t=>String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+/* ---------- 全体の更新 ---------- */
+function updateMemberProps(){
+  const m=MEMBER_MAP[$('member').value]; if(!m) return;
+  $('p-H').textContent=m.H; $('p-B').textContent=m.B; $('p-Ix').textContent=m.Ix; $('p-Zx').textContent=m.Zx; $('p-ib').textContent=m.A; $('p-tw').textContent=m.tw; $('p-tf').textContent=m.tf; $('p-W').textContent=m.kg;
+}
+function updatePatUI(){
+  document.querySelectorAll('#pat-btns .defl-preset').forEach(b=>b.classList.toggle('active',b.dataset.pat===cfg.pat));
+  $('pat-desc').textContent=PAT_TXT[cfg.pat];
+  $('brace-box').style.display=(cfg.pat==='C'&&curTab!=='cant')?'grid':'none';
+  $('tip-label').parentElement; const tl=$('tip-label'); tl.style.display=curTab==='cant'?'none':'flex';
+  $('tip-n-box').style.display=(cfg.tip&&curTab!=='cant')?'block':'none';
+  $('tip-n-lbl').textContent=tipN();
+}
+function update(){
+  updateMemberProps(); updatePatUI();
+  if(curTab==='simple'){ showBeam('s','simple'); updatePos('s','simple'); }
+  else if(curTab==='twopoint'){ showBeam('tp','twopoint'); updatePos('tp','twopoint'); }
+  else showCant();
+  markListStale();
+}
+function setTab(t){
+  curTab=t; document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.toggle('active',c.id==='tab-'+t)); update();
+}
+function toggleManual(){ $('manual-toggle').classList.toggle('open'); $('manual-body').classList.toggle('open'); }
+
+/* ---------- 起動 ---------- */
+(function init(){
+  // 部材選択
+  const groups={}; MEMBERS.forEach(m=>{ (groups[m.g]=groups[m.g]||[]).push(m); });
+  const sel=$('member'); sel.innerHTML=Object.keys(groups).map(g=>`<optgroup label="${g}">${groups[g].map(m=>`<option value="${m.n}">${m.n}　（${m.kg.toFixed(1)} kg/m）</option>`).join('')}</optgroup>`).join('');
+  sel.value='H-200×100×5.5×8';
+  // 数値入力とスライダーの連動
+  [['L','L-slider'],['Lc','Lc-slider'],['tp-L','tp-L-slider'],['tp-La','tp-La-slider'],['tp-d','tp-d-slider'],['cLc','cLc-slider']].forEach(([a,b])=>{
+    $(a).addEventListener('input',()=>{ $(b).value=$(a).value; update(); });
+    $(b).addEventListener('input',()=>{ $(a).value=$(b).value; update(); });
+  });
+  ['W','Hw','phi','fb0','member','deflN','bm','bt','tip-n'].forEach(id=>{
+    $(id).addEventListener('input',()=>{ if(id==='bm') cfg.bm=+$('bm').value; if(id==='bt') cfg.bt=+$('bt').value; if(id==='deflN') document.querySelectorAll('.defl-preset[data-n]').forEach(b=>b.classList.toggle('active',+b.dataset.n===num('deflN'))); update(); });
+    $(id).addEventListener('change',()=>{ if(id==='bm') cfg.bm=+$('bm').value; if(id==='bt') cfg.bt=+$('bt').value; update(); });
+  });
+  $('tipchk').addEventListener('change',()=>{ cfg.tip=$('tipchk').checked; update(); });
+  document.querySelectorAll('#pat-btns .defl-preset').forEach(b=>b.onclick=()=>{ cfg.pat=b.dataset.pat; update(); });
+  document.querySelectorAll('.defl-preset[data-n]').forEach(b=>b.onclick=()=>{ $('deflN').value=b.dataset.n; document.querySelectorAll('.defl-preset[data-n]').forEach(x=>x.classList.toggle('active',x===b)); update(); });
+  document.querySelectorAll('.tab-btn').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+  // 位置スライダー（作り直さないので、つかんだまま動かせる）
+  [['s','simple'],['tp','twopoint']].forEach(([pre,t])=>{
+    $(pre+'-pos-slider').addEventListener('input',e=>{ posState[pre]=parseFloat(e.target.value); updatePos(pre,t); });
+    $(pre+'-pos-input').addEventListener('input',e=>{ const v=parseFloat(e.target.value); if(isFinite(v)){ posState[pre]=v; updatePos(pre,t); } });
+    $(pre+'-pos-input').addEventListener('change',()=>updatePos(pre,t));
+  });
+  document.querySelectorAll('[data-pos]').forEach(b=>b.onclick=()=>{
+    const [pre,act]=b.dataset.pos.split(':'); const t=pre==='s'?'simple':'twopoint'; const n=t==='twopoint'?2:1; const p=mkP(t); if(!valid(p,n)) return;
+    const [lo,hi]=posRange(p,n);
+    if(act==='mid') posState[pre]=(lo+hi)/2;
+    else if(act==='tip') posState[pre]=lo;
+    else { const ev=evalBeam(p,n); if(ev){ let bx=lo,bv=-1; ev.sc.rows.forEach(r=>{ const tv=(p.La>0&&p.tipj==1)?Math.max(0,r.tip)/(p.La*1000/ev.nc):0; const v=Math.max(r.rb,r.rs,r.rd,tv); if(v>bv){bv=v;bx=r.x1;} }); posState[pre]=bx; } }
+    updatePos(pre,t);
+  });
+  $('list-go').onclick=()=>runList(curTab);
+  $('listok').onchange=()=>renderList(curTab); $('listgrp').onchange=()=>renderList(curTab);
+  $('printBtn').onclick=()=>{ buildPrint(); window.print(); };
+  update();
+})();
+
 </script>
 </body>
 </html>
