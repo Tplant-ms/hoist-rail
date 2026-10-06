@@ -560,7 +560,7 @@
             font-size:.85rem;font-weight:700;letter-spacing:.04em;">
     🏠 配管・鋼材計算ツール トップへ
   </a>
-  <div style="margin-top:10px;font-size:11px;color:#90a4ae">版：2026-10-07（計算式追加）</div>
+  <div style="margin-top:10px;font-size:11px;color:#90a4ae">版：2026-10-07b（A選択時の表記整理）</div>
 </div>
 
 <div id="printSheet"></div>
@@ -981,15 +981,16 @@ function buildPrint(){
     rowsH=tr('曲げ応力',r.sb.toFixed(2)+' kN/cm²',s.fb0.toFixed(2)+' kN/cm²',r.rb)+tr('せん断',r.tau.toFixed(2)+' kN/cm²',r.fs.toFixed(2)+' kN/cm²',r.rs)+tr('たわみ（先端）',r.dmax.toFixed(2)+' mm',r.da.toFixed(2)+' mm (Lc/'+nd+')',r.rd);
     extra=`<p>この条件でOKとなる最大の張り出し長さ：<b>${r.cm.Lmax.toFixed(2)} m</b>（曲げ ${(Math.floor(r.cm.Lb*100)/100).toFixed(2)} m／せん断 ${(r.cm.Ls>99?'制限なし':(Math.floor(r.cm.Ls*100)/100).toFixed(2)+' m')}／たわみ ${(Math.floor(r.cm.Ld*100)/100).toFixed(2)} m のうち一番短いもの）</p>`;
     li.push(['吊り荷重',s.W+' kg'],['ホイスト自重',s.Hw+' kg']);
-    li.push(['梁の自重',f.sw?'考慮する':'考慮しない'],['衝撃係数 φ',s.phi.toFixed(2)],['許容曲げ応力度 fb0',s.fb0.toFixed(1)+' kN/cm²'],['たわみの制限','1/'+nd+(nd===250?'（自社基準）':'')]);
+    if(f.sw) li.push(['梁の自重','考慮する']);
+    li.push(['衝撃係数 φ',s.phi.toFixed(2)],['許容曲げ応力度 fb0',s.fb0.toFixed(1)+' kN/cm²'],['たわみの制限','1/'+nd+(nd===250?'（自社基準）':'')]);
   } else {
     const n=t==='twopoint'?2:1; const p=mkP(t);
     if(!valid(p,n)){ $('printSheet').innerHTML='<p>条件を入れてください。</p>'; return; }
     const ev=evalBeam(p,n); const {lt,w,rv}=ev; const fsA=p.fb0/Math.sqrt(3), da=p.L*1000/p.nd, tipLim=p.La*1000/ev.nc;
     li.push(['支点間スパン L',p.L.toFixed(2)+' m'],['張り出し長さ La',p.La>0?p.La.toFixed(2)+' m':'なし（0 m）']);
     if(n==2) li.push(['ホイストの吊り間隔 d',p.d.toFixed(2)+' m（2台）']);
-    li.push(['吊り荷重',s.W+' kg'],['ホイスト自重',s.Hw+' kg'+(n==2?'（1台）':'')],['梁の自重',f.sw?'考慮する':'考慮しない']);
-    li.push(['横座屈',lt.on?`考慮する（横座屈の長さ lb ＝ ${(lt.lbe/1000).toFixed(2)} m${(lt.bm>0||(p.La>0&&lt.bt))?'・つなぎあり':'・つなぎなし'}）`:'考慮しない']);
+    li.push(['吊り荷重',s.W+' kg'],['ホイスト自重',s.Hw+' kg'+(n==2?'（1台）':'')],...(f.sw?[['梁の自重','考慮する']]:[]));
+    if(lt.on) li.push(['横座屈',`考慮する（横座屈の長さ lb ＝ ${(lt.lbe/1000).toFixed(2)} m${(lt.bm>0||(p.La>0&&lt.bt))?'・つなぎあり':'・つなぎなし'}）`]);
     li.push(['衝撃係数 φ',s.phi.toFixed(2)],['許容曲げ応力度 fb0',s.fb0.toFixed(1)+' kN/cm²'],['たわみの制限','支間 1/800']);
     if(ev.useTip) li.push(['張り出し部のたわみの制限','1/'+ev.nc+'（自社基準）']);
     verdict=`<b>${m.n}</b>（スパン ${p.L.toFixed(2)}m・張り出し ${p.La.toFixed(2)}m${n==2?'・吊り間隔 '+p.d.toFixed(2)+'m':''}）のレールは、荷物 ${s.W}kg ＋ ホイスト自重 ${s.Hw}kg${f.sw?' ＋ 梁の自重':''}を吊り上げても、曲げ・せん断・たわみ${ev.useTip?'（張り出し部を含む）':''}の${ev.ok?'すべてが基準以内（ホイストを梁の上で動かした全位置で確認）なので、<u>安全です</u>。':'うち基準を超えるものがあり、<u>安全とは言えません</u>。'}`;
@@ -1023,23 +1024,23 @@ function calcFormulaHTML(t,small){
     const Lc=num('cLc',1.2), nd=num('deflN',400); if(!(Lc>0)) return '';
     const r=cantEval(s.mem,Lc,nd);
     add('荷重 P','P ＝ (W ＋ Hw) × φ × g ÷ 1000',`(${s.W} ＋ ${s.Hw}) × ${f2(s.phi)} × ${G9} ÷ 1000 ＝ <b>${f2(r.P)} kN</b>`);
-    add('梁の自重 w','w ＝ 単位質量(kg/m) × g ÷ 1000',f.sw?`${f2(m.kg,1)} × ${G9} ÷ 1000 ＝ <b>${f2(r.w,3)} kN/m</b>`:'考慮しない（0）');
-    add('根元の曲げ M','M ＝ P·Lc ＋ w·Lc² ÷ 2',`${f2(r.P)} × ${f2(Lc)} ＋ ${f2(r.w,3)} × ${f2(Lc)}² ÷ 2 ＝ <b>${f2(r.M)} kN·m</b>`);
+    if(f.sw) add('梁の自重 w','w ＝ 単位質量(kg/m) × g ÷ 1000',`${f2(m.kg,1)} × ${G9} ÷ 1000 ＝ <b>${f2(r.w,3)} kN/m</b>`);
+    add('根元の曲げ M',f.sw?'M ＝ P·Lc ＋ w·Lc² ÷ 2':'M ＝ P·Lc',f.sw?`${f2(r.P)} × ${f2(Lc)} ＋ ${f2(r.w,3)} × ${f2(Lc)}² ÷ 2 ＝ <b>${f2(r.M)} kN·m</b>`:`${f2(r.P)} × ${f2(Lc)} ＝ <b>${f2(r.M)} kN·m</b>`);
     add('曲げ応力度 σb','σb ＝ M × 100 ÷ Zx ≦ fb₀',`${f2(r.M)} × 100 ÷ ${m.Zx} ＝ <b>${f2(r.sb)}</b> ≦ ${f2(s.fb0)} kN/cm²（使用率 ${f2(r.rb*100,1)}%）`);
-    add('せん断力 Q・せん断応力度 τ','Q ＝ P ＋ w·Lc ／ τ ＝ Q ÷ Aw ≦ fs ＝ fb₀ ÷ √3',`Q ＝ ${f2(r.Q)} kN、Aw ＝ (${m.H}−2×${m.tf})×${m.tw}÷100 ＝ ${f2(Aw)} cm² → τ ＝ <b>${f2(r.tau)}</b> ≦ ${f2(fsA)} kN/cm²（${f2(r.rs*100,1)}%）`);
-    add('たわみ δ（先端）','δ ＝ P·Lc³ ÷ (3EI) ＋ w·Lc⁴ ÷ (8EI) ≦ Lc ÷ n',`E ＝ 21,000 kN/cm²、I ＝ ${m.Ix} cm⁴ → δ ＝ <b>${f2(r.dmax)} mm</b> ≦ ${f2(r.da)} mm（Lc÷${nd}）（${f2(r.rd*100,1)}%）`);
+    add('せん断力 Q・せん断応力度 τ',(f.sw?'Q ＝ P ＋ w·Lc':'Q ＝ P')+' ／ τ ＝ Q ÷ Aw ≦ fs ＝ fb₀ ÷ √3',`Q ＝ ${f2(r.Q)} kN、Aw ＝ (${m.H}−2×${m.tf})×${m.tw}÷100 ＝ ${f2(Aw)} cm² → τ ＝ <b>${f2(r.tau)}</b> ≦ ${f2(fsA)} kN/cm²（${f2(r.rs*100,1)}%）`);
+    add('たわみ δ（先端）',(f.sw?'δ ＝ P·Lc³ ÷ (3EI) ＋ w·Lc⁴ ÷ (8EI)':'δ ＝ P·Lc³ ÷ (3EI)')+' ≦ Lc ÷ n',`E ＝ 21,000 kN/cm²、I ＝ ${m.Ix} cm⁴ → δ ＝ <b>${f2(r.dmax)} mm</b> ≦ ${f2(r.da)} mm（Lc÷${nd}）（${f2(r.rd*100,1)}%）`);
     add('最大の張り出し長さ','上の3式を、それぞれ Lc について解き、いちばん小さい値',`曲げ ${f2(Math.floor(r.cm.Lb*100)/100)} m ／ せん断 ${(r.cm.Ls>99?'制限なし':f2(Math.floor(r.cm.Ls*100)/100)+' m')} ／ たわみ ${f2(Math.floor(r.cm.Ld*100)/100)} m → <b>${f2(r.cm.Lmax)} m</b>`);
   } else {
     const n=t==='twopoint'?2:1; const p=mkP(t); if(!valid(p,n)) return ''; const ev=evalBeam(p,n); if(!ev) return '';
     const P=ev.sc.P, w=ev.sc.w, lt=ev.lt, rv=ev.rv, wo=ev.w, da=p.L*1000/p.nd;
     const sb=rv.rb*lt.fb, Mmax=sb*m.Zx/100, tau=rv.rs*fsA, Qmax=tau*Aw, dmax=rv.rd*da;
     add('荷重 P（ホイスト1台あたり）',`P ＝ (W${n==2?' ÷ 2':''} ＋ Hw) × φ × g ÷ 1000`,`(${n==2?(s.W/2):s.W} ＋ ${s.Hw}) × ${f2(s.phi)} × ${G9} ÷ 1000 ＝ <b>${f2(P)} kN</b>`);
-    add('梁の自重 w','w ＝ 単位質量(kg/m) × g ÷ 1000',f.sw?`${f2(m.kg,1)} × ${G9} ÷ 1000 ＝ <b>${f2(w,3)} kN/m</b>（梁の全長にかかる）`:'考慮しない（0）');
-    add('支点の反力',`RB ＝ Σ(P·a) ÷ L ＋ w·(L² − La²) ÷ (2L)<br>RA ＝ ${n}P ＋ w·(L ＋ La) − RB`,`ホイストを動かした中での最大：RA ＝ <b>${f2(wo.RAmax)} kN</b>、RB ＝ <b>${f2(wo.RBmax)} kN</b>`);
-    add('曲げモーメント M','M(x) ＝ RA·x − ΣP·(x − a) − w·(x ＋ La)² ÷ 2<br>（a：ホイストの位置。ホイストを端から端まで動かして、最大の M を採用）',`Mmax ＝ <b>${f2(Mmax)} kN·m</b>`);
+    if(f.sw) add('梁の自重 w','w ＝ 単位質量(kg/m) × g ÷ 1000',`${f2(m.kg,1)} × ${G9} ÷ 1000 ＝ <b>${f2(w,3)} kN/m</b>（梁の全長にかかる）`);
+    add('支点の反力',(f.sw?`RB ＝ Σ(P·a) ÷ L ＋ w·(L² − La²) ÷ (2L)<br>RA ＝ ${n}P ＋ w·(L ＋ La) − RB`:`RB ＝ Σ(P·a) ÷ L<br>RA ＝ ${n}P − RB`),`ホイストを動かした中での最大：RA ＝ <b>${f2(wo.RAmax)} kN</b>、RB ＝ <b>${f2(wo.RBmax)} kN</b>`);
+    add('曲げモーメント M',(f.sw?'M(x) ＝ RA·x − ΣP·(x − a) − w·(x ＋ La)² ÷ 2':'M(x) ＝ RA·x − ΣP·(x − a)')+'<br>（a：ホイストの位置。ホイストを端から端まで動かして、最大の M を採用）',`Mmax ＝ <b>${f2(Mmax)} kN·m</b>`);
     add('曲げ応力度 σb',`σb ＝ Mmax × 100 ÷ Zx ≦ fb${lt.on?'（横座屈を考慮した許容応力度）':'₀'}`,`${f2(Mmax)} × 100 ÷ ${m.Zx} ＝ <b>${f2(sb)}</b> ≦ ${f2(lt.fb)} kN/cm²（使用率 ${f2(rv.rb*100,1)}%）`);
     add('せん断応力度 τ','τ ＝ Qmax ÷ Aw ≦ fs ＝ fb₀ ÷ √3<br>Aw ＝ (H − 2tf) × tw',`Aw ＝ (${m.H}−2×${m.tf})×${m.tw}÷100 ＝ ${f2(Aw)} cm²、Qmax ＝ ${f2(Qmax)} kN → τ ＝ <b>${f2(tau)}</b> ≦ ${f2(fsA)} kN/cm²（${f2(rv.rs*100,1)}%）`);
-    add('たわみ δ（支間内）','δ ＝ δ（ホイスト荷重）＋ δ（梁の自重）　弾性曲線の式（単純梁＋張り出し）<br>δ ≦ L ÷ 800',`E ＝ 21,000 kN/cm²、I ＝ ${m.Ix} cm⁴ → 最大 δ ＝ <b>${f2(dmax)} mm</b> ≦ ${f2(da)} mm（L÷800）（${f2(rv.rd*100,1)}%）`);
+    add('たわみ δ（支間内）',(f.sw?'δ ＝ δ（ホイスト荷重）＋ δ（梁の自重）':'δ ＝ δ（ホイスト荷重）')+'　弾性曲線の式（単純梁＋張り出し）<br>δ ≦ L ÷ 800',`E ＝ 21,000 kN/cm²、I ＝ ${m.Ix} cm⁴ → 最大 δ ＝ <b>${f2(dmax)} mm</b> ≦ ${f2(da)} mm（L÷800）（${f2(rv.rd*100,1)}%）`);
     if(ev.useTip) add('たわみ（張り出し先端）【自社基準】','δtip ≦ La ÷ '+ev.nc,`最大 δtip ＝ <b>${f2(Math.max(0,wo.tipmax))} mm</b> ≦ ${f2(p.La*1000/ev.nc)} mm（La÷${ev.nc}）（${f2(rv.rt*100,1)}%）`);
     if(lt.on) add('横座屈 fb（AIJの略算式）',`λ ＝ lb ÷ i、Λ ＝ √(π²E ÷ (0.6F))、ν ＝ 1.5 ＋ (2/3)(λ/Λ)²<br>fb1 ＝ {1 − 0.4(λ/Λ)² ÷ C}·F ÷ ν、fb2 ＝ 0.433·E·C ÷ (lb·h ÷ Af)<br>fb ＝ max(fb1, fb2) ≦ fb₀`,`lb ＝ ${f2(lt.lbe/1000)} m、i ＝ ${f2(lt.i,1)} mm、λ ＝ ${f2(lt.lam,1)}、Λ ＝ ${f2(lt.Lam,1)}、C ＝ ${f2(lt.C,1)}、F ＝ 1.5·fb₀ ＝ ${f2(lt.F,0)} N/mm²、E ＝ 205,000 N/mm²（鋼材の標準値）→ fb1 ＝ ${f2(lt.fb1)}、fb2 ＝ ${f2(lt.fb2)}、<b>fb ＝ ${f2(lt.fb)} kN/cm²</b>`);
   }
