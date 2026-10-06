@@ -333,7 +333,8 @@
     <div class="prop-box"><div class="val" id="p-W">—</div><div class="lbl">自重(kg/m)</div></div>
   </div>
   <hr class="divider">
-  <div style="font-size:13px;font-weight:700;color:var(--primary);margin-bottom:4px">📋 部材の一覧（今のタブの条件で、全部材を比べる）</div>
+  <details id="listbox" open style="border-top:1px solid #dde3ea;margin-top:12px;padding-top:10px">
+  <summary style="cursor:pointer;font-size:13px;font-weight:700;color:var(--primary);margin-bottom:6px">📋 部材の一覧（今のタブの条件で、全部材を比べる）<span style="font-weight:400;color:#607d8b"> ← 押すと開閉します</span></summary>
   <p class="note" style="margin:0 0 8px">下のタブで選んでいる梁の形・荷重・スパン・張り出しの条件で、各部材がOKかを一覧にします。「最大張り出し」は、その部材でOKとなる張り出しの上限です。★は、いちばん軽いOKの部材です。行を押すと、その部材を選びます。</p>
   <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
     <button class="action-btn" id="list-go" style="margin-bottom:0">📋 部材の一覧を計算する</button>
@@ -342,6 +343,7 @@
   </div>
   <div class="note" id="list-prog"></div>
   <div id="list-out"></div>
+  </details>
 </details>
 
 <!-- ===== 計算のしかた ===== -->
@@ -411,7 +413,7 @@
       <h3>🔍 ホイストの位置を動かして確認（支点Aを 0 m とする）</h3>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="action-btn" data-pos="s:worst">⚠ 一番きびしい位置へ</button>
-        <button class="action-btn" data-pos="s:mid">📍 中央へ</button>
+        <button class="action-btn" data-pos="s:mid">📍 支点間の中央へ</button>
         <button class="action-btn" data-pos="s:tip">↙ 張り出し先端へ</button>
       </div>
       <div class="slider-row"><span style="font-size:12px;color:var(--sub)" id="s-pos-min-lbl">0m</span>
@@ -520,7 +522,7 @@
       <h3>🔍 ホイストの位置を動かして確認（左ホイスト x₁：支点Aからの距離）</h3>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button class="action-btn" data-pos="tp:worst">⚠ 一番きびしい位置へ</button>
-        <button class="action-btn" data-pos="tp:mid">📍 中央へ</button>
+        <button class="action-btn" data-pos="tp:mid">📍 支点間の中央へ（2台の真ん中）</button>
         <button class="action-btn" data-pos="tp:tip">↙ 張り出し先端へ</button>
       </div>
       <div class="slider-row"><span style="font-size:12px;color:var(--sub)" id="tp-pos-min-lbl">0m</span>
@@ -1064,17 +1066,6 @@ function toggleManual(){ const d=$('fold0'); if(d) d.open=!d.open; }
   document.querySelectorAll('[data-pos]').forEach(b=>b.onclick=()=>{
     const [pre,act]=b.dataset.pos.split(':'); const t=pre==='s'?'simple':'twopoint'; const n=t==='twopoint'?2:1; const p=mkP(t); if(!valid(p,n)) return;
     const [lo,hi]=posRange(p,n);
-    if(act==='mid') posState[pre]=(lo+hi)/2;
+    if(act==='mid') posState[pre]=Math.min(hi,Math.max(lo,(p.L-(n==2?p.d:0))/2));   // 支点間の中央（2点吊りは2台の中心が支間中央）
     else if(act==='tip') posState[pre]=lo;
-    else { const ev=evalBeam(p,n); if(ev){ let bx=lo,bv=-1; ev.sc.rows.forEach(r=>{ const tv=(p.La>0&&p.tipj==1)?Math.max(0,r.tip)/(p.La*1000/ev.nc):0; const v=Math.max(r.rb,r.rs,r.rd,tv); if(v>bv){bv=v;bx=r.x1;} }); posState[pre]=bx; } }
-    updatePos(pre,t);
-  });
-  $('list-go').onclick=()=>runList(curTab);
-  $('listok').onchange=()=>renderList(curTab); $('listgrp').onchange=()=>renderList(curTab);
-  $('printBtn').onclick=()=>{ buildPrint(); window.print(); };
-  update();
-})();
-
-</script>
-</body>
-</html>
+    else { const ev=evalBeam(p,n); if(ev){ let bx=lo,bv=-1; ev.sc.rows.forEach(r=>{ const tv=(p.La>0&&p.tipj==1)?Math.max(0,r.tip)/(p.La*1000/ev.nc):0; const v=Math.max(r.rb,r.rs,r.rd,tv); if(v>bv){bv=v;bx=r.x1;} }); posState[pre]=b
