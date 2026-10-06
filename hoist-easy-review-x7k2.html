@@ -187,6 +187,7 @@ function fmt(v, d=2){
   if(Math.abs(v) < 0.5*Math.pow(10,-d)) v = 0;
   return v.toLocaleString('ja-JP',{minimumFractionDigits:d,maximumFractionDigits:d});
 }
+const fmtNew=(kN)=>Math.round(kN*1000).toLocaleString('en-US');
 function fmtN(v,d=2){ return fmt(v,d).replace(/^-/,'−'); }
 function pct(r){ return fmt(r*100,1)+'%'; }
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
@@ -386,6 +387,11 @@ function beamSVG(fr,o){
   (o.reactions||[]).forEach(r=>{ const x=sx(r.x), up=r.v>=0, right=x>W_SVG-150;
     s+= up ? arrow(x,by+112,x,by+64,'#2E7D32',3.4,11) : arrow(x,by+66,x,by+114,'#B3261E',3.4,11);
     s+=`<text x="${right?x-10:x+10}" y="${by+96}" text-anchor="${right?'end':'start'}" font-size="13" font-weight="700" fill="${up?'#2E7D32':'#B3261E'}">${r.label}</text>`; });
+  if(o.defl){ const D=o.defl, dm=Math.max(...D.pts.map(q=>Math.abs(q[1])),1e-9), K=(D.px||24)/dm;
+    s+=`<polyline points="${D.pts.map(q=>sx(q[0]).toFixed(1)+','+(by+q[1]*K).toFixed(1)).join(' ')}" fill="none" stroke="#1565C0" stroke-width="2.4" stroke-dasharray="7 4"/>`;
+    (D.marks||[]).forEach(m=>{ const x=sx(m.x), y=by+m.v*K, rt=x>W_SVG-170, lf=x<fr.padL+60;
+      s+=`<circle cx="${x}" cy="${y}" r="4.5" fill="#fff" stroke="#1565C0" stroke-width="2.2"/>`;
+      s+=`<text x="${rt?x-8:(lf?x+8:x)}" y="${y+(m.v>=0?19:-9)}" text-anchor="${rt?'end':(lf?'start':'middle')}" font-size="13" font-weight="700" fill="#1565C0" paint-order="stroke" stroke="#fff" stroke-width="4">${m.label}</text>`; }); }
   (o.dims||[]).forEach(d=>{ s+=dimLine(sx(d.a),sx(d.b),d.y,d.label); });
   s+='</svg>'; return '<div class="figwrap">'+s+'</div>';
 }
@@ -688,7 +694,10 @@ function renderBeam(k){
   dims.push({a:Math.min(0,x1),b:Math.max(0,x1),y:by()+34,label:`x1＝${fmtN(x1,2)}m`});
   if(two) dims.push({a:x1,b:x2,y:by()+64,label:`吊り間隔 d＝${fmt(p.d,2)}m`});
   const loads=two?[{x:x1,label:`P＝${fmt(P,2)}kN`,tag:'左ホイスト'},{x:x2,label:`P＝${fmt(P,2)}kN`,tag:'右ホイスト'}]:[{x:x1,label:`P＝${fmt(P,2)}kN`,tag:'ホイスト'}];
-  const beam0=beamSVG(fr,{loads,supports,overhang:La>0,dims,h:296,selfw:selfLabel(w)});
+  const loadsN=loads.map(l=>({...l,label:`P＝${fmtNew(P)} N`}));
+  const dpts0=[]; for(let i=0;i<=120;i++){ const x=-La+(L+La)*i/120; dpts0.push([x,r.dfl(x)]); }
+  const dmk0=[]; if(r.dmax>0.005) dmk0.push({x:r.xd,v:r.dmax,label:`たわみ ${fmt(r.dmax,1)} mm`}); if(La>0&&Math.abs(r.tip)>0.05) dmk0.push({x:-La,v:r.tip,label:`先端 ${fmtN(r.tip,1)} mm`});
+  const beam0=beamSVG(fr,{loads:loadsN,supports,overhang:La>0,dims,h:296,selfw:selfLabel(w),defl:{pts:dpts0,marks:dmk0,px:24}})+`<p class="note" style="margin:2px 0 0">青い点線は、梁がたわんだようすです（見やすいよう大きく描いています。数字は実際の大きさ）。いまのホイスト位置（x1）での値です。</p>`;
   const slider=`<div class="slider-box"><label class="note" for="x1s"><b>ホイスト位置を動かしてみましょう</b>（${two?'左ホイスト ':'ホイスト '}x1：支点Aから ${fmtN(x1,2)} m）</label>
      <input id="x1s" class="slider" type="range" min="${lo}" max="${hi}" step="0.05" value="${x1}">
      <div class="btnrow"><button class="btn" data-go="worst">曲げが最大になる位置へ</button><button class="btn" data-go="mid">${two?'2台が真ん中に並ぶ位置へ（たわみ最大）':'ホイストが真ん中にくる位置へ（たわみ最大）'}</button><button class="btn" data-go="reset">はじめの位置へ</button></div></div>`;
@@ -818,7 +827,7 @@ function render2(){
   const fr=frame(0,Lc,90,70);
   const loads=[{x:Lc,label:`P＝${fmt(P,2)}kN`,tag:'ホイスト'}];
   const dims=[{a:0,b:Lc,y:210,label:`張り出し長さ Lc＝${fmt(Lc,2)}m`}];
-  const s0=`<section class="card"><h2>今回の条件</h2><p class="note" style="margin:4px 0 8px">壁や鉄骨から梁を片側だけ固定して横へ張り出し、その先端にホイストを載せる場合です。</p>${beamSVG(fr,{loads,dims,wall:true,h:250,selfw:selfLabel(w)})}</section>`;
+  const s0=`<section class="card"><h2>今回の条件</h2><p class="note" style="margin:4px 0 8px">壁や鉄骨から梁を片側だけ固定して横へ張り出し、その先端にホイストを載せる場合です。</p>${beamSVG(fr,{loads:loads.map(l=>({...l,label:`P＝${fmtNew(P)} N`})),dims,wall:true,h:250,selfw:selfLabel(w),defl:{pts:Array.from({length:61},(_,i)=>{const x=Lc*i/60, xc=x*100, Lcc=Lc*100; return [x,10*(P*xc*xc*(3*Lcc-xc)/(6*EI)+(w/100)*xc*xc*(6*Lcc*Lcc-4*Lcc*xc+xc*xc)/(24*EI))];}),marks:[{x:Lc,v:dmax,label:`先端たわみ ${fmt(dmax,1)} mm`}],px:26}})}<p class="note" style="margin:2px 0 0">青い点線は、梁がたわんだようすです（見やすいよう大きく描いています。数字は実際の大きさ）。</p></section>`;
   const NM=100; const ptsM=[]; for(let i=0;i<=NM;i++){ const x=Lc*i/NM; ptsM.push([x,P*(Lc-x)+w*(Lc-x)*(Lc-x)/2]); }
   const s2=step(2,'梁の根元は、どれくらいの力で曲げられている？（曲げモーメント）',`
     <p class="lead">片側だけ固定した梁の先にものをぶら下げると、<b>根元が一番強く曲げられます</b>。曲げる力の大きさを<b>曲げモーメント M</b>といい、<b>「力 × 距離」</b>で表します。先端の力 P が、根元から Lc の距離にあります。${w>0?'梁自身の重さ（w×Lc）は梁全体に均等にかかり、その中心（根元から Lc÷2）にあると考えるので、Mw ＝ (w×Lc) × (Lc÷2) ＝ w×Lc²÷2 です。':''}</p>
