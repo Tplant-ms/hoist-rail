@@ -54,6 +54,7 @@
   .gauges{margin-top:14px;display:grid;gap:10px}
   .gauge .lab{display:flex;justify-content:space-between;gap:10px;font-size:14px;flex-wrap:wrap}
   .gauge .lab b{font-size:15px}
+  .gauge .gvals{font-size:14px;margin:2px 0 4px;color:#37474f}
   .bar{position:relative;height:18px;background:#fff;border:1px solid #C7D1E0;border-radius:9px;overflow:hidden;margin-top:3px}
   .bar i{position:absolute;left:0;top:0;bottom:0;border-radius:9px 0 0 9px}
   .bar .lim{position:absolute;top:-2px;bottom:-2px;width:2px;background:#B3261E}
@@ -431,9 +432,10 @@ function sectionSVG(m){
   s+='</g></svg>'; return s;
 }
 /* 使用率ゲージ */
-function gauge(label,detail,ratio,color){
+function gauge(label,detail,ratio,color,vals){
   const mx=Math.max(1.25,ratio*1.05), w=ratio/mx*100, lim=1/mx*100, ng=ratio>1;
   return `<div class="gauge"><div class="lab"><span><b>${label}</b>　<span class="note">${detail}</span></span><b style="color:${ng?'var(--ng)':'var(--ok)'}">使用率 ${pct(ratio)}　${ng?'× NG':'○ OK'}</b></div>
+   ${vals?`<div class="gvals">${vals}</div>`:''}
    <div class="bar"><i style="width:${w}%;background:${ng?'#E57373':color}"></i><span class="lim" style="left:${lim}%"></span></div>
    <div class="bar-cap"><span>0%</span><span style="margin-left:${Math.max(0,lim-8)}%">← 限度 100%</span><span></span></div></div>`;
 }
@@ -618,11 +620,11 @@ function verdictHTML(r,spec,load,moved){
   return `<section class="verdict ${ok?'ok':'ng'}"><div class="big"><div class="mark">${ok?'OK':'NG'}</div>
    <div class="msg">${ok?`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げても、曲げ・せん断・たわみ${hasT?'（張り出し先端を含む）':''}のすべてが基準以内${moved?'（ホイストを梁の上で動かした場合の一番きびしい位置を含む）':''}なので、<u>安全です</u>。`:`<b>${r.mem.n}</b>（${spec}）のレールは、${load}を吊り上げるとき、<b>${ngs}</b>が基準を超えています。<u>安全とは言えません</u>。より大きな部材にするか、スパン（張り出し）を短くしてください。`}${braceSentence(r)}${ok?'':braceAdvice(r)}${(ok||r.laMax==null)?'':`<div class="lamaxadv" style="margin-top:8px;font-size:0.95em"><b>張り出しを変える場合：</b>${r.laMax>0?((r.laMin>0&&r.La<r.laMin-1e-9)?`今の部材・荷物のまま、張り出しを <b>約 ${fmt(r.laMin,2)}〜${fmt(r.laMax,2)} m</b> にすると、すべて基準以内になります（今は ${fmt(r.La,2)} m。短すぎると、支間のたわみが基準を超えます）。`:`今の部材・荷物のまま、張り出しを <b>約 ${fmt(r.laMax,2)} m 以下</b> にすると、すべて基準以内になります（今は ${fmt(r.La,2)} m）。`):'この部材・荷物では、張り出しをどの長さにしても、すべての基準を同時には満たせません。部材か荷物を見直してください。'}</div>`}</div></div>
    <div class="gauges">
-    ${gauge('曲げ','梁が折れないか',r.rb,'#EF8A45')}
-    ${gauge('せん断','梁がずれ切られないか',r.rs,'#A66BC0')}
-    ${gauge('たわみ','梁が下がりすぎないか',r.rd,'#4F8FD9')}
-    ${hasT?gauge('張り出し部のたわみ（自社基準）','張り出し先端が下がりすぎないか',r.rt,'#2E9E9E'):''}
-   </div><p class="note" style="margin-top:8px">使用率＝「実際にかかる値 ÷ 基準で決まった限度」。100%以下なら基準を満たしています。${moved?'この判定は、今の位置とホイストを動かした全位置のうち、きびしいほうの値を使っています。':''}理由は、下の STEP 1 から順に説明します。</p></section>`;
+    ${gauge('曲げ','梁が折れないか',r.rb,'#EF8A45',`今の応力 <b>${fmt(r.rb*r.fb0,2)} kN/cm²</b>　／　許容 <b>${fmt(r.fb0,2)} kN/cm²</b>`)}
+    ${gauge('せん断','梁がずれ切られないか',r.rs,'#A66BC0',`今の応力 <b>${fmt(r.rs*r.fs,2)} kN/cm²</b>　／　許容 <b>${fmt(r.fs,2)} kN/cm²</b>`)}
+    ${gauge('たわみ','梁が下がりすぎないか',r.rd,'#4F8FD9',`今のたわみ <b>${fmt(r.rd*r.da,2)} mm</b>　／　許容 <b>${fmt(r.da,2)} mm</b>`)}
+    ${hasT&&r.tipLim?gauge('張り出し部のたわみ（自社基準）','張り出し先端が下がりすぎないか',r.rt,'#2E9E9E',`今の先端のたわみ <b>${fmt(r.rt*r.tipLim,2)} mm</b>　／　許容 <b>${fmt(r.tipLim,2)} mm</b>`):(hasT?gauge('張り出し部のたわみ（自社基準）','張り出し先端が下がりすぎないか',r.rt,'#2E9E9E'):'')}
+   </div><p class="note" style="margin-top:8px">使用率＝「今の値 ÷ 許容」。100%以下なら基準を満たしています。${moved?'この判定は、今の位置とホイストを動かした全位置のうち、きびしいほうの値を使っています。':''}理由は、下の STEP 1 から順に説明します。</p></section>`;
 }
 const swTxt=p=>p.sw!=0?'梁の自重を含む':'';
 
@@ -797,7 +799,7 @@ function renderBeam(k){
   const ncT=(p.nc>0?p.nc:250);
   const rtip=(La>0&&sc&&p.tipj==1)?Math.max(0,sc.worst.tipmax)/(La*1000/ncT):null;
   const rv0=null;
-  const rv=sc?{...r,rb:Math.max(r.rb,sc.worst.rb),rs:Math.max(r.rs,sc.worst.rs),rd:Math.max(r.rd,sc.worst.rd),rt:rtip}:r;
+  const rv=sc?{...r,rb:Math.max(r.rb,sc.worst.rb),rs:Math.max(r.rs,sc.worst.rs),rd:Math.max(r.rd,sc.worst.rd),rt:rtip,tipLim:(La>0?La*1000/ncT:null)}:r;
   if(sc&&!(rv.rb<=1&&rv.rs<=1&&rv.rd<=1&&(rv.rt==null||rv.rt<=1))) { rv.laMax=exactMaxLa(p,n); rv.laMin=rv.laMax>0?exactMinLa(p,n):0; }
   return {html: verdictHTML(rv,`スパン ${fmt(L,2)}m・張り出し ${fmt(La,2)}m${two?`・吊り間隔 ${fmt(p.d,2)}m`:''}${lt.on?`・横座屈の長さ ${fmt(lt.lbe/1000,2)}m`:''}`,`荷物 ${fmt(p.W,0)}kg ＋ ホイスト自重 ${fmt(p.Hw,0)}kg${two?'×2台':''}${p.sw!=0?' ＋ 梁の自重':''}`,!!sc)
     + condBox(k,p,lt)
