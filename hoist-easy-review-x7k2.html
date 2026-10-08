@@ -1081,6 +1081,14 @@ function mlRender(){
   $('ml-out').querySelectorAll('tr[data-mem]').forEach(tr=>tr.onclick=()=>{ S[mode].mem=tr.dataset.mem; buildInputs(); draw(); mlRender(); });
 }
 (function(){ $('ml-go').onclick=mlRun; $('ml-ok').onchange=mlRender; $('ml-grp').onchange=mlRender; })();
+/* 数値の入力欄：クリック（タップ）したら中身を全選択して、そのまま打ち込めるようにする */
+(function(){
+  let fresh=null;
+  const isNum=t=>t&&t.tagName==='INPUT'&&t.type==='number';
+  document.addEventListener('mousedown',e=>{ fresh=(isNum(e.target)&&document.activeElement!==e.target)?e.target:null; },true);
+  document.addEventListener('mouseup',e=>{ if(fresh&&e.target===fresh){ e.preventDefault(); } fresh=null; },true);
+  document.addEventListener('focusin',e=>{ const t=e.target; if(isNum(t)) setTimeout(()=>{ try{ t.select(); }catch(_){} },0); });
+})();
 loadState(); buildModes(); buildInputs(); draw();
 </script>
 </body>
