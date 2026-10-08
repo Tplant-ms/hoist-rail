@@ -560,7 +560,7 @@
             font-size:.85rem;font-weight:700;letter-spacing:.04em;">
     🏠 配管・鋼材計算ツール トップへ
   </a>
-  <div style="margin-top:10px;font-size:11px;color:#90a4ae">版：2026-10-07b（A選択時の表記整理）</div>
+  <div style="margin-top:10px;font-size:11px;color:#90a4ae">版：2026-10-08（入力欄の全選択）</div>
 </div>
 
 <div id="printSheet"></div>
@@ -1121,6 +1121,14 @@ function toggleManual(){ const d=$('fold0'); if(d) d.open=!d.open; }
   $('listok').onchange=()=>renderList(curTab); $('listgrp').onchange=()=>renderList(curTab);
   $('printBtn').onclick=()=>{ buildPrint(); window.print(); };
   update();
+})();
+/* 数値の入力欄：クリック（タップ）したら中身を全選択して、そのまま打ち込めるようにする */
+(function(){
+  let fresh=null;
+  const isNum=t=>t&&t.tagName==='INPUT'&&t.type==='number';
+  document.addEventListener('mousedown',e=>{ fresh=(isNum(e.target)&&document.activeElement!==e.target)?e.target:null; },true);
+  document.addEventListener('mouseup',e=>{ if(fresh&&e.target===fresh){ e.preventDefault(); } fresh=null; },true);
+  document.addEventListener('focusin',e=>{ const t=e.target; if(isNum(t)) setTimeout(()=>{ try{ t.select(); }catch(_){} },0); });
 })();
 
 </script>
