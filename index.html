@@ -59,6 +59,25 @@
   }
   .form-group.full { grid-column: 1 / -1; }
 
+  /* 数値欄の +/- ボタン（PCの標準スピンボタンは押しっぱなしで止まらなくなるので非表示） */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  input[type=number] { -moz-appearance: textfield; text-align: center; }
+  .num-step { display: flex; align-items: center; gap: 4px; }
+  .num-step > input { flex: 1 1 auto; min-width: 0; }
+  .num-step.sm { display: inline-flex; }
+  .num-step.sm > input { flex: 0 0 auto; }
+  .stepper-btn {
+    flex: 0 0 auto; width: 34px; height: 34px; padding: 0;
+    border: 1px solid #bbb; border-radius: 5px; background: #fff; color: var(--primary);
+    font-size: 18px; font-weight: bold; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    user-select: none; -webkit-user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  .stepper-btn:active { background: #e3ecfa; }
+  .num-step.sm .stepper-btn { width: 26px; height: 26px; font-size: 15px; }
+  @media print { .stepper-btn { display: none; } }
+
   /* MEMBER PROPS */
   .member-props {
     display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-top: 8px;
@@ -425,7 +444,7 @@
         <span style="font-size:12px;color:var(--sub)" id="s-pos-max-lbl">5m</span></div>
       <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px">
         <label style="font-size:12px;color:var(--sub)">ホイスト位置</label>
-        <input type="number" id="s-pos-input" step="0.05" style="width:80px;padding:3px 6px;font-size:13px;font-weight:700;border:1px solid #bbb;border-radius:4px;text-align:right;color:var(--primary)">
+        <input type="number" id="s-pos-input" step="0.05" style="width:80px;padding:3px 6px;font-size:13px;font-weight:700;border:1px solid #bbb;border-radius:4px;text-align:center;color:var(--primary)">
         <span style="font-size:12px;color:var(--sub)">m</span></div>
       <div id="s-pos-zone" style="text-align:center;font-size:11px;color:var(--sub);margin:3px 0 5px"></div>
       <div class="sratios" id="s-pos-ratios"></div>
@@ -534,7 +553,7 @@
         <span style="font-size:12px;color:var(--sub)" id="tp-pos-max-lbl">5m</span></div>
       <div style="display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px">
         <label style="font-size:12px;color:var(--sub)">x₁</label>
-        <input type="number" id="tp-pos-input" step="0.05" style="width:80px;padding:3px 6px;font-size:13px;font-weight:700;border:1px solid #bbb;border-radius:4px;text-align:right;color:var(--primary)">
+        <input type="number" id="tp-pos-input" step="0.05" style="width:80px;padding:3px 6px;font-size:13px;font-weight:700;border:1px solid #bbb;border-radius:4px;text-align:center;color:var(--primary)">
         <span style="font-size:12px;color:var(--sub)">m</span></div>
       <div id="tp-pos-zone" style="text-align:center;font-size:11px;color:var(--sub);margin:3px 0 5px"></div>
       <div class="sratios" id="tp-pos-ratios"></div>
@@ -1129,6 +1148,40 @@ function toggleManual(){ const d=$('fold0'); if(d) d.open=!d.open; }
   document.addEventListener('mousedown',e=>{ fresh=(isNum(e.target)&&document.activeElement!==e.target)?e.target:null; },true);
   document.addEventListener('mouseup',e=>{ if(fresh&&e.target===fresh){ e.preventDefault(); } fresh=null; },true);
   document.addEventListener('focusin',e=>{ const t=e.target; if(isNum(t)) setTimeout(()=>{ try{ t.select(); }catch(_){} },0); });
+})();
+/* 数値の入力欄に +/- ボタンを付ける（押し続けると連続で変わり、離せば必ず止まる） */
+(function(){
+  const decs=s=>{ s=String(s); const i=s.indexOf('.'); return i<0?0:s.length-i-1; };
+  let timer=null, cur=null;
+  function stop(){ clearTimeout(timer); timer=null; if(cur){ cur.dispatchEvent(new Event('change',{bubbles:true})); cur=null; } }
+  function bump(inp,dir){
+    const st=parseFloat(inp.step)||1, d=Math.max(decs(inp.step||1),decs(inp.value)), f=Math.pow(10,d);
+    let v=Math.round(((parseFloat(inp.value)||0)+dir*st)*f)/f;
+    if(inp.min!==''&&v<+inp.min) v=+inp.min;
+    if(inp.max!==''&&v>+inp.max) v=+inp.max;
+    if(String(v)===inp.value) return;
+    inp.value=v; inp.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+  function start(inp,dir){
+    stop(); cur=inp; bump(inp,dir);
+    timer=setTimeout(function rep(){ bump(inp,dir); timer=setTimeout(rep,90); },400);
+  }
+  function enhance(inp){
+    if(inp.dataset.stepper) return; inp.dataset.stepper='1';
+    const wrap=document.createElement('span'); wrap.className='num-step'+(inp.style.width?' sm':'');
+    inp.parentNode.insertBefore(wrap,inp); wrap.appendChild(inp);
+    [['−',-1,'減らす'],['+',1,'増やす']].forEach(([t,dir,lab])=>{
+      const b=document.createElement('button'); b.type='button'; b.className='stepper-btn'; b.textContent=t; b.tabIndex=-1; b.setAttribute('aria-label',lab);
+      b.addEventListener('mousedown',e=>{ if(e.button!==0) return; e.preventDefault(); start(inp,dir); });
+      b.addEventListener('touchstart',e=>{ e.preventDefault(); start(inp,dir); },{passive:false});
+      b.addEventListener('mouseleave',stop);
+      wrap.appendChild(b);
+    });
+  }
+  ['mouseup','touchend','touchcancel'].forEach(ev=>document.addEventListener(ev,stop,true));
+  window.addEventListener('blur',stop);
+  const scan=()=>document.querySelectorAll('input[type=number]:not([data-stepper])').forEach(enhance);
+  scan(); new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});
 })();
 
 </script>
