@@ -37,6 +37,17 @@
   .fld input:focus,.fld select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(47,85,151,.18)}
   .fld .u{font-size:13px;color:var(--sub);white-space:nowrap}
   .fld .hint{font-size:12px;color:var(--sub);margin-top:2px}
+  /* 数値欄の +/- ボタン（PCの標準スピンボタンは押しっぱなしで止まらなくなるので非表示） */
+  input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+  input[type=number]{-moz-appearance:textfield;text-align:center}
+  .num-step{display:flex;align-items:center;gap:4px;flex:1 1 auto;min-width:0}
+  .num-step>input{flex:1 1 auto;min-width:0}
+  .num-step.sm{display:inline-flex;flex:0 0 auto}
+  .num-step.sm>input{flex:0 0 auto}
+  .stepper-btn{flex:0 0 auto;width:36px;height:36px;padding:0;border:1.5px solid #B9C6DA;border-radius:8px;background:#fff;color:var(--blue);font-size:18px;font-weight:700;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;user-select:none;-webkit-user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+  .stepper-btn:active{background:#E8EEF8}
+  .num-step.sm .stepper-btn{width:28px;height:28px;font-size:15px}
+  @media print{.stepper-btn{display:none}}
   details.guide{margin-bottom:12px;padding:12px 16px} details.guide summary{cursor:pointer;font-weight:700;color:var(--navy);font-size:15px} details.guide h3{font-size:14px;margin:12px 0 4px;color:var(--navy)} .gtbl{table-layout:auto} .gtbl th,.gtbl td{vertical-align:top;text-align:left !important;font-size:13px} .gtbl td:nth-child(1){white-space:nowrap;min-width:92px} .gtbl td:nth-child(2),.gtbl td:nth-child(3){white-space:nowrap} .gtbl .btn{margin-top:6px;font-size:12px;padding:4px 12px;white-space:nowrap;border-radius:14px}
   details.adv{margin-top:12px}
   details.adv summary{cursor:pointer;color:var(--blue);font-size:14px}
@@ -1088,6 +1099,40 @@ function mlRender(){
   document.addEventListener('mousedown',e=>{ fresh=(isNum(e.target)&&document.activeElement!==e.target)?e.target:null; },true);
   document.addEventListener('mouseup',e=>{ if(fresh&&e.target===fresh){ e.preventDefault(); } fresh=null; },true);
   document.addEventListener('focusin',e=>{ const t=e.target; if(isNum(t)) setTimeout(()=>{ try{ t.select(); }catch(_){} },0); });
+})();
+/* 数値の入力欄に +/- ボタンを付ける（押し続けると連続で変わり、離せば必ず止まる） */
+(function(){
+  const decs=s=>{ s=String(s); const i=s.indexOf('.'); return i<0?0:s.length-i-1; };
+  let timer=null, cur=null;
+  function stop(){ clearTimeout(timer); timer=null; if(cur){ cur.dispatchEvent(new Event('change',{bubbles:true})); cur=null; } }
+  function bump(inp,dir){
+    const st=parseFloat(inp.step)||1, d=Math.max(decs(inp.step||1),decs(inp.value)), f=Math.pow(10,d);
+    let v=Math.round(((parseFloat(inp.value)||0)+dir*st)*f)/f;
+    if(inp.min!==''&&v<+inp.min) v=+inp.min;
+    if(inp.max!==''&&v>+inp.max) v=+inp.max;
+    if(String(v)===inp.value) return;
+    inp.value=v; inp.dispatchEvent(new Event('input',{bubbles:true}));
+  }
+  function start(inp,dir){
+    stop(); cur=inp; bump(inp,dir);
+    timer=setTimeout(function rep(){ if(!inp.isConnected) return stop(); bump(inp,dir); timer=setTimeout(rep,90); },400);
+  }
+  function enhance(inp){
+    if(inp.dataset.stepper) return; inp.dataset.stepper='1';
+    const wrap=document.createElement('span'); wrap.className='num-step'+(inp.style.width?' sm':'');
+    inp.parentNode.insertBefore(wrap,inp); wrap.appendChild(inp);
+    [['−',-1,'減らす'],['+',1,'増やす']].forEach(([t,dir,lab])=>{
+      const b=document.createElement('button'); b.type='button'; b.className='stepper-btn'; b.textContent=t; b.tabIndex=-1; b.setAttribute('aria-label',lab);
+      b.addEventListener('mousedown',e=>{ if(e.button!==0) return; e.preventDefault(); start(inp,dir); });
+      b.addEventListener('touchstart',e=>{ e.preventDefault(); start(inp,dir); },{passive:false});
+      b.addEventListener('mouseleave',stop);
+      wrap.appendChild(b);
+    });
+  }
+  ['mouseup','touchend','touchcancel'].forEach(ev=>document.addEventListener(ev,stop,true));
+  window.addEventListener('blur',stop);
+  const scan=()=>document.querySelectorAll('input[type=number]:not([data-stepper])').forEach(enhance);
+  scan(); new MutationObserver(scan).observe(document.body,{childList:true,subtree:true});
 })();
 loadState(); buildModes(); buildInputs(); draw();
 </script>
