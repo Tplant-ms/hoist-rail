@@ -328,6 +328,8 @@
         <li>A・Bを選んだときは、「なぜ自重や横座屈を考えなくてよいか」を、提出先に説明できるようにしておいてください。</li>
         <li>柱・ブラケット・ボルト・アンカー・溶接そのものの検討は、含まれません。支点の力は、結果の欄に出ます。</li>
         <li>許容応力度は SS400 の値（fb₀＝15.6 kN/cm²、fs＝fb₀÷√3、E＝21,000 kN/cm²）です。支間のたわみは L/800 です。</li>
+        <li><strong>たわみの制限値と法令の関係</strong>：たわみの制限値（支間 1/800、張り出し部 1/250）は、法令で決められた数値ではありません。支間の 1/800 は JIS・業界指針による目安、張り出し部の 1/250 は自社基準（ホイストの導入・通過に使う張り出し部）です。<br>
+          ただし、吊り上げ荷重 0.5t 以上で電動で吊り上げるホイストはクレーン則の対象となり、<strong>強度の確保（クレーン構造規格）と設置の手続きは法的に必要</strong>です。手続きは、0.5t 以上 3t 未満が「設置報告書」、3t 以上が「設置届」と落成検査です。手動のチェーンブロック＋手動トロリーは、クレーン則の対象外です。</li>
       </ul>
     </div>
   </div>
@@ -579,7 +581,7 @@
             font-size:.85rem;font-weight:700;letter-spacing:.04em;">
     🏠 配管・鋼材計算ツール トップへ
   </a>
-  <div style="margin-top:10px;font-size:11px;color:#90a4ae">版：2026-10-08（入力欄の全選択）</div>
+  <div style="margin-top:10px;font-size:11px;color:#90a4ae">版：2026-10-27（制限値の解説）</div>
 </div>
 
 <div id="printSheet"></div>
@@ -1029,7 +1031,8 @@ function buildPrint(){
    <table style="width:100%;border-collapse:collapse;font-size:12.5px" class="ptbl"><thead><tr><th>検討項目</th><th>計算値</th><th>許容値</th><th>使用率</th><th>判定</th></tr></thead><tbody>${rowsH}</tbody></table>
    <div style="font-size:12.5px;line-height:1.7;margin-top:8px">${extra}</div>
    <h2 style="font-size:13px;margin:8px 0 3px">計算式</h2>${calcFormulaHTML(t,true)}
-   <p style="font-size:11px;color:#666;margin-top:10px">SS400、E＝21,000 kN/cm²、fs＝fb0÷√3。柱・ブラケット・ボルト・アンカー・溶接そのものの検討は含みません。</p>`;
+   <p style="font-size:11px;color:#666;margin-top:10px">SS400、E＝21,000 kN/cm²、fs＝fb0÷√3。柱・ブラケット・ボルト・アンカー・溶接そのものの検討は含みません。</p>
+   <p style="font-size:11px;color:#666;margin-top:4px">※ たわみの制限値（支間 1/800、張り出し部 1/250）は法令の数値ではなく、JIS・業界指針（1/800）と自社基準（1/250：導入・通過用の張り出し部）による目安です。ただし、吊り上げ荷重 0.5t 以上の電動ホイストはクレーン則の対象で、強度の確保（クレーン構造規格）と設置の手続き（0.5t 以上 3t 未満：設置報告書、3t 以上：設置届・落成検査）は法的に必要です。手動のチェーンブロック＋手動トロリーは対象外です。</p>`;
 }
 
 /* ---------- 計算式（今の条件の数字入り）：画面の下と印刷に使う ---------- */
