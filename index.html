@@ -390,7 +390,7 @@
   </div>
   <hr class="divider">
   <label style="display:flex;gap:10px;align-items:center;cursor:pointer;font-size:13px" id="tip-label">
-    <input type="checkbox" id="tipchk" style="width:20px;height:20px;flex:none">
+    <input type="checkbox" id="tipchk" checked style="width:20px;height:20px;flex:none">
     <span>張り出し部のたわみを <b>1/<span id="tip-n-lbl">250</span>（自社基準）</b>で制限する<br>
     <span class="note" style="margin:0">先端が下がりすぎて、トロリーが勝手に動き、吊荷が振れるのを防ぐための基準です（単純梁・2点吊り梁）</span></span>
   </label>
@@ -761,7 +761,7 @@ function exactMinLa(p,n){
    画面（統合版）— 計算はすべて「やさしい解説版」と同じエンジンです
 ===================================================================== */
 const num=(id,d=0)=>{ const e=$(id); const v=e?parseFloat(e.value):NaN; return isFinite(v)?v:d; };
-const cfg={pat:'C',tip:false,bm:0,bt:0};
+const cfg={pat:'C',tip:true,bm:0,bt:0};
 let curTab='simple';
 const posState={s:null,tp:null};
 const G=9.81;
